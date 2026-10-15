@@ -1,0 +1,17 @@
+name: course-check
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: pip install -r requirements.txt
+      - name: 课程一键检查（提交规范 / 开发日志 / 需求追踪 / manifest）
+        run: python scripts/check_all.py

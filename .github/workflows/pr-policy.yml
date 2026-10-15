@@ -1,0 +1,30 @@
+name: pr-policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check pull request target
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import os
+          base = os.environ["BASE_BRANCH"]
+          head = os.environ["HEAD_BRANCH"]
+          same_repo = os.environ["HEAD_REPOSITORY"] == os.environ["BASE_REPOSITORY"]
+          allowed = base == "develop" or (base == "main" and head == "develop" and same_repo)
+          if not allowed:
+              raise SystemExit("Open member PRs against develop; main accepts only develop from this repository.")
+          print("PR target policy passed.")
+          PY

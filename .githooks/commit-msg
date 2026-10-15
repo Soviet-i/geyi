@@ -1,0 +1,10 @@
+#!/bin/sh
+# 提交信息规范检查：不符合《docs/guides/git-workflow.md》的提交会被拒绝。
+# 紧急情况下可用 git commit --no-verify 跳过，但跳过的提交会在 check_all.py 中被发现并扣分。
+for PY in python3 python py; do
+  if command -v "$PY" >/dev/null 2>&1 && "$PY" -c "import sys" >/dev/null 2>&1; then
+    exec "$PY" scripts/check_commit_msg.py "$1"
+  fi
+done
+echo "未找到可用的 python，无法检查提交规范。请先安装 Python 3.8+。" >&2
+exit 1

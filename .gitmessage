@@ -1,0 +1,19 @@
+# <type>(<scope>): <一句话主题，4~60字，说清“做了什么”，不加句号>
+#
+# 背景: 为什么要改？对应哪个需求/问题（如 REQ-003、风险 R-02）
+# 改动: 改了什么？按要点写，涉及哪些文件/模块
+# 验证: 怎么证明改对了？写命令与结果（如 python scripts/build_firmware.py 编译通过）；
+#       硬件相关写证据路径（如 evidence/M2/imu_boot_log.txt）
+# AI协作: 否 | 是(工具/模型；采纳了什么；人工修正了什么)
+#
+# type 取值: feat fix docs test refactor perf build ci chore revert hw
+# 必填项: 所有提交必须有“改动”和“AI协作”；feat/fix/refactor/perf/test/hw 还必须有“背景”和“验证”
+# 以 # 开头的行不会被提交。详见 docs/guides/git-workflow.md
+#
+# 示例:
+#   feat(rgb): 新增 RGB 灯红绿蓝循环闪烁
+#
+#   背景: REQ-002 要求用 RGB 灯指示设备运行状态。
+#   改动: main.c 中新增 rgb_led_init/set_color，按颜色表循环点亮。
+#   验证: 编译通过；上板后串口依次输出 red/green/blue，见 evidence/M2/rgb_log.txt。
+#   AI协作: 是(Claude Code)；采纳颜色表实现，人工修正了灯珠供电未打开的问题。

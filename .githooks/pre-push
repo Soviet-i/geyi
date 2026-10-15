@@ -1,0 +1,16 @@
+#!/bin/sh
+# 推送前检查提交规范与开发日志。默认只给警告；设置环境变量 COURSE_STRICT=1 则不通过时拒绝推送。
+for PY in python3 python py; do
+  if command -v "$PY" >/dev/null 2>&1 && "$PY" -c "import sys" >/dev/null 2>&1; then
+    "$PY" scripts/check_commit_msg.py --log --quiet
+    R1=$?
+    "$PY" scripts/check_devlog.py
+    R2=$?
+    if [ "$COURSE_STRICT" = "1" ] && { [ $R1 -ne 0 ] || [ $R2 -ne 0 ]; }; then
+      echo "COURSE_STRICT=1：检查未通过，已拒绝推送。" >&2
+      exit 1
+    fi
+    exit 0
+  fi
+done
+exit 0

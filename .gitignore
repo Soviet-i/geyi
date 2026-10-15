@@ -1,0 +1,38 @@
+# 构建与编译产物
+build/
+out/
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+*.exe
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 编辑器/系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 体积大的原始素材：放网盘，在 evidence/ 里放链接说明，不要直接入库
+*.mp4
+*.mov
+*.zip
+*.7z
+
+# 密钥与本地配置（绝对不要提交）
+.env
+*.key
+secrets.*
+
+# SiFli SDK 构建产物（scons 在 project/ 下生成）
+build_*/
+.sconsign.dblite
+*.pyc
+sifli_sdk/
+project/src/

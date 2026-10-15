@@ -1,0 +1,9 @@
+#!/bin/sh
+# 提交前提醒：今天还没有开发日志时给出提示（只提醒，不拦截）。
+for PY in python3 python py; do
+  if command -v "$PY" >/dev/null 2>&1 && "$PY" -c "import sys" >/dev/null 2>&1; then
+    "$PY" scripts/check_devlog.py --remind || true
+    exit 0
+  fi
+done
+exit 0

@@ -1,0 +1,95 @@
+# ============================================================
+# 交接清单 Manifest 模板
+# 黄山派嵌入式产品开发实验课程 · Agent协作开发与评审机制
+#
+# 用途：Dev Agent（学生侧）按此schema生成提交材料，
+#       Eval Agent（教师侧）按此schema解析并评审。
+# 使用方法：复制本文件为 submission_<学号或组号>_<里程碑>.yaml，
+#          按字段填写；带 <> 的地方替换成实际内容。
+# 重要：本文件中除 dev_agent.model / dev_agent.tool 等元信息栏位外，
+#      其余内容应尽量由agent在开发过程中自动生成/追加，
+#      而不是学生在提交前手写编造——手写内容的可信度视同人工记录，
+#      不享有"agent执行留痕"的免核验优先级。
+# ============================================================
+
+submission:
+  student_id: "<学号，例如 S2026001>"
+  student_name: "<姓名>"
+  group_id: "<组别，例如 G3>"
+  milestone: "<里程碑名称，例如 阶段4-AI语音集成 / Capstone-检查点2 / Capstone-终版>"
+  submitted_at: "<ISO时间戳，例如 2026-11-03T21:40:00+08:00>"
+
+dev_agent:
+  tool: "Codex"
+  model: "GPT-6"
+  session_log_path: "<完整会话记录文件路径，必须是原始导出，不可编辑>"
+  session_log_hash: "<可选：会话记录文件的哈希值，用于防止事后篡改>"
+
+requirements:
+  prd_path: "docs/01-需求规格说明.md"
+  hardware_constraints_ref: "<引用的硬件规格文档，例如黄山派硬件手册链接或本地副本路径>"
+
+design:
+  architecture_doc_path: "docs/02-方案设计说明.md"
+  key_decisions:
+    # 每一条关键决策都要写清楚：决策内容 / 考虑过的备选方案 / 选择理由 / 谁做的最终决定
+    - decision: "<例如：选择BLE而非WiFi做数据同步>"
+      alternatives_considered: "<例如：曾考虑过用SD卡离线导出，因为使用场景需要实时同步而放弃>"
+      rationale: "<为什么最终这么选，写具体理由，不要只写'效果更好'>"
+      decided_by: "<agent建议+学生确认 / 学生主导 / 纯agent自动决定（不建议用于关键决策）>"
+
+code:
+  repo_url: "https://github.com/Soviet-i/geyi"
+  commit_range: "<起始commit..结束commit，对应本次里程碑>"
+
+physical_verification:
+  # 每一个物理验证节点都要有对应记录，节点类型见配套文档《Agent协作开发与评审机制》第三节表格
+  - item: "<验证项名称，例如：固件烧录与串口启动log>"
+    required_action: "<agent当时要求学生具体做什么>"
+    executed_at: "<学生实际执行的时间戳>"
+    evidence_path: "<原始证据文件路径：照片/视频/日志/示波器截图>"
+    agent_conclusion: "<agent基于该证据得出的结论，例如：启动正常，IMU初始化成功>"
+
+test_results:
+  - test_id: "<测试编号，例如 TC-01>"
+    description: "<测试内容简述>"
+    expected: "<预期结果>"
+    actual: "<实测结果>"
+    pass: <true 或 false>
+    evidence_path: "<对应的原始数据/截图路径>"
+
+known_issues:
+  - "当前仅完成 M0 初始化准备，产品需求、成员分工与提交材料信息尚待学生确认。"
+  - "当前终端未设置 SIFLI_SDK，未找到 scons 和 arm-none-eabi-gcc，尚未验证固件编译能力。"
+  - "未进行物理验证，physical_verification 与产品测试字段仍保留占位，不能用于里程碑正式提交。"
+  - "原始目录缺少 training/T0、T1 任务正文，需向教师索取。"
+
+self_review: |
+  <agent生成的自我复盘，包括：本次里程碑完成度如何、哪些地方agent自己也不确定、
+  哪些决策是在学生介入/纠正之后才修改的。建议由agent在里程碑结束时自动生成，
+  不建议学生代写。>
+
+human_checkpoints:
+  # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
+  - decision_point: "<例如：是否采用非线性PWM映射>"
+    student_confirmation: "<学生对该决策的确认说明，最好包含'为什么认可/为什么修改'的具体理由>"
+
+# ============================================================
+# 以下为字段填写示例（仅供参考，提交时请删除本示例区块）
+# ============================================================
+# submission:
+#   student_id: "S2026007"
+#   student_name: "李四"
+#   group_id: "G3"
+#   milestone: "阶段4-AI语音集成"
+#   submitted_at: "2026-11-03T21:40:00+08:00"
+# dev_agent:
+#   tool: "Claude Code"
+#   model: "claude-sonnet-5"
+#   session_log_path: "logs/session_2026-11-03.jsonl"
+# physical_verification:
+#   - item: "蓝牙BT PAN联网"
+#     required_action: "打开手机蓝牙个人热点，尝试与开发板配对并观察是否能访问外网"
+#     executed_at: "2026-11-03T20:15:00+08:00"
+#     evidence_path: "evidence/bt_pan_connect_log.png"
+#     agent_conclusion: "配对成功，ping通外部服务器，联网延迟约800ms"

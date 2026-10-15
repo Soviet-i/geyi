@@ -1,0 +1,76 @@
+{
+  "_说明": "课程检查脚本共用的配置。教师可按班级情况调整阈值；学生不要自行修改（修改会体现在git历史中）。",
+  "project_name": "<项目名称>",
+  "commit_types": [
+    "feat",
+    "fix",
+    "docs",
+    "test",
+    "refactor",
+    "perf",
+    "build",
+    "ci",
+    "chore",
+    "revert",
+    "hw"
+  ],
+  "commit_type_desc": {
+    "feat": "新增功能",
+    "fix": "修复缺陷",
+    "docs": "文档与开发日志",
+    "test": "新增或修改测试",
+    "refactor": "重构（不改变行为）",
+    "perf": "性能/功耗/资源优化",
+    "build": "构建脚本、依赖、工程配置",
+    "ci": "持续集成与检查脚本",
+    "chore": "杂项（初始化、整理）",
+    "revert": "回退某次提交",
+    "hw": "硬件相关：板级验证、引脚/外设配置、证据入库"
+  },
+  "subject_max_len": 60,
+  "subject_min_len": 4,
+  "section_min_chars": 6,
+  "body_required_types": [
+    "feat",
+    "fix",
+    "refactor",
+    "perf",
+    "test",
+    "hw"
+  ],
+  "vague_subjects": [
+    "update",
+    "updates",
+    "fix",
+    "fix bug",
+    "bug",
+    "wip",
+    "test",
+    "temp",
+    "修改",
+    "更新",
+    "更新代码",
+    "修复bug",
+    "提交",
+    "临时提交",
+    "改了一下"
+  ],
+  "devlog_dir": "docs/devlog",
+  "devlog_required_sections": {
+    "今日完成": 30,
+    "AI协作记录": 6,
+    "明日计划": 6
+  },
+  "devlog_min_effective_chars": 120,
+  "max_gap_days": 7,
+  "sdk": {
+    "_说明": "SiFli SDK 与板型。课程统一使用 SDK v2.5.1；发放前由教师确认，学期内不要改。SDK 工程目录为 project/，应用源码在 src/（与官方例程结构一致）。",
+    "board": "sf32lb52-lchspi-ulp",
+    "sdk_branch": "v2.5.1",
+    "version_prefix": "v2.5",
+    "project_dir": "project",
+    "gitee_repo": "https://gitee.com/SiFli/sifli-sdk",
+    "github_repo": "https://github.com/OpenSiFli/SiFli-SDK",
+    "sdk_tag": "v2.5.1"
+  }
+}
