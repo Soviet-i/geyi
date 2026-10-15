@@ -67,6 +67,14 @@ static int eligible(const GyGame *g, int x, int y, int d)
     }
     return b->kind == GY_EMPTY || (b->kind == GY_SOLDIER && b->owner != a->owner);
 }
+int gy_eligible_count(const GyGame *g, int direction)
+{
+    int x,y,count=0;
+    if(!g||direction<0||direction>3||g->outcome!=GY_PLAYING)return 0;
+    for(y=0;y<g->config.size;++y)for(x=0;x<g->config.size;++x)
+        count+=eligible(g,x,y,direction);
+    return count;
+}
 static void numbers(GyGame *g, int d)
 {
     int n = g->config.size, line, step;
@@ -158,6 +166,7 @@ int gy_preview(const GyGame *g, GyMove m, GyPreview *p)
     if (memcmp(a->cells,g->cells,sizeof(g->cells)) == 0 &&
         a->coins[0] == g->coins[0] && a->coins[1] == g->coins[1]) return 0;
     finish(a); ++a->moves; ++a->revision;
+    p->visible = *a; /* Never expose the next randomly spawned tile in UI preview. */
     if (a->outcome == GY_PLAYING) { spawn(a); a->turn ^= 1; }
     p->valid = 1; return 1;
 }

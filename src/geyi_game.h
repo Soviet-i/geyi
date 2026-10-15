@@ -16,10 +16,11 @@ typedef struct {
     uint32_t revision, moves, rng;
 } GyGame;
 typedef struct { int direction, count; } GyMove;
-typedef struct { GyGame before, after; int valid; } GyPreview;
+typedef struct { GyGame before, after, visible; int valid; } GyPreview;
 GyConfig gy_default_config(void);
 int gy_init(GyGame *g, GyConfig config, uint32_t seed);
 int gy_preview(const GyGame *g, GyMove move, GyPreview *preview);
+int gy_eligible_count(const GyGame *g, int direction);
 int gy_commit(GyGame *g, const GyPreview *preview);
 int gy_place(GyGame *g, int column);
 int gy_resign(GyGame *g);

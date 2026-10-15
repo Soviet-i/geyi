@@ -17,6 +17,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "geyi_game.h"
+#include "geyi_input.h"
 #include "drivers/rt_drv_pwm.h"
 
 #define APP_NAME        "course_starter"
@@ -69,6 +70,8 @@ int main(void)
     rt_kprintf("Hello world!\n");
     rt_kprintf("[geyi:selftest] core=%s (not a hardware game test)\n",
                gy_selftest() ? "PASS" : "FAIL");
+    rt_kprintf("[geyi:selftest] input=%s (simulated angles only)\n",
+               gy_input_selftest() ? "PASS" : "FAIL");
 
     rgb_led_init();
 

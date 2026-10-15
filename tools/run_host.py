@@ -21,9 +21,9 @@ def run(args, **kw):
     return result.stdout
 
 cc = os.environ.get('CC') or shutil.which('gcc') or shutil.which('clang')
-for name, source in [('geyi-tests', 'tests/test_geyi.c'), ('geyi-cli', 'tools/geyi_cli.c')]:
+for name, source in [('geyi-tests', 'tests/test_geyi.c'), ('geyi-input-tests', 'tests/test_input.c'), ('geyi-cli', 'tools/geyi_cli.c')]:
     exe = out/(name + ('.exe' if os.name=='nt' else ''))
-    sources = [str(root/'src/geyi_game.c'),str(root/source)]
+    sources = [str(root/'src/geyi_game.c'),str(root/'src/geyi_input.c'),str(root/source)]
     if cc:
         run([cc,'-std=c11','-Wall','-Wextra','-Werror','-I'+str(root/'src'),*sources,'-o',str(exe)])
     else:
@@ -32,7 +32,7 @@ for name, source in [('geyi-tests', 'tests/test_geyi.c'), ('geyi-cli', 'tools/ge
         if not scripts: raise SystemExit('MSVC/gcc/clang not found; no tests were run.')
         command = f'call "{scripts[0]}" >nul && cl /nologo /std:c11 /W4 /WX /utf-8 /I"{root / "src"}" ' + ' '.join(f'"{s}"' for s in sources) + f' /Fe:"{exe}"'
         run('cmd.exe /d /s /c "' + command + '"')
-    if name=='geyi-tests': run([str(exe)],timeout=30)
+    if name.endswith('tests'): run([str(exe)],timeout=30)
 
 smoke = run([str(out/'geyi-cli.exe' if os.name=='nt' else out/'geyi-cli')],
     input='w 1\ncancel\nw 1\nok\nresign\nrestart\nquit\n',timeout=10)
