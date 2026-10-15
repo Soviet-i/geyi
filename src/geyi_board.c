@@ -102,6 +102,10 @@ void gy_board_poll(void)
     Motion m;uint32_t now=milliseconds();GyInputEvent event;int available[4],d,placing;
     int key=rt_pin_read(34),confirm=pressed(&confirm_key,key,now),cancel=pressed(&cancel_key,rt_pin_read(43),now);
     const GyGame *game=gy_ui_game();
+    if(!gy_ui_is_playing()){
+        gy_input_reset(&input);previous_column=-1;previous_place=0;
+        return;
+    }
     rt_mutex_take(&motion_lock,RT_WAITING_FOREVER);m=shared;rt_mutex_release(&motion_lock);
     if(m.valid&&(uint32_t)(now-last_motion_log)>=1000){
         last_motion_log=now;

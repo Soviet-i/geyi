@@ -18,6 +18,7 @@
 #include "string.h"
 #include "geyi_game.h"
 #include "geyi_input.h"
+#include "geyi_feedback.h"
 #include "drivers/rt_drv_pwm.h"
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
@@ -47,7 +48,7 @@ static const struct rgb_color color_table[] =
 
 static struct rt_device *rgbled_device;
 
-static void rgb_led_init(void)
+static int rgb_led_init(void)
 {
 #ifdef SF32LB52X
     HAL_PIN_Set(PAD_PA32, GPTIM2_CH1, PIN_NOPULL, 1);   /* pwmt2_cc1 */
@@ -58,15 +59,16 @@ static void rgb_led_init(void)
     if (!rgbled_device)
     {
         rt_kprintf("[%s] ERROR: device '%s' not found, check proj.conf RGB options\n", APP_NAME, RGBLED_NAME);
-        RT_ASSERT(0);
+        return 0;
     }
+    return 1;
 }
 
-static void rgb_led_set_color(uint32_t color)
+static int rgb_led_set_color(uint32_t color)
 {
-    struct rt_rgbled_configuration configuration;
+    struct rt_rgbled_configuration configuration={0};
     configuration.color_rgb = color;
-    rt_device_control(rgbled_device, PWM_CMD_SET_COLOR, &configuration);
+    return rt_device_control(rgbled_device, PWM_CMD_SET_COLOR, &configuration)==RT_EOK;
 }
 
 int main(void)
@@ -79,6 +81,9 @@ int main(void)
                gy_input_selftest() ? "PASS" : "FAIL");
 
 #ifdef GEYI_WITH_LVGL
+    GyLight light={0};uint32_t last_light=UINT32_MAX;
+    int light_ok=rgb_led_init();
+    rt_kprintf("[geyi:selftest] light=%s\n",gy_light_selftest()?"PASS":"FAIL");
     if (littlevgl2rtt_init("lcd") != RT_EOK) {
         rt_kprintf("[geyi:lcd] FAIL initialize\n");
         return -1;
@@ -92,10 +97,18 @@ int main(void)
     while(1){
         if(board_ready)gy_board_poll();
         lv_timer_handler();
+        {uint32_t now=(uint32_t)((uint64_t)rt_tick_get()*1000/RT_TICK_PER_SECOND);
+        int event=gy_ui_take_feedback();uint32_t current;
+        if(event){gy_light_start(&light,event,now);rt_kprintf("[geyi:light] event=%d\n",event);}
+        current=gy_light_color(&light,now);
+        if(light_ok&&current!=last_light){
+            if(!rgb_led_set_color(current)){light_ok=0;rt_kprintf("[geyi:light] FAIL write; game continues\n");}
+            last_light=current;
+        }}
         rt_thread_mdelay(5);
     }
 #else
-    rgb_led_init();
+    if(!rgb_led_init())return -1;
 
     while (1)
     {

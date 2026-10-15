@@ -1,0 +1,29 @@
+{
+  "board": "sf32lb52-lchspi-ulp",
+  "port": "COM9",
+  "time": "20261015_213937",
+  "source_head": "e65f7b9810acf0beb7d5e58c5df26d02f29b2d44",
+  "worktree_dirty": true,
+  "source_files": {
+    "src\\geyi_board.c": "4724e91b98d95336d2e4b1a4bfb46a03db6e980bcc98105c5ae5e3fbd6623c9d",
+    "src\\geyi_feedback.c": "0d94b512a4f2a9b76507e73bf2aedb0d55f9c58e3349f97e0214eeced96e34c2",
+    "src\\geyi_font_cn16.c": "ef44d8e1691b58890326e3bcfc8fb0dd3d6740ecffc2623da59393716f300ba0",
+    "src\\geyi_game.c": "03d6307d07f1ef013da2cab856db19ed9292d7f1d302a313630c3512ce095b65",
+    "src\\geyi_input.c": "c2f96b7be2c3abc5aaeb0fd2d04a0c0aaf557ab11ccb8319a16ec4a8c28656b2",
+    "src\\geyi_ui.c": "eed85df62018a924e92a675acb5508c7ac95943984c266e30017455c72f2f3a6",
+    "src\\main.c": "fc5c72f6ef96810247d83f96f4ae1c5154da11c682bf323b5ce4fef4b23f5832",
+    "src\\geyi_board.h": "a44630a4d7fe6a4d50f1d5387772faf50b2ade47ed0e39b2c5e5647072656d7f",
+    "src\\geyi_feedback.h": "931c30a41e6dcc146d1b8320a2c327c2a5cfd9f0072f03334a076a81583abfee",
+    "src\\geyi_font_cn16.h": "1dc90db32e7bdb450ebeaca4fe98be05a659783a7a988be2088e999524f172e2",
+    "src\\geyi_game.h": "5130032a646e0d71a123ba71d5e7111bdf11025ad86f890d5a42e58555e063b9",
+    "src\\geyi_input.h": "872bfa09487bf5bd924e59b19f312f769a21a388349838dd1cd0a5e5a99f2bef",
+    "src\\geyi_ui.h": "49717922fdd22730c02d5d2333b27f514487e5ca0e4613c641e8de4526d57278",
+    "project\\proj.conf": "228afc5aed5435fcb54d655181f1236634ec79004dddadc32b2d74338f58ae8d",
+    "src\\SConscript": "285f8f35b312ec2ea04cbe5d6fe449b4c86d122c2be035393f9d38cab8333fe4"
+  },
+  "files": {
+    "main.bin": "41b6523b9d666a7cf781b9b12e33049e695f81ef44e21cb0c17823f24cbfb595",
+    "bootloader\\bootloader.bin": "e59d70db44367d524fbb46a8a014ce0092462e86959d101a8e2e00ad27bb5e21",
+    "ftab\\ftab.bin": "b47af4ad87fa9e909df9d0b6d603077d4f6925de7ec0f53991c02ec2cfccc1de"
+  }
+}

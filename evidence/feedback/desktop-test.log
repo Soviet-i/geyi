@@ -1,0 +1,4 @@
+PASS: placement through earned game coins
+PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)
+PASS: TC-313 home/modes/disabled entries/input guard/single re-entry
+PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart

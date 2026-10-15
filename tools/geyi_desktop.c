@@ -59,7 +59,22 @@ static void check(int ok,const char *what)
 static int tests(void)
 {
     GyGame before;GyPreview p;GyMove m={GY_UP,1};
-    initialize();before=*gy_ui_game();screenshot("initial.bmp");
+    initialize();before=*gy_ui_game();screenshot("home.bmp");
+    check(gy_light_selftest(),"TC-314 light timeline including wrap");
+    check(gy_ui_take_feedback()==GY_FX_CLEAR,"home clears light");
+    check(!gy_ui_is_playing(),"startup is home");
+    gy_ui_action(GY_UI_UP);gy_ui_tilt_select(GY_UP,1);gy_ui_action(GY_UI_CONFIRM);
+    check(!gy_ui_has_preview()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"menu ignores game input");
+    check(gy_ui_take_feedback()==GY_FX_NONE,"menu game actions do not flash");
+    click(160,280);click(160,346);
+    check(!gy_ui_is_playing(),"home placeholders disabled");
+    click(160,212);screenshot("modes.bmp");
+    click(160,250);click(160,320);
+    check(!gy_ui_is_playing(),"unfinished modes disabled");
+    click(160,400);check(!gy_ui_is_playing(),"mode back to home");
+    click(160,212);click(160,154);
+    check(gy_ui_is_playing(),"single enters game");screenshot("initial.bmp");
+    check(gy_ui_take_feedback()==GY_FX_CLEAR,"single starts light off");
     {const uint32_t required[]={0x786e,0x8ba4,0x5f00,0x8f93,0x80dc,0x7ea2,0x84dd};
      unsigned i;lv_font_glyph_dsc_t glyph;
      for(i=0;i<sizeof(required)/sizeof(required[0]);++i)
@@ -67,14 +82,22 @@ static int tests(void)
     check(gy_preview(&before,m,&p),"core preview exists");
     check(p.visible.rng==before.rng,"visible preview does not consume RNG");
     click(35,354);check(gy_ui_has_preview(),"mouse direction button previews");
+    check(gy_ui_take_feedback()==GY_FX_NONE,"preview does not flash");
     check(!memcmp(&before,gy_ui_game(),sizeof(before)),"preview does not write game");screenshot("preview.bmp");
     click(190,395);check(!gy_ui_has_preview(),"mouse cancel");
+    check(gy_ui_take_feedback()==GY_FX_NONE,"cancel does not flash");
     check(!memcmp(&before,gy_ui_game(),sizeof(before)),"cancel unchanged");
     gy_ui_action(GY_UI_UP);click(70,395);
     check(gy_ui_game()->revision==1&&gy_ui_game()->turn==1,"mouse confirm changes turn");
+    check(gy_ui_take_feedback()==GY_FX_MOVE,"confirmed move flashes once");
     click(70,395);check(gy_ui_game()->revision==1,"disabled confirm not repeated");
+    check(gy_ui_take_feedback()==GY_FX_NONE,"duplicate confirm does not flash");
     gy_ui_action(GY_UI_RESIGN);check(gy_ui_game()->outcome==GY_RED_WIN,"resign");screenshot("result.bmp");
+    check(gy_ui_take_feedback()==GY_FX_RED,"blue resign selects red winner light");
     click(240,20);check(!memcmp(&before,gy_ui_game(),sizeof(before)),"mouse restart");
+    check(gy_ui_take_feedback()==GY_FX_CLEAR,"restart clears light");
+    gy_ui_action(GY_UI_RESIGN);check(gy_ui_take_feedback()==GY_FX_BLUE,"red resign selects blue winner light");
+    gy_ui_action(GY_UI_RESTART);(void)gy_ui_take_feedback();
     gy_ui_action(GY_UI_PLACE);check(!gy_ui_has_preview(),"no coins cannot place");
     /* Drive legal game actions until coins are available; avoid test-only state mutation. */
     {
@@ -86,6 +109,7 @@ static int tests(void)
                     uint32_t revision=gy_ui_game()->revision;
                     gy_ui_action(GY_UI_PLACE);gy_ui_cell(x,y);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
                     gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->revision==revision+1,"place confirmed");
+                    check(gy_ui_take_feedback()==GY_FX_MOVE,"successful placement flashes");
                     goto placed;
                 }
             }
@@ -100,6 +124,11 @@ done: ;
     gy_ui_action(GY_UI_RESTART);gy_ui_action(GY_UI_MORE);gy_ui_action(GY_UI_UP);
     check(gy_ui_has_preview(),"quantity two preview");
     gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->cells[4][1].kind==GY_SOLDIER&&gy_ui_game()->cells[4][4].kind==GY_SOLDIER,"both selected soldiers moved");
+    click(166,20);check(!gy_ui_is_playing()&&!gy_ui_has_preview(),"game back home clears preview");
+    click(160,212);click(160,154);
+    check(gy_ui_is_playing()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"single re-entry resets game");
+    puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
+    puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
     puts("PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart");return 0;
 }
 static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM w,LPARAM l)
