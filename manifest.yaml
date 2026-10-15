@@ -32,6 +32,10 @@ requirements:
 design:
   architecture_doc_path: "docs/02-方案设计说明.md"
   key_decisions:
+    - decision: "单机原型采用纯C规则核心，独立于LVGL和外设"
+      alternatives_considered: "规则嵌入界面回调，或独立规则库并用电脑测试"
+      rationale: "后者可复用给联机房主，固定棋盘可自动验证"
+      decided_by: "Codex给出备选及规则示例，殷白玉要求按建议先做一版；团队最终规则待评审"
     # 每一条关键决策都要写清楚：决策内容 / 考虑过的备选方案 / 选择理由 / 谁做的最终决定
     - decision: "<例如：选择BLE而非WiFi做数据同步>"
       alternatives_considered: "<例如：曾考虑过用SD卡离线导出，因为使用场景需要实时同步而放弃>"
@@ -59,6 +63,9 @@ test_results:
     evidence_path: "<对应的原始数据/截图路径>"
 
 known_issues:
+  - "2026-10-15新增单机个人原型；主机规则与CLI通过，SDK构建通过，但未烧录，不代表板端游戏完成。"
+  - "预览显示未来随机数字仅供调试；正式交互和联机应隐藏，客户端不得提交候选状态。"
+  - "暂定规则、学生试玩及代码理解待确认；此前初始化缺少工具链描述属于历史状态，本轮构建证据见evidence/single/firmware_build.log。"
   - "当前仅完成 M0 初始化准备，产品需求、成员分工与提交材料信息尚待学生确认。"
   - "当前终端未设置 SIFLI_SDK，未找到 scons 和 arm-none-eabi-gcc，尚未验证固件编译能力。"
   - "未进行物理验证，physical_verification 与产品测试字段仍保留占位，不能用于里程碑正式提交。"
