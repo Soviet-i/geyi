@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "geyi_ui.h"
+#include "geyi_font_cn16.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,6 +60,10 @@ static int tests(void)
 {
     GyGame before;GyPreview p;GyMove m={GY_UP,1};
     initialize();before=*gy_ui_game();screenshot("initial.bmp");
+    {const uint32_t required[]={0x786e,0x8ba4,0x5f00,0x8f93,0x80dc,0x7ea2,0x84dd};
+     unsigned i;lv_font_glyph_dsc_t glyph;
+     for(i=0;i<sizeof(required)/sizeof(required[0]);++i)
+        check(lv_font_get_glyph_dsc(&geyi_font_cn16,&glyph,required[i],0)&&glyph.box_w>0,"simplified glyph is present");}
     check(gy_preview(&before,m,&p),"core preview exists");
     check(p.visible.rng==before.rng,"visible preview does not consume RNG");
     click(35,354);check(gy_ui_has_preview(),"mouse direction button previews");

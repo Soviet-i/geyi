@@ -14,6 +14,7 @@ lvgl=sdk/'external/lvgl_v9'
 out=root/'build/desktop'
 out.mkdir(parents=True,exist_ok=True)
 logs=[]
+executable=out/'geyi-desktop-cn.exe'
 vs=Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Microsoft Visual Studio/2022'
 vcvars=next(vs.glob('*/VC/Auxiliary/Build/vcvars64.bat'),None)
 if not vcvars or not (lvgl/'lvgl.h').exists():raise SystemExit('MSVC or SDK LVGL v9 not found')
@@ -48,17 +49,17 @@ try:
     response.write_text('\n'.join('"'+str(p)+'"' for p in objs),encoding='utf-8-sig')
     r=subprocess.run([lib,'/nologo','/OUT:'+str(out/'lvgl.lib'),'@'+str(response)],cwd=out,env=env,capture_output=True)
     if r.returncode:raise RuntimeError(r.stdout.decode('mbcs',errors='replace'))
-    app=[root/'src/geyi_game.c',root/'src/geyi_ui.c',root/'tools/geyi_desktop.c']
+    app=[root/'src/geyi_game.c',root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',root/'tools/geyi_desktop.c']
     app_objects=[compile_one(p) for p in app]
     command=[cc,'/nologo',*[str(p) for p in app_objects],str(out/'lvgl.lib'),
-             '/Fe:'+str(out/'geyi-desktop.exe'),'/link','/SUBSYSTEM:WINDOWS','user32.lib','gdi32.lib']
+             '/Fe:'+str(executable),'/link','/SUBSYSTEM:WINDOWS','user32.lib','gdi32.lib']
     r=subprocess.run(command,cwd=out,env=env,capture_output=True)
     if r.returncode:raise RuntimeError(r.stdout.decode('mbcs',errors='replace')+r.stderr.decode('mbcs',errors='replace'))
-    r=subprocess.run([str(out/'geyi-desktop.exe'),'--test'],cwd=out,capture_output=True,timeout=30)
+    r=subprocess.run([str(executable),'--test'],cwd=out,capture_output=True,timeout=30)
     logs.append(r.stdout.decode('utf-8',errors='replace')+r.stderr.decode('utf-8',errors='replace'))
     print(logs[-1])
     if r.returncode:raise RuntimeError('UI tests failed, exit '+str(r.returncode))
 except Exception as exc:
     logs.append(str(exc));print(str(exc));(out/'desktop-test.log').write_text('\n'.join(logs),encoding='utf-8');raise SystemExit(1)
 (out/'desktop-test.log').write_text('\n'.join(logs),encoding='utf-8')
-print('Ready:',out/'geyi-desktop.exe')
+print('Ready:',executable)

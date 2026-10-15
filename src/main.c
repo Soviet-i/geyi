@@ -19,6 +19,11 @@
 #include "geyi_game.h"
 #include "geyi_input.h"
 #include "drivers/rt_drv_pwm.h"
+#ifdef GEYI_WITH_LVGL
+#include "geyi_ui.h"
+#include "geyi_board.h"
+#include "littlevgl2rtt.h"
+#endif
 
 #define APP_NAME        "course_starter"
 #define APP_VERSION     "0.1.0"
@@ -73,6 +78,23 @@ int main(void)
     rt_kprintf("[geyi:selftest] input=%s (simulated angles only)\n",
                gy_input_selftest() ? "PASS" : "FAIL");
 
+#ifdef GEYI_WITH_LVGL
+    if (littlevgl2rtt_init("lcd") != RT_EOK) {
+        rt_kprintf("[geyi:lcd] FAIL initialize\n");
+        return -1;
+    }
+    gy_ui_create();
+    rt_kprintf("[geyi:lcd] READY %d x %d\n",(int)lv_display_get_horizontal_resolution(NULL),
+               (int)lv_display_get_vertical_resolution(NULL));
+    int board_ready=gy_board_start()==0;
+    if(!board_ready)rt_kprintf("[geyi:board] FAIL worker start, touch remains available\n");
+    rt_kprintf("[geyi:board] Keep board still ~1 second. KEY1 short=confirm KEY2=cancel/place\n");
+    while(1){
+        if(board_ready)gy_board_poll();
+        lv_timer_handler();
+        rt_thread_mdelay(5);
+    }
+#else
     rgb_led_init();
 
     while (1)
@@ -86,5 +108,6 @@ int main(void)
             rt_thread_mdelay(BLINK_OFF_MS);
         }
     }
+#endif
     return 0;
 }

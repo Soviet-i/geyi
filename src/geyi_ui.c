@@ -1,5 +1,6 @@
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
+#include "geyi_font_cn16.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,15 +21,15 @@ static void render(void)
 {
     const GyGame *shown=ready&&!placing?&preview.visible:&game;
     int x,y;char value[80];
-    const char *outcomes[]={"","赤方勝","青方勝","平局"};
+    const char *outcomes[]={"","红方胜","蓝方胜","平局"};
     const char *dirs[]={"上","右","下","左"};
-    lv_label_set_text(turn_label,game.outcome?outcomes[game.outcome]:(game.turn?"青方回合":"赤方回合"));
+    lv_label_set_text(turn_label,game.outcome?outcomes[game.outcome]:(game.turn?"蓝方回合":"红方回合"));
     lv_obj_set_style_text_color(turn_label,lv_color_hex(game.outcome==GY_DRAW?0xffdc79:
         color(game.outcome==GY_RED_WIN?0:game.outcome==GY_BLUE_WIN?1:game.turn)),0);
-    lv_snprintf(value,sizeof(value),"赤方 %d 金    青方 %d 金",game.coins[0],game.coins[1]);
+    lv_snprintf(value,sizeof(value),"红方 %d 金币    蓝方 %d 金币",game.coins[0],game.coins[1]);
     lv_label_set_text(money_label,value);
     {int displayed=ready&&!placing?selected_count:amount;
-    lv_snprintf(value,sizeof(value),"%d 個",displayed);lv_label_set_text(count_label,value);}
+    lv_snprintf(value,sizeof(value),"%d 个",displayed);lv_label_set_text(count_label,value);}
     for(y=0;y<6;++y)for(x=0;x<6;++x) {
         const GyCell *c=&shown->cells[y][x];
         int changed=ready&&!placing&&memcmp(c,&game.cells[y][x],sizeof(*c));
@@ -52,10 +53,10 @@ static void render(void)
         lv_obj_set_style_text_color(labels[y][x],lv_color_hex(c->kind==GY_EMPTY?0xffffff:0x142238),0);
         lv_obj_align(labels[y][x],LV_ALIGN_CENTER,0,c->kind==GY_SOLDIER?-3:0);
     }
-    if(game.outcome)status("本局結束 請重開");
-    else if(placing)status(place_column<0?"放置 請選己方底線空位":"已選位置 請確認或取消");
+    if(game.outcome)status("本局结束 请重开");
+    else if(placing)status(place_column<0?"放置 请选择己方底线空位":"已选位置 请确认或取消");
     else if(ready) {
-        lv_snprintf(value,sizeof(value),"選擇中 %s %d 個 確認才移動",dirs[direction],selected_count);status(value);
+        lv_snprintf(value,sizeof(value),"预览 %s %d 个 确认后移动",dirs[direction],selected_count);status(value);
     }
     if(ready)lv_obj_remove_state(confirm_button,LV_STATE_DISABLED);
     else lv_obj_add_state(confirm_button,LV_STATE_DISABLED);
@@ -70,26 +71,26 @@ static void choose(void)
     m.direction=direction;m.count=available==0?0:(amount>available?available:amount);
     selected_count=m.count;
     ready=gy_preview(&game,m,&preview);
-    if(!ready)status("方向不可用 請重新選擇");
+    if(!ready)status("方向不可用 请重新选择");
 }
 void gy_ui_action(int a)
 {
     if(a==GY_UI_RESTART) {
         gy_init(&game,gy_default_config(),20261015);direction=-1;amount=1;placing=0;ready=0;place_column=-1;
-        status("先選方向 再確認");
+        status("先选方向 再确认");
     } else if(a==GY_UI_CANCEL) {
-        ready=0;placing=0;place_column=-1;direction=-1;status("已取消 本局狀態不變");
+        ready=0;placing=0;place_column=-1;direction=-1;status("已取消 棋盘状态不变");
     } else if(game.outcome) {render();return;}
     else if(a<=GY_UI_LEFT) {placing=0;direction=a;choose();}
     else if(a==GY_UI_LESS||a==GY_UI_MORE) {
         amount+=a==GY_UI_MORE?1:-1;if(amount<1)amount=1;if(amount>36)amount=36;choose();
     } else if(a==GY_UI_CONFIRM) {
         int ok=ready&&(placing?gy_place(&game,place_column):gy_commit(&game,&preview));
-        ready=0;placing=0;direction=-1;status(ok?"回合結束 請交給對方":"沒有可確認的選擇");
+        ready=0;placing=0;direction=-1;status(ok?"回合结束 请交给对方":"没有可确认的选择");
     } else if(a==GY_UI_PLACE) {
         ready=0;placing=0;place_column=-1;
         if(game.coins[game.turn]>=game.config.cost)placing=1;
-        else status("需要4金才能放置");
+        else status("需要4金币才能放置");
     } else if(a==GY_UI_RESIGN) {gy_resign(&game);ready=0;placing=0;}
     render();
 }
@@ -97,7 +98,7 @@ void gy_ui_cell(int x,int y)
 {
     if(!placing||game.outcome||x<0||x>=6||y!=(game.turn?0:5))return;
     place_column=x;ready=game.cells[y][x].kind==GY_EMPTY;render();
-    if(!ready)status("此位置已有單位 請選空位");
+    if(!ready)status("位置已被占用 请选择空位");
 }
 static void action_event(lv_event_t *e) {gy_ui_action((int)(intptr_t)lv_event_get_user_data(e));}
 static void cell_event(lv_event_t *e)
@@ -114,10 +115,10 @@ void gy_ui_create(void)
 {
     int x,y;lv_obj_t *root=lv_screen_active();
     lv_obj_set_style_bg_color(root,lv_color_hex(0x111e31),0);
-    lv_obj_set_style_text_font(root,&lv_font_source_han_sans_sc_16_cjk,0);
+    lv_obj_set_style_text_font(root,&geyi_font_cn16,0);
     lv_obj_remove_flag(root,LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *title=text(root,"GEYI",16,8);lv_obj_set_style_text_font(title,&lv_font_montserrat_24,0);
-    button(root,"重開",205,8,78,28,GY_UI_RESTART);button(root,"認輸",291,8,82,28,GY_UI_RESIGN);
+    button(root,"重开",205,8,78,28,GY_UI_RESTART);button(root,"认输",291,8,82,28,GY_UI_RESIGN);
     turn_label=text(root,"RED TURN",16,40);money_label=text(root,"",16,61);
     for(y=0;y<6;++y)for(x=0;x<6;++x) {
         lv_obj_t *tile=lv_obj_create(root);tiles[y][x]=tile;
@@ -134,7 +135,7 @@ void gy_ui_create(void)
     button(root,LV_SYMBOL_DOWN,108,339,40,30,GY_UI_DOWN);button(root,LV_SYMBOL_LEFT,154,339,40,30,GY_UI_LEFT);
     button(root,"-",210,339,32,30,GY_UI_LESS);count_label=text(root,"",248,348);
     button(root,"+",344,339,32,30,GY_UI_MORE);
-    confirm_button=button(root,"確認",16,378,115,32,GY_UI_CONFIRM);
+    confirm_button=button(root,"确认",16,378,115,32,GY_UI_CONFIRM);
     lv_obj_set_style_opa(confirm_button,LV_OPA_40,LV_STATE_DISABLED);
     button(root,"取消",139,378,110,32,GY_UI_CANCEL);button(root,"放置",257,378,118,32,GY_UI_PLACE);
     hint=text(root,"",16,422);lv_obj_set_width(hint,360);
@@ -142,4 +143,14 @@ void gy_ui_create(void)
 }
 const GyGame *gy_ui_game(void) {return &game;}
 int gy_ui_has_preview(void) {return ready;}
+int gy_ui_is_placing(void) {return placing;}
+void gy_ui_tilt_select(int d,int count)
+{
+    GyMove m={d,count};
+    if(placing||game.outcome)return;
+    direction=d;selected_count=count;amount=count?count:1;
+    ready=gy_preview(&game,m,&preview);
+    if(!ready)status("方向不可用 请重新选择");
+    render();
+}
 #endif

@@ -10,5 +10,7 @@ void gy_ui_action(int action);
 void gy_ui_cell(int column,int row);
 const GyGame *gy_ui_game(void);
 int gy_ui_has_preview(void);
+int gy_ui_is_placing(void);
+void gy_ui_tilt_select(int direction, int count);
 #endif
 #endif

@@ -3,6 +3,7 @@ from building import *
 
 # Add source code
 src = Glob('*.c')
-group = DefineGroup('Applications', src, depend = [''])
+defines = ['GEYI_WITH_LVGL'] if GetDepend('PKG_USING_LITTLEVGL2RTT') else []
+group = DefineGroup('Applications', src, depend = [''], CPPDEFINES = defines)
 
 Return('group')
