@@ -4,6 +4,7 @@ from building import *
 # Add source code
 src = Glob('*.c')
 defines = ['GEYI_WITH_LVGL'] if GetDepend('PKG_USING_LITTLEVGL2RTT') else []
+defines += ['GEYI_WITH_RTTHREAD']
 group = DefineGroup('Applications', src, depend = [''], CPPDEFINES = defines)
 
 Return('group')
