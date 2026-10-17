@@ -21,9 +21,16 @@ def run(args, **kw):
     return result.stdout
 
 cc = os.environ.get('CC') or shutil.which('gcc') or shutil.which('clang')
-for name, source in [('geyi-tests', 'tests/test_geyi.c'), ('geyi-input-tests', 'tests/test_input.c'), ('geyi-cli', 'tools/geyi_cli.c')]:
+targets = [
+    ('geyi-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_geyi.c']),
+    ('geyi-input-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_input.c']),
+    ('geyi-ai-tests', ['src/geyi_game.c', 'src/geyi_ai.c', 'tests/test_ai.c']),
+    ('geyi-ai-bench', ['src/geyi_game.c', 'src/geyi_ai.c', 'tools/geyi_ai_bench.c']),
+    ('geyi-cli', ['src/geyi_game.c', 'src/geyi_input.c', 'tools/geyi_cli.c']),
+]
+for name, relative_sources in targets:
     exe = out/(name + ('.exe' if os.name=='nt' else ''))
-    sources = [str(root/'src/geyi_game.c'),str(root/'src/geyi_input.c'),str(root/source)]
+    sources = [str(root/source) for source in relative_sources]
     if cc:
         run([cc,'-std=c11','-Wall','-Wextra','-Werror','-I'+str(root/'src'),*sources,'-o',str(exe)])
     else:
