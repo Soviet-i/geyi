@@ -1,0 +1,61 @@
+scons: Reading SConscript files ...
+Board: sf32lb52-lchspi-ulp_hcpu
+-----
+Adding ftab subproject for chip: SF32LB52X (ptab v1/v2)
+========
+Multi-Project Info
+--------
+full_name       main.bootloader
+parent          main
+bsp_root        D:\sifli\SiFli-SDK\example\boot_loader\project\butterflmicro\ram_v2
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/bootloader
+link_script     D:\sifli\SiFli-SDK\example/boot_loader/project/butterflmicro/ram_v2\link
+ptab            D:\sifli\SiFli-SDK\customer\boards\sf32lb52-lchspi-ulp\ptab.json
+embedded:       False
+--------
+full_name       main
+parent          
+bsp_root        C:\Users\殷白玉\Documents\ChatGPT\嵌入式 2\geyi-prototype\project
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/
+link_script     D:\sifli\SiFli-SDK\drivers/cmsis/sf32lb52x/Templates/gcc/hcpu/link
+ptab            D:\sifli\SiFli-SDK\customer\boards\sf32lb52-lchspi-ulp\ptab.json
+--------
+full_name       main.ftab
+parent          main
+bsp_root        D:\sifli\SiFli-SDK\example\flash_table\sf32lb52x_common_v2
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/ftab
+link_script     D:\sifli\SiFli-SDK\drivers/cmsis/sf32lb52x/Templates/gcc/hcpu/link
+ptab            D:\sifli\SiFli-SDK\customer\boards\sf32lb52-lchspi-ulp\ptab.json
+embedded:       False
+========
+scons: done reading SConscript files.
+scons: Building targets ...
+scons: building associated VariantDir targets: build_sf32lb52-lchspi-ulp_hcpu
+Generating build_sf32lb52-lchspi-ulp_hcpu\bootloader\link_copy.lds ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\link_copy.lds ...
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\bootloader\compile_commands.json
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\compile_commands.json
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\link_copy.lds ...
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\ftab\compile_commands.json
+scons: done building targets.
+
+                                              main                             
+┌──────────────────────────┬──────────────────┬──────────────────┬─────────────
+│ Region / Section         │            Total │             Used │             
+├──────────────────────────┼──────────────────┼──────────────────┼─────────────
+│ ROM                      │      8,388,608 B │        861,405 B │      7,527,2
+│   .text                  │        430,676 B │                  │             
+│   .rodata                │        400,981 B │                  │             
+│   other                  │            568 B │                  │             
+│ RAM                      │        523,264 B │        224,504 B │        298,7
+│   other                  │        196,352 B │                  │             
+│   .bss                   │         23,948 B │                  │             
+│   .data                  │          4,204 B │                  │             
+└──────────────────────────┴──────────────────┴──────────────────┴─────────────
+  Binary size: 830,456 B
+
+================================================================================
+Memory Usage Analysis
+================================================================================
+================================================================================
+

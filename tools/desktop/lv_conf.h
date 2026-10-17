@@ -1,0 +1,17 @@
+#ifndef LV_CONF_H
+#define LV_CONF_H
+#define LV_COLOR_DEPTH 32
+#define LV_USE_OS 0
+#define LV_USE_STDLIB_MALLOC 1
+#define LV_USE_STDLIB_STRING 1
+#define LV_USE_STDLIB_SPRINTF 1
+#define LV_USE_DRAW_SW 1
+#define LV_USE_LOG 0
+#define LV_ASSERT_HANDLER_INCLUDE <stdlib.h>
+#define LV_ASSERT_HANDLER abort();
+#define LV_FONT_MONTSERRAT_12 1
+#define LV_FONT_MONTSERRAT_14 1
+#define LV_FONT_MONTSERRAT_18 1
+#define LV_FONT_MONTSERRAT_24 1
+#define LV_FONT_SOURCE_HAN_SANS_SC_16_CJK 1
+#endif

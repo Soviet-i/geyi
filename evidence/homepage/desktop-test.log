@@ -1,0 +1,3 @@
+PASS: placement through earned game coins
+PASS: TC-313 home/modes/disabled entries/input guard/single re-entry
+PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart

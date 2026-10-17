@@ -32,6 +32,14 @@ requirements:
 design:
   architecture_doc_path: "docs/02-方案设计说明.md"
   key_decisions:
+    - decision: "REQ-311一次集成板端显示触摸与IMU/按键后实测"
+      alternatives_considered: "A先显示触摸再倾斜；B全部接入后验证"
+      rationale: "学生选择B；保留分层日志，编译不冒充物理验收"
+      decided_by: "殷白玉明确选择B"
+    - decision: "单机原型采用纯C规则核心，独立于LVGL和外设"
+      alternatives_considered: "规则嵌入界面回调，或独立规则库并用电脑测试"
+      rationale: "后者可复用给联机房主，固定棋盘可自动验证"
+      decided_by: "Codex给出备选及规则示例，殷白玉要求按建议先做一版；团队最终规则待评审"
     # 每一条关键决策都要写清楚：决策内容 / 考虑过的备选方案 / 选择理由 / 谁做的最终决定
     - decision: "<例如：选择BLE而非WiFi做数据同步>"
       alternatives_considered: "<例如：曾考虑过用SD卡离线导出，因为使用场景需要实时同步而放弃>"
@@ -43,6 +51,16 @@ code:
   commit_range: "<起始commit..结束commit，对应本次里程碑>"
 
 physical_verification:
+  - item: "REQ-314 RGB灯反馈"
+    required_action: "观察有效行动短闪及终局闪灯，核对颜色、亮度与次数"
+    executed_at: "2026-10-15（本人确认日期；精确测试时刻未单列）"
+    evidence_path: "evidence/board/20261015_213937/serial.log；docs/04-测试报告.md本人审核确认补充"
+    agent_conclusion: "串口有light自检及灯事件，殷白玉审核提交说明时明确确认实物颜色/亮度/次数；无仪器测量数据，不写为AI独立实测。"
+  - item: "REQ-311/REQ-312板端启动、简体显示与倾斜预览留证"
+    required_action: "本人烧录，观察简体显示与操作，回传真实日志、照片和反馈"
+    executed_at: "2026-10-15（精确操作时刻未单独确认；采集目录205419、回传文件2106）"
+    evidence_path: "evidence/board/20261015_2106/README.md"
+    agent_conclusion: "照片可见简体UI；串口含启动、校准与四向预览，源码哈希一致。本人审核提交时明确确认完整对局、金币放兵及长期稳定性验收完成、代码人工核验后无修正；未提供量化时长/局数，不记为AI独立测量。"
   # 每一个物理验证节点都要有对应记录，节点类型见配套文档《Agent协作开发与评审机制》第三节表格
   - item: "<验证项名称，例如：固件烧录与串口启动log>"
     required_action: "<agent当时要求学生具体做什么>"
@@ -59,6 +77,19 @@ test_results:
     evidence_path: "<对应的原始数据/截图路径>"
 
 known_issues:
+  - "最新审核反馈：殷白玉已确认实际灯色、亮度及闪灯次数，记录为本人实测确认，无仪器亮度/计时数据；下列待确认描述为此前状态。本轮更新PR #3，不合并。"
+  - "213937板端采集与当前灯效源码哈希一致，light自检及清灯/行动/红胜事件已记录，但无实物灯色/亮度/次数确认。已有团队PR #3，待本轮提交审核后更新，不重复创建。"
+  - "REQ-314先做板载RGB，无音效；调度/事件测试及SDK编译通过，物理灯色亮度和时序待烧录验证；evidence/feedback/。"
+  - "REQ-313首页与模式页已实现：仅单机可用，参数/历史/人机/联机只展示禁用；导航和软件回归通过，板端新入口未烧录验收，evidence/homepage/。"
+  - "当前快照：简体实物照片和日志已留证，本人另确认完整对局/金币放兵/长期稳定性验收完成，未提供时长/局数；下列尚未烧录等为历史状态。规则待组长确认，音效/蓝牙/人机未实现。"
+  - "REQ-312简体文本与66字小字库已通过软件检查、LVGL渲染和SDK编译；新固件待学生重烧并拍照，证据evidence/simplified/。"
+  - "旧固件board/20261015_203552原始日志含LCD READY与IMU校准；四向、按键和真实UI验收不能仅由日志代替。下列未烧录说明属于此前准备状态。"
+  - "REQ-311已按学生B选择接板端LVGL与IMU/按键并完成构建准备，尚未烧录；四向映射、真实触摸和按键均待学生留证。"
+  - "REQ-310图形版已完成真实LVGL电脑测试和软件渲染检查，板端LVGL未启用；evidence/graphical/，不得视作真机验收。用户要求不提交上传。"
+  - "REQ-309输入层软件模拟60断言及SDK编译通过，但未读取IMU或烧录，参数待真机校准；evidence/single/input_host_test.log。"
+  - "2026-10-15新增单机个人原型；主机规则与CLI通过，SDK构建通过，但未烧录，不代表板端游戏完成。"
+  - "预览显示未来随机数字仅供调试；正式交互和联机应隐藏，客户端不得提交候选状态。"
+  - "暂定规则、学生试玩及代码理解待确认；此前初始化缺少工具链描述属于历史状态，本轮构建证据见evidence/single/firmware_build.log。"
   - "当前仅完成 M0 初始化准备，产品需求、成员分工与提交材料信息尚待学生确认。"
   - "当前终端未设置 SIFLI_SDK，未找到 scons 和 arm-none-eabi-gcc，尚未验证固件编译能力。"
   - "未进行物理验证，physical_verification 与产品测试字段仍保留占位，不能用于里程碑正式提交。"
