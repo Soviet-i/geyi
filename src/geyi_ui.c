@@ -1,5 +1,7 @@
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
+#include "geyi_ai.h"
+#include "geyi_ai_task.h"
 #include "geyi_font_cn16.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -13,8 +15,20 @@ static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
 static lv_obj_t *home_page,*mode_page,*game_page;
 static int playing;
 static int feedback;
+static int ai_side=-1;          /* -1 = no AI, 0 = AI red, 1 = AI blue */
+static int ai_thinking;
+static uint32_t ai_generation;
+static uint32_t ai_revision;
+static void cancel_ai(void)
+{
+    if(ai_thinking)gy_ai_task_cancel();
+    ai_thinking=0;
+    ++ai_generation;
+}
+static int human_turn(void){return ai_side<0||game.turn!=ai_side;}
 static void show_page(lv_obj_t *page)
 {
+    cancel_ai();
     lv_obj_add_flag(home_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(mode_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(game_page,LV_OBJ_FLAG_HIDDEN);
@@ -35,7 +49,11 @@ static void render(void)
     int x,y;char value[80];
     const char *outcomes[]={"","红方胜","蓝方胜","平局"};
     const char *dirs[]={"上","右","下","左"};
-    lv_label_set_text(turn_label,game.outcome?outcomes[game.outcome]:(game.turn?"蓝方回合":"红方回合"));
+    if(game.outcome)lv_label_set_text(turn_label,outcomes[game.outcome]);
+    else if(ai_side>=0){
+        lv_snprintf(value,sizeof(value),"%s回合%s",game.turn?"蓝方":"红方",game.turn==ai_side?"(AI)":"(你)");
+        lv_label_set_text(turn_label,value);
+    }else lv_label_set_text(turn_label,game.turn?"蓝方回合":"红方回合");
     lv_obj_set_style_text_color(turn_label,lv_color_hex(game.outcome==GY_DRAW?0xffdc79:
         color(game.outcome==GY_RED_WIN?0:game.outcome==GY_BLUE_WIN?1:game.turn)),0);
     lv_snprintf(value,sizeof(value),"红方 %d 金币    蓝方 %d 金币",game.coins[0],game.coins[1]);
@@ -66,12 +84,40 @@ static void render(void)
         lv_obj_align(labels[y][x],LV_ALIGN_CENTER,0,c->kind==GY_SOLDIER?-3:0);
     }
     if(game.outcome)status("本局结束 请重开");
+    else if(ai_thinking)status("AI 思考中...");
     else if(placing)status(place_column<0?"放置 请选择己方底线空位":"已选位置 请确认或取消");
     else if(ready) {
         lv_snprintf(value,sizeof(value),"预览 %s %d 个 确认后移动",dirs[direction],selected_count);status(value);
-    }
+    }else if(ai_side>=0)status(game.turn==ai_side?"AI 回合":"先选方向 再确认");
     if(ready)lv_obj_remove_state(confirm_button,LV_STATE_DISABLED);
     else lv_obj_add_state(confirm_button,LV_STATE_DISABLED);
+}
+static void start_ai(void)
+{
+    GyAiConfig cfg;
+    if(ai_side<0||!playing||game.outcome!=GY_PLAYING||game.turn!=ai_side||ai_thinking)return;
+    cfg=gy_ai_default_config();
+    ++ai_generation;
+    ai_revision=game.revision;
+    if(gy_ai_task_start(&game,&cfg,ai_revision,ai_generation)==0)ai_thinking=1;
+    render();
+}
+static void apply_ai(const GyAiAction *a)
+{
+    uint32_t old_revision=game.revision;
+    int old_outcome=game.outcome;
+    int ok=0;
+    if(a->kind==GY_AI_MOVE){
+        GyPreview p;
+        if(gy_preview(&game,a->move,&p))ok=gy_commit(&game,&p);
+    }else if(a->kind==GY_AI_PLACE)ok=gy_place(&game,a->column);
+    if(!ok){render();start_ai();return;}
+    ready=0;placing=0;direction=-1;place_column=-1;
+    if(!old_outcome&&game.outcome)
+        feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
+    else if(game.revision!=old_revision)feedback=GY_FX_MOVE;
+    render();
+    if(!game.outcome&&game.turn==ai_side)start_ai();
 }
 static void choose(void)
 {
@@ -89,14 +135,19 @@ void gy_ui_action(int a)
 {
     uint32_t old_revision=game.revision;
     int old_outcome=game.outcome;
-    if(a==GY_UI_HOME){feedback=GY_FX_CLEAR;show_page(home_page);return;}
-    if(a==GY_UI_MODES){feedback=GY_FX_CLEAR;show_page(mode_page);return;}
-    if(a==GY_UI_SINGLE){show_page(game_page);a=GY_UI_RESTART;}
+    if(a==GY_UI_HOME){ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);return;}
+    if(a==GY_UI_MODES){ai_side=-1;feedback=GY_FX_CLEAR;show_page(mode_page);return;}
+    if(a==GY_UI_SINGLE){ai_side=-1;show_page(game_page);a=GY_UI_RESTART;}
+    if(a==GY_UI_AI_RED){ai_side=1;show_page(game_page);a=GY_UI_RESTART;}
+    if(a==GY_UI_AI_BLUE){ai_side=0;show_page(game_page);a=GY_UI_RESTART;}
     if(!playing)return;
     if(a==GY_UI_RESTART) {
+        cancel_ai();
         feedback=GY_FX_CLEAR;
         gy_init(&game,gy_default_config(),20261015);direction=-1;amount=1;placing=0;ready=0;place_column=-1;
         status("先选方向 再确认");
+    } else if(ai_thinking||!human_turn()) {
+        render();return;
     } else if(a==GY_UI_CANCEL) {
         ready=0;placing=0;place_column=-1;direction=-1;status("已取消 棋盘状态不变");
     } else if(game.outcome) {render();return;}
@@ -115,10 +166,11 @@ void gy_ui_action(int a)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
     else if(a==GY_UI_CONFIRM&&game.revision!=old_revision)feedback=GY_FX_MOVE;
     render();
+    if(!game.outcome&&ai_side>=0&&game.turn==ai_side)start_ai();
 }
 void gy_ui_cell(int x,int y)
 {
-    if(!playing||!placing||game.outcome||x<0||x>=6||y!=(game.turn?0:5))return;
+    if(!playing||ai_thinking||!human_turn()||!placing||game.outcome||x<0||x>=6||y!=(game.turn?0:5))return;
     place_column=x;ready=game.cells[y][x].kind==GY_EMPTY;render();
     if(!ready)status("位置已被占用 请选择空位");
 }
@@ -158,14 +210,16 @@ void gy_ui_create(void)
     button(home_page,"开始游戏",32,188,326,52,GY_UI_MODES);
     unavailable(home_page,"自定义游戏参数 - 暂未开放",258);
     unavailable(home_page,"历史记录 - 暂未开放",324);
-    text(home_page,"单机原型  /  同板双人",32,406);
-    text(mode_page,"选择游戏模式",32,40);
-    text(mode_page,"选择单机，开始同板双人对战",32,78);
-    button(mode_page,"单机对战",32,130,326,50,GY_UI_SINGLE);
-    text(mode_page,"两位玩家轮流操作一块开发板",40,190);
-    unavailable(mode_page,"人机对战 - 暂未开放",232);
-    unavailable(mode_page,"联机对战 - 暂未开放",298);
-    button(mode_page,"返回首页",32,380,326,40,GY_UI_HOME);
+    text(home_page,"单机 / 人机 原型",32,406);
+    text(mode_page,"选择游戏模式",32,36);
+    text(mode_page,"单机或人机，开始一局对战",32,70);
+    button(mode_page,"单机对战",32,104,326,44,GY_UI_SINGLE);
+    text(mode_page,"两位玩家轮流操作一块开发板",40,152);
+    button(mode_page,"人机对战 (我执红)",32,178,326,44,GY_UI_AI_RED);
+    button(mode_page,"人机对战 (我执蓝)",32,230,326,44,GY_UI_AI_BLUE);
+    text(mode_page,"红方先手; 我执蓝时 AI 先走",40,280);
+    unavailable(mode_page,"联机对战 - 暂未开放",310);
+    button(mode_page,"返回首页",32,382,326,40,GY_UI_HOME);
     root=game_page;
     lv_obj_t *title=text(root,"GEYI",16,8);lv_obj_set_style_text_font(title,&lv_font_montserrat_24,0);
     button(root,"首页",138,8,59,28,GY_UI_HOME);
@@ -196,11 +250,34 @@ const GyGame *gy_ui_game(void) {return &game;}
 int gy_ui_has_preview(void) {return ready;}
 int gy_ui_is_placing(void) {return placing;}
 int gy_ui_is_playing(void) {return playing;}
+int gy_ui_ai_mode(void) {return ai_side>=0;}
+int gy_ui_ai_thinking(void) {return ai_thinking;}
 int gy_ui_take_feedback(void) {int event=feedback;feedback=GY_FX_NONE;return event;}
+void gy_ui_tick(void)
+{
+    GyAiResult r;
+    if(gy_ai_task_poll(&r)){
+        if(!ai_thinking||r.generation!=ai_generation||r.revision!=game.revision||
+           !playing||game.outcome!=GY_PLAYING||game.turn!=ai_side){
+            ai_thinking=0;
+        }else if(r.action.kind==0){
+            ai_thinking=0;
+            status("AI 没有合法动作");
+            render();
+            return;
+        }else{
+            ai_thinking=0;
+            apply_ai(&r.action);
+            return;
+        }
+    }
+    if(!ai_thinking&&playing&&ai_side>=0&&game.outcome==GY_PLAYING&&game.turn==ai_side)
+        start_ai();
+}
 void gy_ui_tilt_select(int d,int count)
 {
     GyMove m={d,count};
-    if(!playing||placing||game.outcome)return;
+    if(!playing||ai_thinking||!human_turn()||placing||game.outcome)return;
     direction=d;selected_count=count;amount=count?count:1;
     ready=gy_preview(&game,m,&preview);
     if(!ready)status("方向不可用 请重新选择");

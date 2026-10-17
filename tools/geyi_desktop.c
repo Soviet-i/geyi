@@ -69,10 +69,11 @@ static int tests(void)
     click(160,280);click(160,346);
     check(!gy_ui_is_playing(),"home placeholders disabled");
     click(160,212);screenshot("modes.bmp");
-    click(160,250);click(160,320);
-    check(!gy_ui_is_playing(),"unfinished modes disabled");
+    click(160,330);
+    check(!gy_ui_is_playing(),"unfinished online mode disabled");
     click(160,400);check(!gy_ui_is_playing(),"mode back to home");
-    click(160,212);click(160,154);
+    check(gy_ai_selftest(),"AI selftest");
+    click(160,212);click(160,126);
     check(gy_ui_is_playing(),"single enters game");screenshot("initial.bmp");
     check(gy_ui_take_feedback()==GY_FX_CLEAR,"single starts light off");
     {const uint32_t required[]={0x786e,0x8ba4,0x5f00,0x8f93,0x80dc,0x7ea2,0x84dd};
@@ -125,10 +126,51 @@ done: ;
     check(gy_ui_has_preview(),"quantity two preview");
     gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->cells[4][1].kind==GY_SOLDIER&&gy_ui_game()->cells[4][4].kind==GY_SOLDIER,"both selected soldiers moved");
     click(166,20);check(!gy_ui_is_playing()&&!gy_ui_has_preview(),"game back home clears preview");
-    click(160,212);click(160,154);
+    click(160,212);click(160,126);
     check(gy_ui_is_playing()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"single re-entry resets game");
+    /* REQ-315: human red, AI blue. */
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,200);
+    check(gy_ui_ai_mode()&&!gy_ui_ai_thinking(),"human red AI mode starts on human turn");
+    check(gy_ui_game()->turn==0,"human red starts");
+    screenshot("ai_human_red.bmp");
+    {
+        uint32_t rev=gy_ui_game()->revision;
+        gy_ui_action(GY_UI_UP);
+        check(gy_ui_has_preview(),"human preview in AI mode");
+        gy_ui_action(GY_UI_CONFIRM);
+        check(gy_ui_ai_thinking(),"AI blue starts after human move");
+        check(gy_ui_game()->turn==1,"AI blue is to move");
+        screenshot("ai_thinking.bmp");
+        gy_ui_action(GY_UI_LEFT);
+        check(gy_ui_game()->revision==rev+1,"AI turn ignores human input");
+        gy_ui_tick();
+        check(!gy_ui_ai_thinking(),"AI blue finished");
+        check(gy_ui_game()->turn==0,"turn returns to human red");
+        check(gy_ui_game()->revision==rev+2,"AI blue moved once");
+        screenshot("ai_after.bmp");
+    }
+    /* REQ-315: human blue, AI red moves first. */
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,252);
+    check(gy_ui_ai_mode()&&gy_ui_ai_thinking(),"AI red starts first");
+    check(gy_ui_game()->turn==0,"AI red is to move");
+    screenshot("ai_red_first.bmp");
+    gy_ui_tick();
+    check(!gy_ui_ai_thinking(),"AI red finished");
+    check(gy_ui_game()->turn==1,"turn returns to human blue");
+    screenshot("ai_red_after.bmp");
+    /* REQ-315: leaving during AI thinking discards the stale result. */
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,252);
+    check(gy_ui_ai_thinking(),"AI red starts again");
+    gy_ui_action(GY_UI_HOME);
+    check(!gy_ui_is_playing(),"home during AI thinking");
+    gy_ui_tick();
+    check(!gy_ui_is_playing(),"stale AI result discarded after home");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
+    puts("PASS: TC-315 AI red/blue modes, AI turn, input guard, stale result discard");
     puts("PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart");return 0;
 }
 static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM w,LPARAM l)
@@ -171,6 +213,6 @@ int WINAPI WinMain(HINSTANCE instance,HINSTANCE previous,LPSTR command,int show)
     if(!window)return 2;ShowWindow(window,show);UpdateWindow(window);
     while(!quit){while(PeekMessage(&msg,NULL,0,0,PM_REMOVE)){
         if(msg.message==WM_QUIT){quit=1;break;}TranslateMessage(&msg);DispatchMessage(&msg);}
-        lv_timer_handler();Sleep(5);}
+        lv_timer_handler();gy_ui_tick();Sleep(5);}
     return 0;
 }
