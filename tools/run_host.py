@@ -21,9 +21,9 @@ def run(args, **kw):
     return result.stdout
 
 cc = os.environ.get('CC') or shutil.which('gcc') or shutil.which('clang')
-for name, source in [('geyi-tests', 'tests/test_geyi.c'), ('geyi-input-tests', 'tests/test_input.c'), ('geyi-cli', 'tools/geyi_cli.c')]:
+for name, source in [('geyi-tests', 'tests/test_geyi.c'), ('geyi-input-tests', 'tests/test_input.c'), ('geyi-config-tests', 'tests/test_config.c'), ('geyi-cli', 'tools/geyi_cli.c')]:
     exe = out/(name + ('.exe' if os.name=='nt' else ''))
-    sources = [str(root/'src/geyi_game.c'),str(root/'src/geyi_input.c'),str(root/source)]
+    sources = [str(root/'src/geyi_game.c'),str(root/'src/geyi_input.c'),str(root/'src/geyi_config.c'),str(root/source)]
     if cc:
         run([cc,'-std=c11','-Wall','-Wextra','-Werror','-I'+str(root/'src'),*sources,'-o',str(exe)])
     else:
