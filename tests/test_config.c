@@ -6,6 +6,7 @@
  */
 #include "geyi_config.h"
 #include "geyi_game.h"
+#include "geyi_input.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -336,6 +337,70 @@ static int test_spawn_interval_effect(void)
     return 0;
 }
 
+/* TC-402/TC-409：倾斜缓冲阈值已接线到 geyi_input，并保持默认 10% 不改变既有行为 */
+static int test_input_buffer_wired(void)
+{
+    GyInput s;
+    int a[4] = {2, 2, 2, 2};
+    uint32_t t;
+
+    /* 默认值必须是 10%（等同改造前的硬编码），否则既有输入行为会变 */
+    gy_input_reset(&s);
+    CHECK(s.dir_buffer_pct == 10);
+    CHECK(s.angle_buffer_pct == 10);
+
+    /* 配置接口按区间钳位 */
+    gy_input_configure(&s, -5, 999);
+    CHECK(s.dir_buffer_pct == GY_INPUT_BUFFER_MIN);
+    CHECK(s.angle_buffer_pct == GY_INPUT_BUFFER_MAX);
+    gy_input_configure(&s, 0, 0);
+    CHECK(s.dir_buffer_pct == 0 && s.angle_buffer_pct == 0);
+
+    /* 两处范围定义必须一致，防止 geyi_config 与 geyi_input 各写一套后漂移。
+     * 这里从 geyi_config 的**范围表**读取（而不是比宏），才能真正发现表与输入模块不一致。 */
+    {
+        int cfg_min = 0, cfg_max = 0;
+        CHECK(gy_param_range(GY_P_DIR_BUFFER, &cfg_min, &cfg_max) == GY_PARAM_OK);
+        CHECK(cfg_min == GY_INPUT_BUFFER_MIN);
+        CHECK(cfg_max == GY_INPUT_BUFFER_MAX);
+        CHECK(gy_param_range(GY_P_ANGLE_BUFFER, &cfg_min, &cfg_max) == GY_PARAM_OK);
+        CHECK(cfg_min == GY_INPUT_BUFFER_MIN);
+        CHECK(cfg_max == GY_INPUT_BUFFER_MAX);
+    }
+
+    /* 行为验证：纵轴 2000 已稳定后，用横轴 2100（强 5%）试探。
+     * 阈值 0%  → 应当切换到横轴；阈值 50% → 应当保持原方向。
+     * 注意：输入模块要求先"回中"解除 latched（见 gy_input_selftest 的做法），
+     * 所以每段都以水平样例开头，不能直接上倾斜。 */
+    {
+        int dir_switch, dir_hold;
+
+        /* 阈值 0%：稍强一点的横轴就应切走 */
+        gy_input_reset(&s);
+        gy_input_configure(&s, 0, 10);
+        t = 0;
+        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a);        /* 回中，解除 latched */
+        for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a);    /* 稳定指向 UP */
+        CHECK(s.direction == GY_UP);
+        for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a); /* 指向 RIGHT，仅强 5% */
+        dir_switch = s.direction;
+
+        /* 阈值 50%：完全相同的输入应保持原方向 */
+        gy_input_reset(&s);
+        gy_input_configure(&s, 50, 10);
+        t = 0;
+        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a);
+        for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a);
+        CHECK(s.direction == GY_UP);
+        for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a);
+        dir_hold = s.direction;
+
+        CHECK(dir_switch == GY_RIGHT);      /* 阈值 0 时切走 */
+        CHECK(dir_hold == GY_UP);           /* 阈值 50 时保持 */
+    }
+    return 0;
+}
+
 int main(void)
 {
     if (test_meta()) return 1;
@@ -349,7 +414,8 @@ int main(void)
     if (test_get_set_roundtrip()) return 1;
     if (test_invalid_id()) return 1;
     if (test_spawn_interval_effect()) return 1;
+    if (test_input_buffer_wired()) return 1;
     if (test_selftest()) return 1;
-    printf("PASS: %d assertions; TC-401..TC-406 host tests\n", checks);
+    printf("PASS: %d assertions; TC-401..TC-406 + TC-409 host tests\n", checks);
     return 0;
 }
