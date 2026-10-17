@@ -3,6 +3,21 @@
 本目录保存本轮软件验证的原始日志，不包含真机验证。**尚未烧录开发板**，不能据此
 宣称 AI 在屏幕上可玩、线程实时性或灯效正常。
 
+## REQ-316 AI 决策预览（2026-10-17）
+
+- `desktop-test-tc316.log`：桌面 LVGL 测试 PASS，覆盖“AI 结果到达后先预览、
+  100ms 不提交、约 600ms 后只提交一次、预览期间人类输入无效、首页取消后不落子”。
+- `ai_preview.png` / `ai_red_preview.png`：AI 预览方向、数量、目标格高亮和
+  “AI 预览 即将落子”状态；`ai_preview_after.png` / `ai_red_preview_after.png`：
+  延迟后落子、回到人类回合。
+- `firmware_build_tc316.log`：包含预览功能的新固件构建日志。
+- 新固件：main.bin 838,544 B，SHA256
+  `c3a006acfc8624a0bb9964c4e47db400d385f0761224e834fbceca98d9c70dcc`。
+- 真实屏幕上的 500ms 观感、只落子一次、取消行为仍待学生烧录取证；桌面截图
+  不是真机照片。
+
+以下是 837,192 B 版本（不含预览）的原始记录，保留作历史证据。
+
 ## 环境
 
 - SDK：SiFli-SDK v2.5.1，路径 `D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1`
