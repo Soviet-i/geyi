@@ -45,45 +45,62 @@ design:
       rationale: "想法稿要求 Alpha-Beta 剪枝对比；棋盘分支较小、板端可解释；spawn=0 避免偷看下一步随机块；独立线程保证 LVGL 不冻结"
       decided_by: "学生 2026-10-17 明确选择：不建模随机块、独立 AI 线程、模式页两个先后手按钮；原件留在课程目录、仓库只写摘要"
     # 每一条关键决策都要写清楚：决策内容 / 考虑过的备选方案 / 选择理由 / 谁做的最终决定
-    - decision: "<例如：选择BLE而非WiFi做数据同步>"
-      alternatives_considered: "<例如：曾考虑过用SD卡离线导出，因为使用场景需要实时同步而放弃>"
-      rationale: "<为什么最终这么选，写具体理由，不要只写'效果更好'>"
-      decided_by: "<agent建议+学生确认 / 学生主导 / 纯agent自动决定（不建议用于关键决策）>"
+    - decision: "人机对战入口改为单入口 + 先后手准备页"
+      alternatives_considered: "模式页两个“我执红/我执蓝”按钮；固定人类执红；完整联机房间页"
+      rationale: "匹配想法稿非联机准备页，先后手关系更直观且可交换；不引入房间/旁观逻辑"
+      decided_by: "学生 2026-10-17 明确要求：左红先手默认玩家、右蓝后手默认 AI、点击方框互换、取消/开始"
+    - decision: "AI 决策先预览约 500ms 再自动确认"
+      alternatives_considered: "AI 直接落子；固定更长/更短停顿；每步等待用户确认"
+      rationale: "让学生看清 AI 选择的方向和受影响格子，同时不阻塞 UI；500ms 由学生指定为默认值"
+      decided_by: "学生 2026-10-17 明确要求“先显示预览，稍微停顿（如 0.5s）后再真实移动”"
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
-  commit_range: "<起始commit..结束commit，对应本次里程碑>"
+  commit_range: "99a223b..e10d396"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
     required_action: "观察有效行动短闪及终局闪灯，核对颜色、亮度与次数"
     executed_at: "2026-10-15（本人确认日期；精确测试时刻未单列）"
-    evidence_path: "evidence/board/20261015_213937/serial.log；docs/04-测试报告.md本人审核确认补充"
-    agent_conclusion: "串口有light自检及灯事件，殷白玉审核提交说明时明确确认实物颜色/亮度/次数；无仪器测量数据，不写为AI独立实测。"
+    evidence_path: "evidence/board/20261015_213937/serial.log"
+    agent_conclusion: "串口有light自检及灯事件，殷白玉审核提交说明时明确确认实物颜色/亮度/次数；无仪器测量数据，不写为AI独立实测。提交说明见 docs/04-测试报告.md。"
   - item: "REQ-311/REQ-312板端启动、简体显示与倾斜预览留证"
     required_action: "本人烧录，观察简体显示与操作，回传真实日志、照片和反馈"
     executed_at: "2026-10-15（精确操作时刻未单独确认；采集目录205419、回传文件2106）"
     evidence_path: "evidence/board/20261015_2106/README.md"
     agent_conclusion: "照片可见简体UI；串口含启动、校准与四向预览，源码哈希一致。本人审核提交时明确确认完整对局、金币放兵及长期稳定性验收完成、代码人工核验后无修正；未提供量化时长/局数，不记为AI独立测量。"
   # 每一个物理验证节点都要有对应记录，节点类型见配套文档《Agent协作开发与评审机制》第三节表格
-  - item: "<验证项名称，例如：固件烧录与串口启动log>"
-    required_action: "<agent当时要求学生具体做什么>"
-    executed_at: "<学生实际执行的时间戳>"
-    evidence_path: "<原始证据文件路径：照片/视频/日志/示波器截图>"
-    agent_conclusion: "<agent基于该证据得出的结论，例如：启动正常，IMU初始化成功>"
+  - item: "REQ-316/REQ-317 AI预览与准备页板端验证"
+    required_action: "烧录 839,584 B 固件，验证准备页默认红先玩家/蓝后 AI、点击方框互换、取消/开始、AI 预览约 500ms 后只落子一次、预览中操作无效、首页/重开取消"
+    executed_at: "2026-10-17（学生本人操作并确认；精确时刻未单列）"
+    evidence_path: "evidence/ai/BaiduNetDisk.md"
+    agent_conclusion: "学生回传百度网盘视频（人机.zip，提取码在文件内）并确认板端验证成功；agent 未能在线打开/解码视频，未独立核验画面，按学生本人确认记录，不写成 agent 目测或仪器测量。"
 
 test_results:
-  - test_id: "<测试编号，例如 TC-01>"
-    description: "<测试内容简述>"
-    expected: "<预期结果>"
-    actual: "<实测结果>"
-    pass: <true 或 false>
-    evidence_path: "<对应的原始数据/截图路径>"
+  - test_id: "TC-315-SW"
+    description: "人机对战 AI 主机/桌面/编译（软件部分）"
+    expected: "AI 合法动作、不偷看 RNG、桌面人机流程、SDK 编译"
+    actual: "主机 62 断言 PASS；桌面 TC-315/316/317 PASS；main.bin 839,584 B；真机由学生视频确认"
+    pass: true
+    evidence_path: "evidence/ai/README.md"
+  - test_id: "TC-316-SW"
+    description: "AI 决策预览 500ms 与单次提交（软件部分）"
+    expected: "先预览、延迟后一次提交、预览中人类输入无效、首页取消不落子"
+    actual: "桌面 TC-316 PASS；真机由学生视频确认验证成功"
+    pass: true
+    evidence_path: "evidence/ai/desktop-test-tc316.log"
+  - test_id: "TC-317-SW"
+    description: "人机准备页与先后手互换（软件部分）"
+    expected: "默认红先玩家、右蓝后 AI、点击互换、取消/开始、AI 执红先手"
+    actual: "桌面 TC-317 PASS；真机由学生视频确认验证成功"
+    pass: true
+    evidence_path: "evidence/ai/desktop-test-tc317.log"
 
 known_issues:
-  - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839584 B，含 REQ-316 预览和 REQ-317 准备页）；尚未烧录，AI 真机行为、屏幕文字、线程耗时/栈高水位均未验证。"
-  - "REQ-316 AI 决策预览已实现并在桌面测试通过（默认 500ms、移动/放兵预览、预览中人类输入无效、首页/重开取消）；真机预览时长、只落子一次和真实屏幕观感待学生烧录取证。"
-  - "REQ-317 人机准备页已实现并在桌面测试通过（单个入口、红先/蓝后、点击方框互换、取消/开始、人类执红/执蓝两种顺序）；真机方框布局、点击互换和 AI 先手行为待学生拍照/录像验证。"
+  - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839584 B，含 REQ-316 预览和 REQ-317 准备页）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
+  - "REQ-316 AI 决策预览已实现并在桌面测试通过（默认 500ms、移动/放兵预览、预览中人类输入无效、首页/重开取消）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
+  - "REQ-317 人机准备页已实现并在桌面测试通过（单个入口、红先/蓝后、点击方框互换、取消/开始、人类执红/执蓝两种顺序）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
+  - "REQ-316/317 板端证据为 evidence/ai/BaiduNetDisk.md 中的百度网盘链接（人机.zip，提取码在文件内）；agent 当前环境无法访问 pan.baidu.com，未在线打开/解码，结论按学生本人确认记录。"
   - "AI 搜索按学生选择固定 spawn=0，不建模每步随机生成的 2/4 数字块；这是已知近似，可能低估数字块威胁。"
   - "AI 评估权重是 v0 初始值，只通过固定局面和 30 手自对弈路径测试，尚未做棋力/平衡性调参；不得宣称 AI 已平衡或足够聪明。"
   - "人机对战默认最多 5 层、300ms、节点上限 200000；开发板上的实际耗时、线程栈和内存尚未测量，需学生烧录取证。"
@@ -104,18 +121,27 @@ known_issues:
   - "暂定规则、学生试玩及代码理解待确认；此前初始化缺少工具链描述属于历史状态，本轮构建证据见evidence/single/firmware_build.log。"
   - "当前仅完成 M0 初始化准备，产品需求、成员分工与提交材料信息尚待学生确认。"
   - "当前终端未设置 SIFLI_SDK，未找到 scons 和 arm-none-eabi-gcc，尚未验证固件编译能力。"
-  - "未进行物理验证，physical_verification 与产品测试字段仍保留占位，不能用于里程碑正式提交。"
+  - "物理验证由学生本人在真实硬件上完成并确认；REQ-316/317 证据为网盘视频链接，agent 未独立解码，不能写成 agent 目测或仪器测量。"
   - "原始目录缺少 training/T0、T1 任务正文，需向教师索取。"
 
 self_review: |
-  <agent生成的自我复盘，包括：本次里程碑完成度如何、哪些地方agent自己也不确定、
-  哪些决策是在学生介入/纠正之后才修改的。建议由agent在里程碑结束时自动生成，
-  不建议学生代写。>
+  本次完成 REQ-315~317 的文档、规则核心模拟接口、negamax+Alpha-Beta AI、
+  独立 AI 线程封装、人机 UI、500ms 决策预览和先后手准备页。主机 62 条 AI 断言、
+  桌面 TC-315/316/317 和 SDK 编译均通过，最新固件 839,584 B。
+  不确定/未完成：板端物理验证由学生本人完成并确认；证据为百度网盘视频链接，
+  agent 当前环境无法访问 pan.baidu.com，未独立打开/解码视频，因此没有把真机项
+  写成 agent 目测或仪器测量。AI 评估权重未调参，线程耗时/栈高水位未测，
+  自定义搜索深度未实现。关键决策由学生拍板；agent 自测发现终局分数取负错误并
+  修正；学生尚未逐行审阅代码。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
-  - decision_point: "<例如：是否采用非线性PWM映射>"
-    student_confirmation: "<学生对该决策的确认说明，最好包含'为什么认可/为什么修改'的具体理由>"
+  - decision_point: "AI 算法与随机块处理"
+    student_confirmation: "学生选择 Minimax+Alpha-Beta；搜索不建模随机生成块，避免偷看 RNG；开发板使用独立 AI 线程。"
+  - decision_point: "AI 决策预览时长与行为"
+    student_confirmation: "学生要求 AI 决策后先显示与倾斜相同的预览，约 0.5 秒后再自动确认，预览期间人类操作无效。"
+  - decision_point: "人机对战先后手入口"
+    student_confirmation: "学生要求改为首页→开始游戏→人机对战→准备页；左红先手默认玩家，右蓝后手默认 AI，点击方框互换，取消返回，开始后按选择进入游戏。"
 
 # ============================================================
 # 以下为字段填写示例（仅供参考，提交时请删除本示例区块）
