@@ -145,19 +145,37 @@ done: ;
         gy_ui_action(GY_UI_LEFT);
         check(gy_ui_game()->revision==rev+1,"AI turn ignores human input");
         gy_ui_tick();
-        check(!gy_ui_ai_thinking(),"AI blue finished");
+        check(!gy_ui_ai_thinking(),"AI blue finished thinking");
+        check(gy_ui_ai_previewing(),"AI blue preview pending");
+        check(gy_ui_has_preview()||gy_ui_is_placing(),"AI blue preview visible");
+        check(gy_ui_game()->turn==1,"AI turn remains during preview");
+        check(gy_ui_game()->revision==rev+1,"preview does not commit");
+        Sleep(100);gy_ui_tick();
+        check(gy_ui_ai_previewing(),"preview holds before 500ms");
+        check(gy_ui_game()->revision==rev+1,"no commit before delay");
+        screenshot("ai_preview.bmp");
+        gy_ui_action(GY_UI_LEFT);
+        check(gy_ui_game()->revision==rev+1,"preview ignores human input");
+        Sleep(500);gy_ui_tick();
+        check(!gy_ui_ai_previewing(),"AI blue preview finished");
         check(gy_ui_game()->turn==0,"turn returns to human red");
         check(gy_ui_game()->revision==rev+2,"AI blue moved once");
         screenshot("ai_after.bmp");
     }
-    /* REQ-315: human blue, AI red moves first. */
+    /* REQ-315/316: human blue, AI red moves first with preview. */
     gy_ui_action(GY_UI_HOME);
     click(160,212);click(160,252);
     check(gy_ui_ai_mode()&&gy_ui_ai_thinking(),"AI red starts first");
     check(gy_ui_game()->turn==0,"AI red is to move");
     screenshot("ai_red_first.bmp");
     gy_ui_tick();
-    check(!gy_ui_ai_thinking(),"AI red finished");
+    check(!gy_ui_ai_thinking(),"AI red finished thinking");
+    check(gy_ui_ai_previewing(),"AI red preview pending");
+    check(gy_ui_has_preview()||gy_ui_is_placing(),"AI red preview visible");
+    check(gy_ui_game()->turn==0,"AI red still to move during preview");
+    screenshot("ai_red_preview.bmp");
+    Sleep(600);gy_ui_tick();
+    check(!gy_ui_ai_previewing(),"AI red preview finished");
     check(gy_ui_game()->turn==1,"turn returns to human blue");
     screenshot("ai_red_after.bmp");
     /* REQ-315: leaving during AI thinking discards the stale result. */
@@ -168,9 +186,20 @@ done: ;
     check(!gy_ui_is_playing(),"home during AI thinking");
     gy_ui_tick();
     check(!gy_ui_is_playing(),"stale AI result discarded after home");
+    /* REQ-316: leaving during AI preview cancels the delayed commit. */
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,252);
+    check(gy_ui_ai_thinking(),"AI red starts for preview cancel");
+    gy_ui_tick();
+    check(gy_ui_ai_previewing(),"AI red preview starts");
+    gy_ui_action(GY_UI_HOME);
+    check(!gy_ui_is_playing(),"home during AI preview");
+    Sleep(600);gy_ui_tick();
+    check(!gy_ui_is_playing(),"preview commit cancelled after home");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
     puts("PASS: TC-315 AI red/blue modes, AI turn, input guard, stale result discard");
+    puts("PASS: TC-316 AI preview before delayed single commit, input guard, cancel");
     puts("PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart");return 0;
 }
 static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM w,LPARAM l)

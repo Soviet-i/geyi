@@ -17,12 +17,18 @@ static int playing;
 static int feedback;
 static int ai_side=-1;          /* -1 = no AI, 0 = AI red, 1 = AI blue */
 static int ai_thinking;
+static int ai_preview_pending;
+static uint32_t ai_preview_at;
+static GyAiAction ai_pending;
 static uint32_t ai_generation;
 static uint32_t ai_revision;
+#define AI_PREVIEW_MS 500u
 static void cancel_ai(void)
 {
     if(ai_thinking)gy_ai_task_cancel();
     ai_thinking=0;
+    ai_preview_pending=0;
+    ai_pending.kind=0;
     ++ai_generation;
 }
 static int human_turn(void){return ai_side<0||game.turn!=ai_side;}
@@ -85,17 +91,19 @@ static void render(void)
     }
     if(game.outcome)status("本局结束 请重开");
     else if(ai_thinking)status("AI 思考中...");
+    else if(ai_preview_pending)status("AI 预览 即将落子");
     else if(placing)status(place_column<0?"放置 请选择己方底线空位":"已选位置 请确认或取消");
     else if(ready) {
         lv_snprintf(value,sizeof(value),"预览 %s %d 个 确认后移动",dirs[direction],selected_count);status(value);
     }else if(ai_side>=0)status(game.turn==ai_side?"AI 回合":"先选方向 再确认");
-    if(ready)lv_obj_remove_state(confirm_button,LV_STATE_DISABLED);
+    if(ready&&human_turn())lv_obj_remove_state(confirm_button,LV_STATE_DISABLED);
     else lv_obj_add_state(confirm_button,LV_STATE_DISABLED);
 }
 static void start_ai(void)
 {
     GyAiConfig cfg;
-    if(ai_side<0||!playing||game.outcome!=GY_PLAYING||game.turn!=ai_side||ai_thinking)return;
+    if(ai_side<0||!playing||game.outcome!=GY_PLAYING||game.turn!=ai_side||
+       ai_thinking||ai_preview_pending)return;
     cfg=gy_ai_default_config();
     ++ai_generation;
     ai_revision=game.revision;
@@ -111,8 +119,45 @@ static void apply_ai(const GyAiAction *a)
         GyPreview p;
         if(gy_preview(&game,a->move,&p))ok=gy_commit(&game,&p);
     }else if(a->kind==GY_AI_PLACE)ok=gy_place(&game,a->column);
+    ai_preview_pending=0;ai_pending.kind=0;
     if(!ok){render();start_ai();return;}
     ready=0;placing=0;direction=-1;place_column=-1;
+    if(!old_outcome&&game.outcome)
+        feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
+    else if(game.revision!=old_revision)feedback=GY_FX_MOVE;
+    render();
+    if(!game.outcome&&game.turn==ai_side)start_ai();
+}
+static void begin_ai_preview(const GyAiAction *a)
+{
+    if(a->kind==GY_AI_MOVE){
+        if(!gy_preview(&game,a->move,&preview)){apply_ai(a);return;}
+        direction=a->move.direction;
+        selected_count=a->move.count;
+        amount=selected_count?selected_count:1;
+        ready=1;placing=0;place_column=-1;
+    }else if(a->kind==GY_AI_PLACE){
+        int row=game.turn==0?game.config.size-1:0;
+        if(a->column<0||a->column>=game.config.size||
+           game.cells[row][a->column].kind!=GY_EMPTY||
+           game.coins[game.turn]<game.config.cost){apply_ai(a);return;}
+        placing=1;ready=1;place_column=a->column;direction=-1;
+    }else{apply_ai(a);return;}
+    ai_pending=*a;
+    ai_preview_pending=1;
+    ai_preview_at=lv_tick_get();
+    render();
+}
+static void commit_ai_pending(void)
+{
+    uint32_t old_revision=game.revision;
+    int old_outcome=game.outcome;
+    int ok=0;
+    if(ai_pending.kind==GY_AI_MOVE)ok=gy_commit(&game,&preview);
+    else if(ai_pending.kind==GY_AI_PLACE)ok=gy_place(&game,ai_pending.column);
+    ai_preview_pending=0;ai_pending.kind=0;
+    ready=0;placing=0;direction=-1;place_column=-1;
+    if(!ok){status("AI 动作失效 重新思考");render();start_ai();return;}
     if(!old_outcome&&game.outcome)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
     else if(game.revision!=old_revision)feedback=GY_FX_MOVE;
@@ -252,10 +297,15 @@ int gy_ui_is_placing(void) {return placing;}
 int gy_ui_is_playing(void) {return playing;}
 int gy_ui_ai_mode(void) {return ai_side>=0;}
 int gy_ui_ai_thinking(void) {return ai_thinking;}
+int gy_ui_ai_previewing(void) {return ai_preview_pending;}
 int gy_ui_take_feedback(void) {int event=feedback;feedback=GY_FX_NONE;return event;}
 void gy_ui_tick(void)
 {
     GyAiResult r;
+    if(ai_preview_pending){
+        if((uint32_t)(lv_tick_get()-ai_preview_at)>=AI_PREVIEW_MS)commit_ai_pending();
+        return;
+    }
     if(gy_ai_task_poll(&r)){
         if(!ai_thinking||r.generation!=ai_generation||r.revision!=game.revision||
            !playing||game.outcome!=GY_PLAYING||game.turn!=ai_side){
@@ -267,11 +317,12 @@ void gy_ui_tick(void)
             return;
         }else{
             ai_thinking=0;
-            apply_ai(&r.action);
+            begin_ai_preview(&r.action);
             return;
         }
     }
-    if(!ai_thinking&&playing&&ai_side>=0&&game.outcome==GY_PLAYING&&game.turn==ai_side)
+    if(!ai_thinking&&!ai_preview_pending&&playing&&ai_side>=0&&
+       game.outcome==GY_PLAYING&&game.turn==ai_side)
         start_ai();
 }
 void gy_ui_tilt_select(int d,int count)

@@ -18,6 +18,7 @@ int gy_ui_is_playing(void);
 int gy_ui_take_feedback(void);
 int gy_ui_ai_mode(void);
 int gy_ui_ai_thinking(void);
+int gy_ui_ai_previewing(void);
 void gy_ui_tilt_select(int direction, int count);
 #endif
 #endif
