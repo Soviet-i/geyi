@@ -12,7 +12,10 @@ static GyPreview preview;
 static int direction=-1, amount=1, selected_count=1, placing=0, place_column=-1, ready=0;
 static lv_obj_t *tiles[6][6], *labels[6][6], *health[6][6];
 static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
-static lv_obj_t *home_page,*mode_page,*game_page;
+static lv_obj_t *home_page,*mode_page,*game_page,*prep_page;
+static lv_obj_t *prep_red_label,*prep_blue_label;
+static int prep_active;
+static int prep_human_red=1;
 static int playing;
 static int feedback;
 static int ai_side=-1;          /* -1 = no AI, 0 = AI red, 1 = AI blue */
@@ -38,9 +41,17 @@ static void show_page(lv_obj_t *page)
     lv_obj_add_flag(home_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(mode_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(game_page,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(prep_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(page,LV_OBJ_FLAG_HIDDEN);
     playing=page==game_page;
+    prep_active=page==prep_page;
     ready=0;placing=0;direction=-1;place_column=-1;
+}
+static void update_prep_labels(void)
+{
+    if(!prep_red_label||!prep_blue_label)return;
+    lv_label_set_text(prep_red_label,prep_human_red?"红方\n先手\n玩家":"红方\n先手\nAI");
+    lv_label_set_text(prep_blue_label,prep_human_red?"蓝方\n后手\nAI":"蓝方\n后手\n玩家");
 }
 static uint32_t color(int owner) {return owner?0x5ba8ff:0xff6b7c;}
 static lv_obj_t *text(lv_obj_t *parent,const char *value,int x,int y)
@@ -183,8 +194,18 @@ void gy_ui_action(int a)
     if(a==GY_UI_HOME){ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);return;}
     if(a==GY_UI_MODES){ai_side=-1;feedback=GY_FX_CLEAR;show_page(mode_page);return;}
     if(a==GY_UI_SINGLE){ai_side=-1;show_page(game_page);a=GY_UI_RESTART;}
-    if(a==GY_UI_AI_RED){ai_side=1;show_page(game_page);a=GY_UI_RESTART;}
-    if(a==GY_UI_AI_BLUE){ai_side=0;show_page(game_page);a=GY_UI_RESTART;}
+    if(a==GY_UI_AI){
+        ai_side=-1;prep_human_red=1;update_prep_labels();
+        feedback=GY_FX_CLEAR;show_page(prep_page);return;
+    }
+    if(a==GY_UI_PREP_SWAP){
+        if(!prep_active)return;
+        prep_human_red=!prep_human_red;update_prep_labels();return;
+    }
+    if(a==GY_UI_PREP_CANCEL){ai_side=-1;feedback=GY_FX_CLEAR;show_page(mode_page);return;}
+    if(a==GY_UI_PREP_START){
+        ai_side=prep_human_red?1:0;show_page(game_page);a=GY_UI_RESTART;
+    }
     if(!playing)return;
     if(a==GY_UI_RESTART) {
         cancel_ai();
@@ -230,6 +251,19 @@ static lv_obj_t *button(lv_obj_t *root,const char *name,int x,int y,int w,int h,
     lv_obj_t *label=lv_label_create(b);lv_label_set_text(label,name);lv_obj_center(label);
     lv_obj_add_event_cb(b,action_event,LV_EVENT_CLICKED,(void*)(intptr_t)action);return b;
 }
+static lv_obj_t *side_box(lv_obj_t *root,const char *name,int x,int y,int w,int h,
+                          int action,uint32_t bg,lv_obj_t **label_out)
+{
+    lv_obj_t *b=lv_button_create(root);lv_obj_set_pos(b,x,y);lv_obj_set_size(b,w,h);
+    lv_obj_set_style_bg_color(b,lv_color_hex(bg),0);
+    lv_obj_set_style_radius(b,10,0);lv_obj_set_style_shadow_width(b,0,0);
+    lv_obj_t *label=lv_label_create(b);lv_label_set_text(label,name);lv_obj_center(label);
+    lv_obj_set_style_text_color(label,lv_color_hex(0x142238),0);
+    lv_obj_set_style_text_align(label,LV_TEXT_ALIGN_CENTER,0);
+    lv_obj_add_event_cb(b,action_event,LV_EVENT_CLICKED,(void*)(intptr_t)action);
+    if(label_out)*label_out=label;
+    return b;
+}
 static lv_obj_t *page(lv_obj_t *root)
 {
     lv_obj_t *p=lv_obj_create(root);lv_obj_set_size(p,390,450);
@@ -248,7 +282,7 @@ void gy_ui_create(void)
     lv_obj_set_style_bg_color(root,lv_color_hex(0x111e31),0);
     lv_obj_set_style_text_font(root,&geyi_font_cn16,0);
     lv_obj_remove_flag(root,LV_OBJ_FLAG_SCROLLABLE);
-    home_page=page(root);mode_page=page(root);game_page=page(root);
+    home_page=page(root);mode_page=page(root);game_page=page(root);prep_page=page(root);
     {lv_obj_t *t=text(home_page,"GEYI",32,46);lv_obj_set_style_text_font(t,&lv_font_montserrat_24,0);}
     text(home_page,"格弈 / 合成攻防",32,92);
     text(home_page,"倾斜棋盘  轮流对战",32,123);
@@ -260,11 +294,20 @@ void gy_ui_create(void)
     text(mode_page,"单机或人机，开始一局对战",32,70);
     button(mode_page,"单机对战",32,104,326,44,GY_UI_SINGLE);
     text(mode_page,"两位玩家轮流操作一块开发板",40,152);
-    button(mode_page,"人机对战 (我执红)",32,178,326,44,GY_UI_AI_RED);
-    button(mode_page,"人机对战 (我执蓝)",32,230,326,44,GY_UI_AI_BLUE);
-    text(mode_page,"红方先手; 我执蓝时 AI 先走",40,280);
-    unavailable(mode_page,"联机对战 - 暂未开放",310);
+    button(mode_page,"人机对战",32,178,326,44,GY_UI_AI);
+    text(mode_page,"进入后选择先后手，AI 自动走子",40,228);
+    unavailable(mode_page,"联机对战 - 暂未开放",260);
     button(mode_page,"返回首页",32,382,326,40,GY_UI_HOME);
+    text(prep_page,"人机对战",32,36);
+    text(prep_page,"选择先后手",32,70);
+    side_box(prep_page,"红方\n先手\n玩家",32,118,150,170,
+             GY_UI_PREP_SWAP,0xff6b7c,&prep_red_label);
+    side_box(prep_page,"蓝方\n后手\nAI",208,118,150,170,
+             GY_UI_PREP_SWAP,0x5ba8ff,&prep_blue_label);
+    text(prep_page,"点击方框交换先后手",32,300);
+    button(prep_page,"取消",32,350,150,44,GY_UI_PREP_CANCEL);
+    button(prep_page,"开始游戏",208,350,150,44,GY_UI_PREP_START);
+    update_prep_labels();
     root=game_page;
     lv_obj_t *title=text(root,"GEYI",16,8);lv_obj_set_style_text_font(title,&lv_font_montserrat_24,0);
     button(root,"首页",138,8,59,28,GY_UI_HOME);
@@ -298,6 +341,8 @@ int gy_ui_is_playing(void) {return playing;}
 int gy_ui_ai_mode(void) {return ai_side>=0;}
 int gy_ui_ai_thinking(void) {return ai_thinking;}
 int gy_ui_ai_previewing(void) {return ai_preview_pending;}
+int gy_ui_prep_active(void) {return prep_active;}
+int gy_ui_prep_human_red(void) {return prep_human_red;}
 int gy_ui_take_feedback(void) {int event=feedback;feedback=GY_FX_NONE;return event;}
 void gy_ui_tick(void)
 {

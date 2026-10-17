@@ -56,6 +56,13 @@ static void click(int x,int y)
 }
 static void check(int ok,const char *what)
 {if(!ok){fprintf(stderr,"FAIL UI: %s\n",what);exit(1);}}
+static void enter_ai_mode(int human_red)
+{
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,200);
+    if(!human_red)click(100,200);
+    click(270,372);
+}
 static int tests(void)
 {
     GyGame before;GyPreview p;GyMove m={GY_UP,1};
@@ -69,7 +76,7 @@ static int tests(void)
     click(160,280);click(160,346);
     check(!gy_ui_is_playing(),"home placeholders disabled");
     click(160,212);screenshot("modes.bmp");
-    click(160,330);
+    click(160,280);
     check(!gy_ui_is_playing(),"unfinished online mode disabled");
     click(160,400);check(!gy_ui_is_playing(),"mode back to home");
     check(gy_ai_selftest(),"AI selftest");
@@ -128,10 +135,25 @@ done: ;
     click(166,20);check(!gy_ui_is_playing()&&!gy_ui_has_preview(),"game back home clears preview");
     click(160,212);click(160,126);
     check(gy_ui_is_playing()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"single re-entry resets game");
-    /* REQ-315: human red, AI blue. */
+    /* REQ-317: prep page defaults, swap, cancel, then human red start. */
     gy_ui_action(GY_UI_HOME);
     click(160,212);click(160,200);
-    check(gy_ui_ai_mode()&&!gy_ui_ai_thinking(),"human red AI mode starts on human turn");
+    check(gy_ui_prep_active()&&gy_ui_prep_human_red(),"prep defaults to human red");
+    check(!gy_ui_is_playing(),"prep is not a running game");
+    screenshot("ai_prep.bmp");
+    click(100,200);
+    check(!gy_ui_prep_human_red(),"click red box swaps to human blue");
+    screenshot("ai_prep_blue.bmp");
+    click(300,200);
+    check(gy_ui_prep_human_red(),"click blue box swaps back to human red");
+    click(100,372);
+    check(!gy_ui_prep_active()&&!gy_ui_is_playing(),"prep cancel returns to modes");
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,200);
+    check(gy_ui_prep_active()&&gy_ui_prep_human_red(),"prep resets default human red");
+    click(270,372);
+    check(gy_ui_is_playing()&&gy_ui_ai_mode()&&!gy_ui_ai_thinking(),
+          "human red starts from prep");
     check(gy_ui_game()->turn==0,"human red starts");
     screenshot("ai_human_red.bmp");
     {
@@ -162,9 +184,8 @@ done: ;
         check(gy_ui_game()->revision==rev+2,"AI blue moved once");
         screenshot("ai_after.bmp");
     }
-    /* REQ-315/316: human blue, AI red moves first with preview. */
-    gy_ui_action(GY_UI_HOME);
-    click(160,212);click(160,252);
+    /* REQ-315/316/317: swap to human blue, AI red moves first with preview. */
+    enter_ai_mode(0);
     check(gy_ui_ai_mode()&&gy_ui_ai_thinking(),"AI red starts first");
     check(gy_ui_game()->turn==0,"AI red is to move");
     screenshot("ai_red_first.bmp");
@@ -179,16 +200,14 @@ done: ;
     check(gy_ui_game()->turn==1,"turn returns to human blue");
     screenshot("ai_red_after.bmp");
     /* REQ-315: leaving during AI thinking discards the stale result. */
-    gy_ui_action(GY_UI_HOME);
-    click(160,212);click(160,252);
+    enter_ai_mode(0);
     check(gy_ui_ai_thinking(),"AI red starts again");
     gy_ui_action(GY_UI_HOME);
     check(!gy_ui_is_playing(),"home during AI thinking");
     gy_ui_tick();
     check(!gy_ui_is_playing(),"stale AI result discarded after home");
     /* REQ-316: leaving during AI preview cancels the delayed commit. */
-    gy_ui_action(GY_UI_HOME);
-    click(160,212);click(160,252);
+    enter_ai_mode(0);
     check(gy_ui_ai_thinking(),"AI red starts for preview cancel");
     gy_ui_tick();
     check(gy_ui_ai_previewing(),"AI red preview starts");
@@ -198,8 +217,9 @@ done: ;
     check(!gy_ui_is_playing(),"preview commit cancelled after home");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
-    puts("PASS: TC-315 AI red/blue modes, AI turn, input guard, stale result discard");
+    puts("PASS: TC-315 AI modes, AI turn, input guard, stale result discard");
     puts("PASS: TC-316 AI preview before delayed single commit, input guard, cancel");
+    puts("PASS: TC-317 prep default/swap/cancel/start with human red and human blue");
     puts("PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart");return 0;
 }
 static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM w,LPARAM l)
