@@ -20,6 +20,10 @@ typedef struct { GyGame before, after, visible; int valid; } GyPreview;
 GyConfig gy_default_config(void);
 int gy_init(GyGame *g, GyConfig config, uint32_t seed);
 int gy_preview(const GyGame *g, GyMove move, GyPreview *preview);
+/* Apply a move to a copy. spawn_next=0 is the AI-search state: no random
+ * tile is generated, but the turn is toggled. spawn_next=1 matches
+ * gy_preview's after state. next must not alias g. */
+int gy_simulate_move(const GyGame *g, GyMove move, GyGame *next, int spawn_next);
 int gy_eligible_count(const GyGame *g, int direction);
 int gy_commit(GyGame *g, const GyPreview *preview);
 int gy_place(GyGame *g, int column);
