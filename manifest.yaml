@@ -179,23 +179,3 @@ human_checkpoints:
     student_confirmation: "学生要求改为首页→开始游戏→人机对战→准备页；左红先手默认玩家，右蓝后手默认 AI，点击方框互换，取消返回，开始后按选择进入游戏。"
   - decision_point: "产品名、里程碑与范围"
     student_confirmation: "产品名确定为格弈；当前集成工作不作为新里程碑申报；赵志浩的历史/计时模块仍在开发、尚未提交，不由 agent 代管；旧立项材料只保留硬件约束与风险，产品范围按新想法更新。"
-
-# ============================================================
-# 以下为字段填写示例（仅供参考，提交时请删除本示例区块）
-# ============================================================
-# submission:
-#   student_id: "S2026007"
-#   student_name: "李四"
-#   group_id: "G3"
-#   milestone: "阶段4-AI语音集成"
-#   submitted_at: "2026-11-03T21:40:00+08:00"
-# dev_agent:
-#   tool: "Claude Code"
-#   model: "claude-sonnet-5"
-#   session_log_path: "logs/session_2026-11-03.jsonl"
-# physical_verification:
-#   - item: "蓝牙BT PAN联网"
-#     required_action: "打开手机蓝牙个人热点，尝试与开发板配对并观察是否能访问外网"
-#     executed_at: "2026-11-03T20:15:00+08:00"
-#     evidence_path: "evidence/bt_pan_connect_log.png"
-#     agent_conclusion: "配对成功，ping通外部服务器，联网延迟约800ms"
