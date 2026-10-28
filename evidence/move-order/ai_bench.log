@@ -1,0 +1,5 @@
+# AI benchmark after movement-order fix (host CPU, fixed seed 20261015)
+pruning=1 depth=3 seed=20261015 nodes=144 cutoffs=16 elapsed_ms=0 score=-20 action=move direction=0 count=1
+pruning=0 depth=3 seed=20261015 nodes=333 cutoffs=0 elapsed_ms=1 score=-20 action=move direction=0 count=1
+pruning=1 depth=4 seed=20261015 nodes=429 cutoffs=72 elapsed_ms=1 score=40 action=move direction=0 count=2
+pruning=0 depth=4 seed=20261015 nodes=2069 cutoffs=0 elapsed_ms=7 score=40 action=move direction=0 count=2
