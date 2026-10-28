@@ -17,7 +17,7 @@ submission:
   student_name: "蔡融汉"
   group_id: "G8"
   milestone: "M2 人机对战（已完成并合入集成分支；当前 M3 进行中，未申报新里程碑）"
-  submitted_at: "2026-10-28T19:00:32+08:00"
+  submitted_at: "2026-10-28T19:01:30+08:00"
 
 dev_agent:
   tool: "Claude Code"
@@ -60,7 +60,7 @@ design:
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
-  commit_range: "99a223b..e18e950"
+  commit_range: "99a223b..4c3b3cf"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
