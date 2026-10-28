@@ -35,16 +35,35 @@ Generating build_sf32lb52-lchspi-ulp_hcpu\bootloader\link_copy.lds ...
 CC build_sf32lb52-lchspi-ulp_hcpu\src\geyi_param_ui.o
 Building compilation database build_sf32lb52-lchspi-ulp_hcpu\compile_commands.json
 Building compilation database build_sf32lb52-lchspi-ulp_hcpu\bootloader\compile_commands.json
+CC build_sf32lb52-lchspi-ulp_hcpu\src\geyi_ui.o
 Generating build_sf32lb52-lchspi-ulp_hcpu\link_copy.lds ...
 Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\link_copy.lds ...
-LINK build_sf32lb52-lchspi-ulp_hcpu\main.elf
 Building compilation database build_sf32lb52-lchspi-ulp_hcpu\ftab\compile_commands.json
+LINK build_sf32lb52-lchspi-ulp_hcpu\main.elf
 C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: warning: build_sf32lb52-lchspi-ulp_hcpu\main.elf has a LOAD segment with RWX permissions
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.asm ...
 Generating build_sf32lb52-lchspi-ulp_hcpu\main.bin ...
 Generating build_sf32lb52-lchspi-ulp_hcpu\main.hex ...
-Generating build_sf32lb52-lchspi-ulp_hcpu\main.asm ...
 Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\board\ftab.c ...
 WARNING: img "dfu" not found
+CC build_sf32lb52-lchspi-ulp_hcpu\ftab\board\ftab.o
+LINK build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.elf
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-closer.o): in function `_close_r':
+closer.c:(.text._close_r+0xc): warning: _close is not implemented and will always fail
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-closer.o): note: the message above does not take linker garbage collection into account
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+lseekr.c:(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-lseekr.o): note: the message above does not take linker garbage collection into account
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-readr.o): in function `_read_r':
+readr.c:(.text._read_r+0x10): warning: _read is not implemented and will always fail
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-readr.o): note: the message above does not take linker garbage collection into account
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-writer.o): in function `_write_r':
+writer.c:(.text._write_r+0x10): warning: _write is not implemented and will always fail
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-writer.o): note: the message above does not take linker garbage collection into account
+C:/Users/MR/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: warning: cannot find entry symbol entry; defaulting to 12000000
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.hex ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.asm ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.bin ...
 Generating build_sf32lb52-lchspi-ulp_hcpu\download.bat ...
 Generated sftool param: build_sf32lb52-lchspi-ulp_hcpu/sftool_param.json
 scons: done building targets.
@@ -53,16 +72,16 @@ scons: done building targets.
 +------------------------------------------------------------------------------
 | Region / Section         |            Total |             Used |             
 |--------------------------+------------------+------------------+-------------
-| ROM                      |      8,388,608 B |        876,142 B |      7,512,4
-|   .text                  |        440,732 B |                  |             
-|   .rodata                |        405,622 B |                  |             
+| ROM                      |      8,388,608 B |        879,238 B |      7,509,3
+|   .text                  |        440,788 B |                  |             
+|   .rodata                |        408,662 B |                  |             
 |   other                  |            568 B |                  |             
 | RAM                      |        523,264 B |        247,380 B |        275,8
 |   other                  |        196,352 B |                  |             
 |   .bss                   |         46,784 B |                  |             
 |   .data                  |          4,244 B |                  |             
 +------------------------------------------------------------------------------
-  Binary size: 844,200 B
+  Binary size: 847,344 B
 
 ================================================================================
 Memory Usage Analysis
