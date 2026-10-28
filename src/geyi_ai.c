@@ -1,7 +1,7 @@
 #include "geyi_ai.h"
 #include <string.h>
 
-#define GY_AI_MAX_DEPTH 5
+#define GY_AI_MAX_DEPTH 6
 #define GY_AI_MAX_ACTIONS (4 * GY_MAX * GY_MAX + GY_MAX)
 #define GY_AI_INF 1000000
 #define GY_AI_WIN 100000

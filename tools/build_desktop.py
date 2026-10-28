@@ -50,8 +50,8 @@ try:
     r=subprocess.run([lib,'/nologo','/OUT:'+str(out/'lvgl.lib'),'@'+str(response)],cwd=out,env=env,capture_output=True)
     if r.returncode:raise RuntimeError(r.stdout.decode('mbcs',errors='replace'))
     app=[root/'src/geyi_game.c',root/'src/geyi_feedback.c',root/'src/geyi_ai.c',
-         root/'src/geyi_ai_task.c',root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',
-         root/'tools/geyi_desktop.c']
+         root/'src/geyi_ai_task.c',root/'src/geyi_config.c',root/'src/geyi_param_ui.c',
+         root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',root/'tools/geyi_desktop.c']
     app_objects=[compile_one(p) for p in app]
     command=[cc,'/nologo',*[str(p) for p in app_objects],str(out/'lvgl.lib'),
              '/Fe:'+str(executable),'/link','/SUBSYSTEM:WINDOWS','user32.lib','gdi32.lib']

@@ -20,6 +20,8 @@
 #include "geyi_input.h"
 #include "geyi_feedback.h"
 #include "geyi_ai.h"
+#include "geyi_config.h"
+#include "geyi_param_ui.h"
 #include "drivers/rt_drv_pwm.h"
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
@@ -81,6 +83,8 @@ int main(void)
     rt_kprintf("[geyi:selftest] input=%s (simulated angles only)\n",
                gy_input_selftest() ? "PASS" : "FAIL");
     rt_kprintf("[geyi:selftest] ai=%s\n", gy_ai_selftest() ? "PASS" : "FAIL");
+    rt_kprintf("[geyi:selftest] param=%s\n", gy_param_selftest() ? "PASS" : "FAIL");
+    rt_kprintf("[geyi:selftest] paramui=%s\n", gy_param_ui_selftest() ? "PASS" : "FAIL");
 
 #ifdef GEYI_WITH_LVGL
     GyLight light={0};uint32_t last_light=UINT32_MAX;
