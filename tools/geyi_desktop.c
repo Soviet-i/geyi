@@ -83,6 +83,7 @@ static int param_tests(void)
     check(gy_param_ui_mode()==GY_MODE_PVE,"param pve mode");
     click(324,318);
     check(gy_param_ui_page()==1,"param second page");
+    screenshot("param_page2.bmp");
     click(338,199);
     check(gy_param_ui_value(GY_P_SEARCH_DEPTH)==4,"param depth plus");
     click(107,359);

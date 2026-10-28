@@ -21,6 +21,7 @@ static lv_obj_t *param_row_obj[GY_PARAM_UI_ROWS];
 static lv_obj_t *param_row_name[GY_PARAM_UI_ROWS];
 static lv_obj_t *param_row_value[GY_PARAM_UI_ROWS];
 static lv_obj_t *param_page_label,*param_status_label;
+static lv_obj_t *param_prev_button,*param_next_button;
 static int prep_active;
 static int prep_human_red=1;
 static int playing;
@@ -248,6 +249,11 @@ static void param_refresh(void)
     {char value[16];
      lv_snprintf(value,sizeof(value),"%d/%d",gy_param_ui_page()+1,gy_param_ui_page_count());
      lv_label_set_text(param_page_label,value);}
+    if(param_prev_button)
+        lv_obj_set_style_opa(param_prev_button,gy_param_ui_page()==0?LV_OPA_40:LV_OPA_COVER,0);
+    if(param_next_button)
+        lv_obj_set_style_opa(param_next_button,
+            gy_param_ui_page()>=gy_param_ui_page_count()-1?LV_OPA_40:LV_OPA_COVER,0);
     lv_label_set_text(param_status_label,param_status_text);
 }
 static void param_adjust_event(lv_event_t *e)
@@ -413,8 +419,8 @@ void gy_ui_create(void)
     param_mode_buttons[0]=button(param_page,"单机",32,64,104,34,GY_UI_PARAM_MODE_SINGLE);
     param_mode_buttons[1]=button(param_page,"人机",143,64,104,34,GY_UI_PARAM_MODE_PVE);
     param_mode_buttons[2]=button(param_page,"联机",254,64,104,34,GY_UI_PARAM_MODE_PVP);
-    button(param_page,"上一页",16,304,100,28,GY_UI_PARAM_PREV);
-    button(param_page,"下一页",274,304,100,28,GY_UI_PARAM_NEXT);
+    param_prev_button=button(param_page,"上一页",16,304,100,28,GY_UI_PARAM_PREV);
+    param_next_button=button(param_page,"下一页",274,304,100,28,GY_UI_PARAM_NEXT);
     param_page_label=text(param_page,"1/2",170,304);
     button(param_page,"重置",32,340,150,38,GY_UI_PARAM_RESET);
     button(param_page,"返回",208,340,150,38,GY_UI_PARAM_BACK);
