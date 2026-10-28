@@ -13,21 +13,21 @@
 # ============================================================
 
 submission:
-  student_id: "<学号，例如 S2026001>"
-  student_name: "<姓名>"
-  group_id: "<组别，例如 G3>"
-  milestone: "<里程碑名称，例如 阶段4-AI语音集成 / Capstone-检查点2 / Capstone-终版>"
-  submitted_at: "<ISO时间戳，例如 2026-11-03T21:40:00+08:00>"
+  student_id: "2024211401"
+  student_name: "蔡融汉"
+  group_id: "G8"
+  milestone: "M2 人机对战（已完成并合入集成分支；当前 M3 进行中，未申报新里程碑）"
+  submitted_at: "2026-10-28T19:00:32+08:00"
 
 dev_agent:
-  tool: "Codex"
-  model: "GPT-6"
-  session_log_path: "<完整会话记录文件路径，必须是原始导出，不可编辑>"
-  session_log_hash: "<可选：会话记录文件的哈希值，用于防止事后篡改>"
+  tool: "Claude Code"
+  model: "DeepSeek"
+  session_log_path: "logs/2026-10-28_claude-code.jsonl.gz"
+  session_log_hash: "a13e1528ea5e4349dec0b33bc235a0f368b9d704aec5518be73c468290cd9eb7"
 
 requirements:
   prd_path: "docs/01-需求规格说明.md"
-  hardware_constraints_ref: "<引用的硬件规格文档，例如黄山派硬件手册链接或本地副本路径>"
+  hardware_constraints_ref: "docs/02-方案设计说明.md（硬件与平台约束一节）"
 
 design:
   architecture_doc_path: "docs/02-方案设计说明.md"
@@ -53,10 +53,14 @@ design:
       alternatives_considered: "AI 直接落子；固定更长/更短停顿；每步等待用户确认"
       rationale: "让学生看清 AI 选择的方向和受影响格子，同时不阻塞 UI；500ms 由学生指定为默认值"
       decided_by: "学生 2026-10-17 明确要求“先显示预览，稍微停顿（如 0.5s）后再真实移动”"
+    - decision: "联机只走板载蓝牙，不做 WiFi/互联网匹配；反馈只用板载 RGB"
+      alternatives_considered: "外接 WiFi / 手机 App / BLE+BT PAN 互联网联机；外接震动马达"
+      rationale: "板载无 WiFi、无马达、无电池；课程板卡稀缺，先保单机/人机/参数闭环；BT PAN 与互联网联机列为拓展，不承诺"
+      decided_by: "硬件约束（旧立项材料）；联机范围由蔡融汉负责，尚未进入实现"
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
-  commit_range: "99a223b..e10d396"
+  commit_range: "99a223b..e18e950"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
@@ -106,8 +110,26 @@ test_results:
     actual: "主机固定用例 PASS；板端 hardware-01/02/03.jpg 显示移动前、预览和确认后均为预期位置，两个 B8 变 B6"
     pass: true
     evidence_path: "evidence/move-order/README.md"
+  - test_id: "TC-401~TC-406/TC-409-HOST"
+    description: "参数子系统主机测试与集成分支重测"
+    expected: "10 项参数模型、范围/钳位、三类配置、重置、输入接线；gy_simulate_move(...,1) 遵守生成间隔"
+    actual: "2026-10-28 运行 tools/run_host.py：核心 26920、输入 60、参数 2517、AI 62 断言全部 PASS；参数断言由 2503 增至 2517（新增 14 条集成回归）"
+    pass: true
+    evidence_path: "evidence/config/host_test_20261028.txt"
+  - test_id: "TC-407/TC-408"
+    description: "参数界面与平衡扫描"
+    expected: "首页进入参数页并返回；批量扫描输出可复现 CSV"
+    actual: "未执行：参数界面尚未接入，平衡扫描工具尚未实现"
+    pass: false
+    evidence_path: "docs/04-测试报告.md"
 
 known_issues:
+  - "【2026-10-28 当前】集成分支 integration/local-merge 已合并 PR #6/#7/#4，主机测试 26920/60/2517/62 PASS；该分支尚未 push，组员 PR 仍基于旧 develop。"
+  - "【2026-10-28 当前】参数界面 REQ-408、平衡扫描 REQ-411、历史/计时（赵志浩开发中）、联机/BLE 未完成；未执行项不写成通过。"
+  - "【2026-10-28 当前】check_devlog.py --strict 仍因 2026-10-18→2026-10-28 间隔 10 天失败；未修改检查脚本、未改提交日期绕过。"
+  - "【2026-10-28 当前】本终端没有 SIFLI_SDK、scons 和 arm-none-eabi-gcc，本轮未重跑固件编译；主机测试不等于板端通过。"
+  - "【2026-10-28 当前】TC-303-05 单兵板端照片、串口 ai=PASS、板端 AI 耗时/线程栈高水位、倾斜正确率/误触率/延迟、390×450 帧率仍缺。"
+  - "以下为历史条目，部分已被后续提交取代；当前状态以 2026-10-28 条目为准。"
   - "REQ-303/304 移动顺序修正已实现（前到后统一遍历、gy_eligible_count 模拟、D1 最终前方伤害）；主机 26920 断言、输入 60、AI 62、桌面 TC-313~317、SDK 编译 839552 B 通过；板端 TC-304-05 由学生三张照片确认，TC-303-05 单兵局面仅主机覆盖，倾斜数量手感和串口耗时待补。"
   - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839552 B，含 REQ-316 预览、REQ-317 准备页和移动顺序修正）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
   - "REQ-316 AI 决策预览已实现并在桌面测试通过（默认 500ms、移动/放兵预览、预览中人类输入无效、首页/重开取消）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
@@ -137,14 +159,15 @@ known_issues:
   - "原始目录缺少 training/T0、T1 任务正文，需向教师索取。"
 
 self_review: |
-  本次完成 REQ-315~317 的文档、规则核心模拟接口、negamax+Alpha-Beta AI、
-  独立 AI 线程封装、人机 UI、500ms 决策预览和先后手准备页。主机 62 条 AI 断言、
-  桌面 TC-315/316/317 和 SDK 编译均通过，最新固件 839,584 B。
-  不确定/未完成：板端物理验证由学生本人完成并确认；证据为百度网盘视频链接，
-  agent 当前环境无法访问 pan.baidu.com，未独立打开/解码视频，因此没有把真机项
-  写成 agent 目测或仪器测量。AI 评估权重未调参，线程耗时/栈高水位未测，
-  自定义搜索深度未实现。关键决策由学生拍板；agent 自测发现终局分数取负错误并
-  修正；学生尚未逐行审阅代码。
+  2026-10-28 本轮把 PR #6（人机对战）、PR #7（移动顺序修正，含 10-18 日志）
+  和 PR #4（参数配置）合入本地集成分支 integration/local-merge，解决 6 个文档/工具冲突，
+  修复 gy_simulate_move 未遵守 spawn_interval 的集成语义问题，并新增 14 条回归。
+  主机测试 26920/60/2517/62 全部 PASS；未重跑固件编译（本终端无 SDK 工具链），
+  也没有新的板端证据。产品名统一为格弈；硬件约束与旧立项风险已按新想法整理进
+  docs/02 和 docs/06。
+  不确定/未完成：集成分支未 push；参数界面、平衡扫描、历史/计时、联机/BLE 未完成；
+  TC-303-05 单兵板端、AI 板端耗时/栈、倾斜量化、帧率仍缺。关键决策由学生拍板；
+  学生本次纠正了产品名、里程碑表述和赵志浩状态；agent 自测发现终局分数取负错误并修正。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
@@ -154,6 +177,8 @@ human_checkpoints:
     student_confirmation: "学生要求 AI 决策后先显示与倾斜相同的预览，约 0.5 秒后再自动确认，预览期间人类操作无效。"
   - decision_point: "人机对战先后手入口"
     student_confirmation: "学生要求改为首页→开始游戏→人机对战→准备页；左红先手默认玩家，右蓝后手默认 AI，点击方框互换，取消返回，开始后按选择进入游戏。"
+  - decision_point: "产品名、里程碑与范围"
+    student_confirmation: "产品名确定为格弈；当前集成工作不作为新里程碑申报；赵志浩的历史/计时模块仍在开发、尚未提交，不由 agent 代管；旧立项材料只保留硬件约束与风险，产品范围按新想法更新。"
 
 # ============================================================
 # 以下为字段填写示例（仅供参考，提交时请删除本示例区块）
