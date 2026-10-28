@@ -212,7 +212,9 @@ int gy_simulate_move(const GyGame *g, GyMove m, GyGame *next, int spawn_next)
     *next = *g;
     if (!apply_move(next, g, m)) return 0;
     if (next->outcome == GY_PLAYING) {
-        if (spawn_next) spawn(next);
+        /* 与 gy_preview 使用同一生成判定：spawn_next=1 时也遵守 spawn_interval，
+         * 否则 AI 搜索会按“每次生成”模拟，与真实对局不一致。 */
+        if (spawn_next && gy_should_spawn(next)) spawn(next);
         next->turn ^= 1;
     }
     return 1;
