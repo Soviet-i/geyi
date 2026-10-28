@@ -83,8 +83,8 @@ int main(void)
     rt_kprintf("[geyi:selftest] input=%s (simulated angles only)\n",
                gy_input_selftest() ? "PASS" : "FAIL");
     rt_kprintf("[geyi:selftest] ai=%s\n", gy_ai_selftest() ? "PASS" : "FAIL");
-    rt_kprintf("[geyi:selftest] param=%s\n", gy_param_selftest() ? "PASS" : "FAIL");
-    rt_kprintf("[geyi:selftest] paramui=%s\n", gy_param_ui_selftest() ? "PASS" : "FAIL");
+    {int rc=gy_param_selftest();rt_kprintf("[geyi:selftest] param=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
+    {int rc=gy_param_ui_selftest();rt_kprintf("[geyi:selftest] paramui=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
 
 #ifdef GEYI_WITH_LVGL
     GyLight light={0};uint32_t last_light=UINT32_MAX;

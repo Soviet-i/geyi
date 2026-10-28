@@ -95,7 +95,7 @@ int gy_param_ui_selftest(void)
 {
     GyParamSet *p;
     GyConfig cfg;
-    GyGame game;
+    static GyGame game;   /* 自检不占主线程栈；板端首次上电曾出现返回码异常 */
 
     gy_param_ui_init();
     if (gy_param_ui_mode() != GY_MODE_SINGLE || gy_param_ui_page() != 0) return -1;
