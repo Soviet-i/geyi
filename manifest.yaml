@@ -85,6 +85,11 @@ physical_verification:
     executed_at: "2026-10-18（学生拍照时间；精确时刻未单列）"
     evidence_path: "evidence/move-order/README.md"
     agent_conclusion: "学生提供 hardware-01/02/03.jpg：移动前 2 B8 2 . B8 .，预览 . 2 B6 . 2 B6（数量2个），确认后位置一致并换手；支持 TC-304-05 的两兵移动、数字补位和 D1 B6 伤害。未提供 TC-303-05 单兵照片、串口日志或仪器计时，agent 未独立测量。"
+  - item: "REQ-408 参数页启动自检（板端）"
+    required_action: "烧录 844,200 B 固件，连续重启观察 param/paramui 自检、LCD 和 IMU"
+    executed_at: "2026-10-28（CodeKit MCP 烧录 COM7；连续 5 次 reboot）"
+    evidence_path: "evidence/param/20261028/board_boot.log"
+    agent_conclusion: "连续 5 次启动均为 param=PASS rc=0、paramui=PASS rc=0、LCD READY 390x450、IMU WHO_AM_I=6a；参数页 UI、触摸和参数生效尚未由学生确认。首次 844,176 B 版本曾出现一次 FAIL，重编 844,200 B 并把自检局面改为静态后 5/5 PASS，原因未完全定位，见 docs/06 R-022。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -132,9 +137,15 @@ test_results:
   - test_id: "FW-BUILD-PARAM"
     description: "参数页固件编译（REQ-401~410 集成）"
     expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
-    actual: "2026-10-28 运行 scripts/build_firmware.py：编译成功，main.bin 844,176 B；ROM 876,138 B，RAM 246,300 B"
+    actual: "2026-10-28 运行 scripts/build_firmware.py：编译成功，main.bin 844,200 B；烧录后连续 5 次启动 self-test PASS"
     pass: true
     evidence_path: "evidence/param/20261028/firmware_build.log"
+  - test_id: "TC-407-BOOT"
+    description: "参数页固件启动自检（板端，REQ-408）"
+    expected: "烧录后启动输出 param=PASS、paramui=PASS、LCD READY、IMU 6a"
+    actual: "2026-10-28 CodeKit MCP 烧录 COM7，连续 5 次 reboot 均 PASS；参数页 UI/触摸/参数生效尚未确认"
+    pass: true
+    evidence_path: "evidence/param/20261028/board_boot.log"
   - test_id: "TC-407 板端 + TC-408"
     description: "参数页板端验收与平衡扫描"
     expected: "板端进入/返回各 10 次、size=5/7、参数生效、串口 param/paramui=PASS；平衡扫描输出可复现 CSV"
@@ -144,9 +155,9 @@ test_results:
 
 known_issues:
   - "【2026-10-28 当前】集成分支 integration/local-merge 已合并 PR #6/#7/#4，领先 origin/develop 42 个提交，主机测试 26920/60/2517/75/62 PASS（参数页加入后）；该分支尚未 push，组员 PR 仍基于旧 develop。"
-  - "【2026-10-28 当前】参数页 REQ-408 主机 75 断言、桌面 LVGL --test、固件 844,176 B 编译均通过；板端尚未烧录。平衡扫描 REQ-411、历史/计时（赵志浩开发中）、联机/BLE 未完成；未执行项不写成通过。"
+  - "【2026-10-28 当前】参数页 REQ-408 主机 75 断言、桌面 LVGL --test、固件 844,200 B 编译与 5 次启动自检均通过；参数页 UI/触摸/参数生效尚未确认。平衡扫描 REQ-411、历史/计时（赵志浩开发中）、联机/BLE 未完成；未执行项不写成通过。"
   - "【2026-10-28 当前】check_devlog.py --strict 仍因 2026-10-18→2026-10-28 间隔 10 天失败；未修改检查脚本、未改提交日期绕过。"
-  - "【2026-10-28 当前】参数页版本已用 SDK v2.5.1 编译成功（main.bin 844,176 B），但尚未烧录；最近板端固件仍是 839,584 B/839,552 B。"
+  - "【2026-10-28 当前】参数页版本已用 SDK v2.5.1 编译并烧录（main.bin 844,200 B），连续 5 次启动参数自检 PASS；参数页 UI/触摸/参数生效待学生确认。"
   - "【2026-10-28 当前】2026-10-17 学生视频只覆盖“选择先后手+人机对战”；REQ-316 的 500ms/单次提交/取消、屏幕裁切、串口 ai=PASS、AI 耗时/栈仍未确认；视频/照片不代表当前 HEAD。"
   - "【2026-10-28 当前】TC-303-05 单兵板端照片、倾斜正确率/误触率/延迟、390×450 帧率仍缺；最近固件为 839,584 B（10-17）和 839,552 B（10-18）。"
   - "【2026-10-28 当前】training/T0、T1 任务正文缺失，training/progress.md 空白；需向教师索取材料，不能自行编造。"

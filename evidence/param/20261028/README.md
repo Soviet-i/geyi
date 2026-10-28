@@ -37,19 +37,30 @@ PASS: TC-317 prep default/swap/cancel/start with human red and human blue
 python scripts/build_firmware.py
 ```
 
-结果：编译成功；`main.bin` 844,176 B；ROM 使用 876,138 B，RAM 使用 246,300 B。
+结果：编译成功；`main.bin` 844,200 B（含 param/paramui 返回码输出与静态自检局面）。
 构建日志：`firmware_build.log`，SHA-256
-`2c7b24a58ecaa77b57dcc6d587beaf4dfe7660236e75a3ed3f679cf0f9e6bfe4`。
+`a41381f1f239172281a5b5d151e152493c2027311dab3ee312d495824bf22724`。
 
 固件文件（构建产物，不入库）：`project/build_sf32lb52-lchspi-ulp_hcpu/main.bin`，
-SHA-256 `95dffd236200c439726a9fd703f8a96bc37e45c927ed489d714057834b7a286b`。
+SHA-256 `14bcabcad48c87ba480c350a8064b7fe0113f2d6f28663806a6499bdb4ddf20b`。
+
+## 板端启动（已执行）
+
+- 烧录：CodeKit MCP `sifli_build_download`，COM7，1000000 波特率，verify 通过。
+- 启动日志：`board_boot.log`，SHA-256
+  `23893e0ba5fbde1738e8f7ae10f427c882c1ec4d9f04f1305e09e722adc13c31`。
+- 连续 5 次 `reboot` 均看到：
+  `[geyi:selftest] param=PASS rc=0`、`[geyi:selftest] paramui=PASS rc=0`、
+  `[geyi:lcd] READY 390 x 450`、`[geyi:imu] WHO_AM_I=6a`。
+- 说明：第一次烧录 844,176 B 版本曾出现一次 `param=FAIL/paramui=FAIL`；随后把
+  `gy_param_ui_selftest` 的大局面改为静态、完整重编 844,200 B 并重新烧录，连续
+  5 次启动 PASS。首次失败原因未完全定位，保留记录，不写成已彻底解决。
 
 ## 未执行
 
-- 烧录与启动：未执行；需要学生确认后烧录 COM7。
 - 板端参数页进入/返回 10 次、size=5/7、生成间隔 3、缓冲阈值、搜索深度：
-  需要学生观察屏幕/触摸/倾斜并回传照片、录像或串口日志。
-- 启动串口 `param=PASS`、`paramui=PASS`：尚未采集。
+  需要学生观察屏幕/触摸/倾斜并回传照片、录像。
+- 参数页真实布局/触摸点击、参数生效（REQ-407/410 板端段）尚未确认。
 - AI 板端耗时/线程栈、帧率：尚未测量。
 
 以上未执行项不得写成通过。
