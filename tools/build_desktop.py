@@ -15,8 +15,23 @@ out=root/'build/desktop'
 out.mkdir(parents=True,exist_ok=True)
 logs=[]
 executable=out/'geyi-desktop-cn.exe'
-vs=Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Microsoft Visual Studio/2022'
-vcvars=next(vs.glob('*/VC/Auxiliary/Build/vcvars64.bat'),None)
+candidates=[]
+if os.environ.get('VS_ROOT'):
+    candidates.append(Path(os.environ['VS_ROOT']))
+vswhere=Path(os.environ.get('ProgramFiles(x86)',r'C:\Program Files (x86)'))/'Microsoft Visual Studio/Installer/vswhere.exe'
+if vswhere.exists():
+    probe=subprocess.run([str(vswhere),'-latest','-products','*','-requires','Microsoft.VisualStudio.Component.VC.Tools.x86.x64','-property','installationPath'],capture_output=True,text=True)
+    for line in probe.stdout.splitlines():
+        if line.strip(): candidates.append(Path(line.strip()))
+candidates += [Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Microsoft Visual Studio/2022',
+               Path(os.environ.get('ProgramFiles(x86)',r'C:\Program Files (x86)'))/'Microsoft Visual Studio/2022']
+vcvars=None
+for candidate in candidates:
+    found=next(candidate.glob('*/VC/Auxiliary/Build/vcvars64.bat'),None) if candidate.is_dir() else None
+    if not found and (candidate/'VC/Auxiliary/Build/vcvars64.bat').exists():
+        found=candidate/'VC/Auxiliary/Build/vcvars64.bat'
+    if found:
+        vcvars=found; break
 if not vcvars or not (lvgl/'lvgl.h').exists():raise SystemExit('MSVC or SDK LVGL v9 not found')
 result=subprocess.run('cmd.exe /d /s /c "call "'+str(vcvars)+'" >nul && set"',capture_output=True)
 if result.returncode:raise SystemExit(result.stderr.decode(errors='replace'))
