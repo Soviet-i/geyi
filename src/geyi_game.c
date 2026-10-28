@@ -30,7 +30,7 @@ static void spawn(GyGame *g)
 }
 GyConfig gy_default_config(void)
 {
-    GyConfig c = {6, 8, 2, 4, 1, 2}; return c;
+    GyConfig c = {6, 8, 2, 4, 1, 2, 1}; return c;
 }
 int gy_init(GyGame *g, GyConfig c, uint32_t seed)
 {
@@ -198,7 +198,12 @@ int gy_preview(const GyGame *g, GyMove m, GyPreview *p)
     p->before = *g; p->after = *g; a = &p->after;
     if (!apply_move(a, &p->before, m)) return 0;
     p->visible = *a; /* Never expose the next randomly spawned tile in UI preview. */
-    if (a->outcome == GY_PLAYING) { spawn(a); a->turn ^= 1; }
+    if (a->outcome == GY_PLAYING) {
+        /* 是否生成由 gy_should_spawn() 决定（抽成函数以便主机测试）。
+         * 放置士兵不经过本函数，因此不计入间隔（沿用 REQ-301 的原型约定）。 */
+        if (gy_should_spawn(a)) spawn(a);
+        a->turn ^= 1;
+    }
     p->valid = 1; return 1;
 }
 int gy_simulate_move(const GyGame *g, GyMove m, GyGame *next, int spawn_next)
@@ -232,6 +237,13 @@ int gy_resign(GyGame *g)
 {
     if (!g || g->outcome != GY_PLAYING) return 0;
     g->outcome = g->turn == 0 ? GY_BLUE_WIN : GY_RED_WIN; ++g->revision; return 1;
+}
+int gy_should_spawn(const GyGame *g)
+{
+    if (!g) return 0;
+    if (g->moves == 0) return 0;                      /* 尚未发生有效移动，不生成 */
+    if (g->config.spawn_interval <= 1) return 1;      /* 改造前行为：每次移动都生成 */
+    return (g->moves % (uint32_t)g->config.spawn_interval) == 0;
 }
 int gy_selftest(void)
 {
