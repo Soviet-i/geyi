@@ -56,6 +56,13 @@ static void click(int x,int y)
 }
 static void check(int ok,const char *what)
 {if(!ok){fprintf(stderr,"FAIL UI: %s\n",what);exit(1);}}
+static void enter_ai_mode(int human_red)
+{
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,200);
+    if(!human_red)click(100,200);
+    click(270,372);
+}
 static int tests(void)
 {
     GyGame before;GyPreview p;GyMove m={GY_UP,1};
@@ -69,10 +76,11 @@ static int tests(void)
     click(160,280);click(160,346);
     check(!gy_ui_is_playing(),"home placeholders disabled");
     click(160,212);screenshot("modes.bmp");
-    click(160,250);click(160,320);
-    check(!gy_ui_is_playing(),"unfinished modes disabled");
+    click(160,280);
+    check(!gy_ui_is_playing(),"unfinished online mode disabled");
     click(160,400);check(!gy_ui_is_playing(),"mode back to home");
-    click(160,212);click(160,154);
+    check(gy_ai_selftest(),"AI selftest");
+    click(160,212);click(160,126);
     check(gy_ui_is_playing(),"single enters game");screenshot("initial.bmp");
     check(gy_ui_take_feedback()==GY_FX_CLEAR,"single starts light off");
     {const uint32_t required[]={0x786e,0x8ba4,0x5f00,0x8f93,0x80dc,0x7ea2,0x84dd};
@@ -125,10 +133,93 @@ done: ;
     check(gy_ui_has_preview(),"quantity two preview");
     gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->cells[4][1].kind==GY_SOLDIER&&gy_ui_game()->cells[4][4].kind==GY_SOLDIER,"both selected soldiers moved");
     click(166,20);check(!gy_ui_is_playing()&&!gy_ui_has_preview(),"game back home clears preview");
-    click(160,212);click(160,154);
+    click(160,212);click(160,126);
     check(gy_ui_is_playing()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"single re-entry resets game");
+    /* REQ-317: prep page defaults, swap, cancel, then human red start. */
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,200);
+    check(gy_ui_prep_active()&&gy_ui_prep_human_red(),"prep defaults to human red");
+    check(!gy_ui_is_playing(),"prep is not a running game");
+    screenshot("ai_prep.bmp");
+    click(100,200);
+    check(!gy_ui_prep_human_red(),"click red box swaps to human blue");
+    screenshot("ai_prep_blue.bmp");
+    click(300,200);
+    check(gy_ui_prep_human_red(),"click blue box swaps back to human red");
+    click(100,372);
+    check(!gy_ui_prep_active()&&!gy_ui_is_playing(),"prep cancel returns to modes");
+    gy_ui_action(GY_UI_HOME);
+    click(160,212);click(160,200);
+    check(gy_ui_prep_active()&&gy_ui_prep_human_red(),"prep resets default human red");
+    click(270,372);
+    check(gy_ui_is_playing()&&gy_ui_ai_mode()&&!gy_ui_ai_thinking(),
+          "human red starts from prep");
+    check(gy_ui_game()->turn==0,"human red starts");
+    screenshot("ai_human_red.bmp");
+    {
+        uint32_t rev=gy_ui_game()->revision;
+        gy_ui_action(GY_UI_UP);
+        check(gy_ui_has_preview(),"human preview in AI mode");
+        gy_ui_action(GY_UI_CONFIRM);
+        check(gy_ui_ai_thinking(),"AI blue starts after human move");
+        check(gy_ui_game()->turn==1,"AI blue is to move");
+        screenshot("ai_thinking.bmp");
+        gy_ui_action(GY_UI_LEFT);
+        check(gy_ui_game()->revision==rev+1,"AI turn ignores human input");
+        gy_ui_tick();
+        check(!gy_ui_ai_thinking(),"AI blue finished thinking");
+        check(gy_ui_ai_previewing(),"AI blue preview pending");
+        check(gy_ui_has_preview()||gy_ui_is_placing(),"AI blue preview visible");
+        check(gy_ui_game()->turn==1,"AI turn remains during preview");
+        check(gy_ui_game()->revision==rev+1,"preview does not commit");
+        Sleep(100);gy_ui_tick();
+        check(gy_ui_ai_previewing(),"preview holds before 500ms");
+        check(gy_ui_game()->revision==rev+1,"no commit before delay");
+        screenshot("ai_preview.bmp");
+        gy_ui_action(GY_UI_LEFT);
+        check(gy_ui_game()->revision==rev+1,"preview ignores human input");
+        Sleep(500);gy_ui_tick();
+        check(!gy_ui_ai_previewing(),"AI blue preview finished");
+        check(gy_ui_game()->turn==0,"turn returns to human red");
+        check(gy_ui_game()->revision==rev+2,"AI blue moved once");
+        screenshot("ai_after.bmp");
+    }
+    /* REQ-315/316/317: swap to human blue, AI red moves first with preview. */
+    enter_ai_mode(0);
+    check(gy_ui_ai_mode()&&gy_ui_ai_thinking(),"AI red starts first");
+    check(gy_ui_game()->turn==0,"AI red is to move");
+    screenshot("ai_red_first.bmp");
+    gy_ui_tick();
+    check(!gy_ui_ai_thinking(),"AI red finished thinking");
+    check(gy_ui_ai_previewing(),"AI red preview pending");
+    check(gy_ui_has_preview()||gy_ui_is_placing(),"AI red preview visible");
+    check(gy_ui_game()->turn==0,"AI red still to move during preview");
+    screenshot("ai_red_preview.bmp");
+    Sleep(600);gy_ui_tick();
+    check(!gy_ui_ai_previewing(),"AI red preview finished");
+    check(gy_ui_game()->turn==1,"turn returns to human blue");
+    screenshot("ai_red_after.bmp");
+    /* REQ-315: leaving during AI thinking discards the stale result. */
+    enter_ai_mode(0);
+    check(gy_ui_ai_thinking(),"AI red starts again");
+    gy_ui_action(GY_UI_HOME);
+    check(!gy_ui_is_playing(),"home during AI thinking");
+    gy_ui_tick();
+    check(!gy_ui_is_playing(),"stale AI result discarded after home");
+    /* REQ-316: leaving during AI preview cancels the delayed commit. */
+    enter_ai_mode(0);
+    check(gy_ui_ai_thinking(),"AI red starts for preview cancel");
+    gy_ui_tick();
+    check(gy_ui_ai_previewing(),"AI red preview starts");
+    gy_ui_action(GY_UI_HOME);
+    check(!gy_ui_is_playing(),"home during AI preview");
+    Sleep(600);gy_ui_tick();
+    check(!gy_ui_is_playing(),"preview commit cancelled after home");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
+    puts("PASS: TC-315 AI modes, AI turn, input guard, stale result discard");
+    puts("PASS: TC-316 AI preview before delayed single commit, input guard, cancel");
+    puts("PASS: TC-317 prep default/swap/cancel/start with human red and human blue");
     puts("PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart");return 0;
 }
 static LRESULT CALLBACK procedure(HWND hwnd,UINT message,WPARAM w,LPARAM l)
@@ -171,6 +262,6 @@ int WINAPI WinMain(HINSTANCE instance,HINSTANCE previous,LPSTR command,int show)
     if(!window)return 2;ShowWindow(window,show);UpdateWindow(window);
     while(!quit){while(PeekMessage(&msg,NULL,0,0,PM_REMOVE)){
         if(msg.message==WM_QUIT){quit=1;break;}TranslateMessage(&msg);DispatchMessage(&msg);}
-        lv_timer_handler();Sleep(5);}
+        lv_timer_handler();gy_ui_tick();Sleep(5);}
     return 0;
 }

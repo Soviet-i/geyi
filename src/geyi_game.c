@@ -125,20 +125,19 @@ static void finish(GyGame *g)
     else if (!alive[0]) g->outcome = GY_BLUE_WIN;
     else if (!alive[1]) g->outcome = GY_RED_WIN;
 }
-int gy_preview(const GyGame *g, GyMove m, GyPreview *p)
+/* Apply a move to the copy in a. before is the untouched source board used
+ * only for the no-change check. Does not spawn or toggle the turn. */
+static int apply_move(GyGame *a, const GyGame *before, GyMove m)
 {
     int x, y, n, total = 0, ids[GY_MAX*GY_MAX], dist[GY_MAX*GY_MAX];
     int i, j, d, cx, cy;
     unsigned char selected[GY_MAX][GY_MAX] = {{0}};
-    GyGame *a;
-    if (!g || !p) return 0;
-    memset(p, 0, sizeof(*p));
-    if (g->outcome != GY_PLAYING || m.direction < 0 || m.direction > 3 || m.count < 0) return 0;
-    d = m.direction; n = g->config.size;
+    if (a->outcome != GY_PLAYING || m.direction < 0 || m.direction > 3 || m.count < 0) return 0;
+    d = m.direction; n = a->config.size;
     /* Doubled coordinates retain half-cell edge centers without floats. */
     cx = d == GY_LEFT ? -1 : (d == GY_RIGHT ? 2*n-1 : n-1);
     cy = d == GY_UP ? -1 : (d == GY_DOWN ? 2*n-1 : n-1);
-    for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (eligible(g,x,y,d)) {
+    for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (eligible(a,x,y,d)) {
         int distance = abs(2*x-cx) + abs(2*y-cy);
         i = total++;
         while (i > 0 && dist[i-1] > distance) {
@@ -148,7 +147,6 @@ int gy_preview(const GyGame *g, GyMove m, GyPreview *p)
     }
     if (m.count > total || (m.count == 0 && total > 0)) return 0;
     for (i = 0; i < m.count; ++i) selected[ids[i]/GY_MAX][ids[i]%GY_MAX] = 1;
-    p->before = *g; p->after = *g; a = &p->after;
     numbers(a, d);
     for (i = 0; i < n; ++i) for (j = 0; j < n; ++j) {
         int nx, ny;
@@ -163,12 +161,33 @@ int gy_preview(const GyGame *g, GyMove m, GyPreview *p)
         } else if (to->kind == GY_SOLDIER && to->owner != a->turn && to->hp > 0)
             to->hp -= a->config.attack;
     }
-    if (memcmp(a->cells,g->cells,sizeof(g->cells)) == 0 &&
-        a->coins[0] == g->coins[0] && a->coins[1] == g->coins[1]) return 0;
+    if (memcmp(a->cells,before->cells,sizeof(before->cells)) == 0 &&
+        a->coins[0] == before->coins[0] && a->coins[1] == before->coins[1]) return 0;
     finish(a); ++a->moves; ++a->revision;
+    return 1;
+}
+int gy_preview(const GyGame *g, GyMove m, GyPreview *p)
+{
+    GyGame *a;
+    if (!g || !p) return 0;
+    memset(p, 0, sizeof(*p));
+    if (g->outcome != GY_PLAYING || m.direction < 0 || m.direction > 3 || m.count < 0) return 0;
+    p->before = *g; p->after = *g; a = &p->after;
+    if (!apply_move(a, &p->before, m)) return 0;
     p->visible = *a; /* Never expose the next randomly spawned tile in UI preview. */
     if (a->outcome == GY_PLAYING) { spawn(a); a->turn ^= 1; }
     p->valid = 1; return 1;
+}
+int gy_simulate_move(const GyGame *g, GyMove m, GyGame *next, int spawn_next)
+{
+    if (!g || !next || next == g) return 0;
+    *next = *g;
+    if (!apply_move(next, g, m)) return 0;
+    if (next->outcome == GY_PLAYING) {
+        if (spawn_next) spawn(next);
+        next->turn ^= 1;
+    }
+    return 1;
 }
 int gy_commit(GyGame *g, const GyPreview *p)
 {
@@ -194,12 +213,16 @@ int gy_resign(GyGame *g)
 int gy_selftest(void)
 {
     /* Boot-only workspace in BSS, not on the small RT-Thread main stack. */
-    static GyGame g, copy;
+    static GyGame g, copy, sim;
     static GyPreview p;
     GyMove m = {GY_UP,1};
     if (!gy_init(&g,gy_default_config(),1)) return 0;
     copy = g;
     if (!gy_preview(&g,m,&p) || memcmp(&g,&copy,sizeof(g))) return 0;
+    if (!gy_simulate_move(&g,m,&sim,1) || memcmp(&sim,&p.after,sizeof(sim))) return 0;
+    if (!gy_simulate_move(&g,m,&sim,0) ||
+        sim.turn != (g.turn ^ 1) || sim.rng != g.rng ||
+        memcmp(sim.cells,p.visible.cells,sizeof(sim.cells)) != 0) return 0;
     if (!gy_commit(&g,&p) || gy_commit(&g,&p)) return 0;
     return g.revision == 1;
 }
