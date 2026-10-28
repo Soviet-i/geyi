@@ -28,9 +28,9 @@ static int test_pages(void)
     CHECK(gy_param_ui_page() == 1);
     CHECK(gy_param_ui_item_at(0) == GY_P_MERGE_REWARD);
     CHECK(gy_param_ui_item_at(1) == GY_P_KILL_REWARD);
-    CHECK(gy_param_ui_item_at(2) == -1);       /* 单机模式不显示搜索深度 */
-    CHECK(gy_param_ui_item_at(3) == GY_P_DIR_BUFFER);
-    CHECK(gy_param_ui_item_at(4) == GY_P_ANGLE_BUFFER);
+    CHECK(gy_param_ui_item_at(2) == GY_P_DIR_BUFFER);
+    CHECK(gy_param_ui_item_at(3) == GY_P_ANGLE_BUFFER);
+    CHECK(gy_param_ui_item_at(4) == -1);       /* 单机模式末行隐藏搜索深度 */
     CHECK(gy_param_ui_page_next() == 0);
     CHECK(gy_param_ui_page() == 1);
     CHECK(gy_param_ui_page_prev() == 1);
@@ -45,9 +45,9 @@ static int test_mode(void)
     CHECK(gy_param_ui_set_mode(GY_MODE_PVE) == 1);
     CHECK(gy_param_ui_mode() == GY_MODE_PVE);
     CHECK(gy_param_ui_page_next() == 1);
-    CHECK(gy_param_ui_item_at(2) == GY_P_SEARCH_DEPTH);
+    CHECK(gy_param_ui_item_at(4) == GY_P_SEARCH_DEPTH);
     CHECK(gy_param_ui_set_mode(GY_MODE_PVP) == 1);
-    CHECK(gy_param_ui_item_at(2) == -1);       /* 联机模式不显示搜索深度 */
+    CHECK(gy_param_ui_item_at(4) == -1);       /* 联机模式末行不显示搜索深度 */
     CHECK(gy_param_ui_set_mode(GY_MODE_COUNT) == 0);
     CHECK(gy_param_ui_set_mode(-1) == 0);
     CHECK(gy_param_ui_mode() == GY_MODE_PVP);
@@ -75,14 +75,25 @@ static int test_spawn_adjust(void)
 {
     gy_param_ui_init();
     CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 1);
-    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) == GY_PARAM_ERR_ODD);
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) == GY_PARAM_OK);
     CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 3);
-    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) == GY_PARAM_ERR_ODD);
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) == GY_PARAM_OK);
     CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 5);
     CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 4) == GY_PARAM_OK);
     CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 9);
     CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) == GY_PARAM_ERR_RANGE);
     CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 9);
+    /* 减 1 必须跨到相邻奇数，不能被 clamp 回原值。 */
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, -1) == GY_PARAM_OK);
+    CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 7);
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, -1) == GY_PARAM_OK);
+    CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 5);
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, -1) == GY_PARAM_OK);
+    CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 3);
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, -1) == GY_PARAM_OK);
+    CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 1);
+    CHECK(gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, -1) == GY_PARAM_ERR_RANGE);
+    CHECK(gy_param_ui_value(GY_P_SPAWN_INTERVAL) == 1);
     return 0;
 }
 

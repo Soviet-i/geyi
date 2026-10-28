@@ -10,6 +10,14 @@
 static int s_mode = GY_MODE_SINGLE;
 static int s_page = 0;
 
+/* 界面显示顺序：人机专用的搜索深度放第 2 页最后一行。
+ * 单机/联机隐藏该行时，前面的参数仍连续排列，不会在中间留空。 */
+static const int k_order[GY_P_COUNT] = {
+    GY_P_SIZE, GY_P_SPAWN_INTERVAL, GY_P_HP, GY_P_ATTACK, GY_P_COST,
+    GY_P_MERGE_REWARD, GY_P_KILL_REWARD, GY_P_DIR_BUFFER, GY_P_ANGLE_BUFFER,
+    GY_P_SEARCH_DEPTH
+};
+
 static int mode_valid(int mode)
 {
     return mode >= 0 && mode < GY_MODE_COUNT;
@@ -63,8 +71,9 @@ int gy_param_ui_item_at(int row)
 {
     int id;
     if (row < 0 || row >= GY_PARAM_UI_ROWS) return -1;
-    id = s_page * GY_PARAM_UI_ROWS + row;
-    if (id < 0 || id >= GY_P_COUNT) return -1;
+    {int slot = s_page * GY_PARAM_UI_ROWS + row;
+     if (slot < 0 || slot >= GY_P_COUNT) return -1;
+     id = k_order[slot];}
     if (!gy_param_valid_in_mode(id, s_mode)) return -1;
     return id;
 }
@@ -83,7 +92,11 @@ int gy_param_ui_adjust(int id, int delta)
     if (!set) return GY_PARAM_ERR_MODE;
     if (delta == 0) return GY_PARAM_OK;
     current = gy_param_get(set, id);
-    return gy_param_set(set, id, current + delta);
+    {int raw=current+delta;
+     /* 生成间隔必须为奇数：减 1 时不能先落到偶数再被 clamp 回原值，
+      * 否则界面会出现“只能加不能减”。按调整方向跨到相邻奇数。 */
+     if(id==GY_P_SPAWN_INTERVAL&&(raw&1)==0)raw+=delta>0?1:-1;
+     return gy_param_set(set,id,raw);}
 }
 
 int gy_param_ui_reset(void)
@@ -107,16 +120,16 @@ int gy_param_ui_selftest(void)
     if (gy_param_ui_page_next() != 1 || gy_param_ui_page() != 1) return -6;
     if (gy_param_ui_item_at(0) != GY_P_MERGE_REWARD) return -7;
     if (gy_param_ui_item_at(1) != GY_P_KILL_REWARD) return -8;
-    if (gy_param_ui_item_at(2) != -1) return -9;  /* 单机模式不显示搜索深度 */
-    if (gy_param_ui_item_at(3) != GY_P_DIR_BUFFER) return -10;
-    if (gy_param_ui_item_at(4) != GY_P_ANGLE_BUFFER) return -11;
+    if (gy_param_ui_item_at(2) != GY_P_DIR_BUFFER) return -9;
+    if (gy_param_ui_item_at(3) != GY_P_ANGLE_BUFFER) return -10;
+    if (gy_param_ui_item_at(4) != -1) return -11;  /* 单机模式不显示搜索深度（末行） */
     if (gy_param_ui_page_next() != 0 || gy_param_ui_page() != 1) return -12;
     if (gy_param_ui_page_prev() != 1 || gy_param_ui_page() != 0) return -13;
     if (gy_param_ui_page_prev() != 0 || gy_param_ui_page() != 0) return -14;
 
     if (!gy_param_ui_set_mode(GY_MODE_PVE)) return -15;
     gy_param_ui_page_next();
-    if (gy_param_ui_item_at(2) != GY_P_SEARCH_DEPTH) return -16;
+    if (gy_param_ui_item_at(4) != GY_P_SEARCH_DEPTH) return -16;
     if (gy_param_ui_set_mode(GY_MODE_COUNT)) return -17;  /* 非法模式不能被接受 */
     if (gy_param_ui_mode() != GY_MODE_PVE) return -18;
 
@@ -132,9 +145,9 @@ int gy_param_ui_selftest(void)
 
     /* 生成间隔必须为奇数：1 -> 3 -> 5；9 再 + 应钳在 9。 */
     gy_param_reset(GY_MODE_SINGLE);
-    if (gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) != GY_PARAM_ERR_ODD ||
+    if (gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) != GY_PARAM_OK ||
         gy_param_ui_value(GY_P_SPAWN_INTERVAL) != 3) return -26;
-    if (gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) != GY_PARAM_ERR_ODD ||
+    if (gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 1) != GY_PARAM_OK ||
         gy_param_ui_value(GY_P_SPAWN_INTERVAL) != 5) return -27;
     if (gy_param_ui_adjust(GY_P_SPAWN_INTERVAL, 4) != GY_PARAM_OK ||
         gy_param_ui_value(GY_P_SPAWN_INTERVAL) != 9) return -28;

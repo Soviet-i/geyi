@@ -79,12 +79,22 @@ static int param_tests(void)
     check(gy_param_ui_value(GY_P_SIZE)==7,"param size plus");
     click(288,123);
     check(gy_param_ui_value(GY_P_SIZE)==6,"param size minus");
+    click(338,161);
+    check(gy_param_ui_value(GY_P_SPAWN_INTERVAL)==3,"param spawn plus");
+    click(288,161);
+    check(gy_param_ui_value(GY_P_SPAWN_INTERVAL)==1,"param spawn minus");
+    click(324,318);
+    check(gy_param_ui_page()==1 && gy_param_ui_item_at(4)==-1,
+          "single page 2 hides depth at last row");
+    screenshot("param_page2_single.bmp");
+    click(66,318);
+    check(gy_param_ui_page()==0,"back to first page before pve");
     click(195,81);
     check(gy_param_ui_mode()==GY_MODE_PVE,"param pve mode");
     click(324,318);
     check(gy_param_ui_page()==1,"param second page");
     screenshot("param_page2.bmp");
-    click(338,199);
+    click(338,275);
     check(gy_param_ui_value(GY_P_SEARCH_DEPTH)==4,"param depth plus");
     click(107,359);
     check(gy_param_ui_value(GY_P_SEARCH_DEPTH)==3,"param reset pve");

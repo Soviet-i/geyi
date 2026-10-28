@@ -222,9 +222,6 @@ static void choose(void)
     ready=gy_preview(&game,m,&preview);
     if(!ready)status("方向不可用 请重新选择");
 }
-static const char *param_short[GY_P_COUNT]={
-    "SIZE","SPAWN","HP","ATK","COST","MERGE","KILL","DEPTH","DIR%","ANGLE%"
-};
 static void param_message(const char *msg)
 {
     lv_snprintf(param_status_text,sizeof(param_status_text),"%s",msg);
@@ -240,7 +237,7 @@ static void param_refresh(void)
         int id=gy_param_ui_item_at(i);
         if(id<0){lv_obj_add_flag(param_row_obj[i],LV_OBJ_FLAG_HIDDEN);continue;}
         lv_obj_remove_flag(param_row_obj[i],LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(param_row_name[i],param_short[id]);
+        lv_label_set_text(param_row_name[i],gy_param_name(id));
         {int lo=0,hi=0;char value[40];
          gy_param_range(id,&lo,&hi);
          lv_snprintf(value,sizeof(value),"%d [%d-%d]",gy_param_ui_value(id),lo,hi);
@@ -278,8 +275,8 @@ void gy_ui_action(int a)
         param_message("新开一局生效");param_refresh();return;
     }
     if(a==GY_UI_PARAM_BACK){show_page(home_page);return;}
-    if(a==GY_UI_PARAM_PREV){if(gy_param_ui_page_prev())param_refresh();return;}
-    if(a==GY_UI_PARAM_NEXT){if(gy_param_ui_page_next())param_refresh();return;}
+    if(a==GY_UI_PARAM_PREV){if(gy_param_ui_page_prev()){param_message("新开一局生效");param_refresh();}return;}
+    if(a==GY_UI_PARAM_NEXT){if(gy_param_ui_page_next()){param_message("新开一局生效");param_refresh();}return;}
     if(a==GY_UI_PARAM_RESET){
         gy_param_ui_reset();param_message("已重置");param_refresh();return;
     }
