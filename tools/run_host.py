@@ -25,6 +25,7 @@ targets = [
     ('geyi-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_geyi.c']),
     ('geyi-input-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_input.c']),
     ('geyi-config-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'src/geyi_config.c', 'tests/test_config.c']),
+    ('geyi-param-ui-tests', ['src/geyi_game.c', 'src/geyi_config.c', 'src/geyi_param_ui.c', 'tests/test_param_ui.c']),
     ('geyi-ai-tests', ['src/geyi_game.c', 'src/geyi_ai.c', 'tests/test_ai.c']),
     ('geyi-ai-bench', ['src/geyi_game.c', 'src/geyi_ai.c', 'tools/geyi_ai_bench.c']),
     ('geyi-cli', ['src/geyi_game.c', 'src/geyi_input.c', 'tools/geyi_cli.c']),
