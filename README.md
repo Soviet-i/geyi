@@ -1,6 +1,6 @@
 # course_starter —— 黄山派嵌入式产品开发课程脚手架
 
-本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。本次暂不邀请成员，产品方向和成员职责待确定。具体操作见 `docs/guides/git-workflow.md`。
+本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。当前成员已加入，产品名为格弈；M2 人机对战已合入本地集成分支 `integration/local-merge`（尚未 push），M3 进行中。具体状态见 `docs/00-项目计划与里程碑.md`。
 
 这是课程的**统一起点**：既是入门训练的练习场，也是你自己产品项目的基础工程。它内置：
 
@@ -9,6 +9,9 @@
 - **git 全程管理**：提交规范由钩子强制，开发日志与提交自动核对
 - **入门训练**：T0 环境与规范、T1 用一个小功能完整走一遍“需求 → 设计 → 实现 → 测试 → 总结”
 - **开箱即用的 SiFli SDK 工程**（`project/` + `src/`，结构与官方例程一致）：黄山派例程（串口打印 Hello world + 板载 RGB 灯红绿蓝闪烁），装好 SDK v2.5.1 后一条命令编译
+
+> `training/` 目前只有 `README.md` 与 `progress.md`，README 引用的 T0/T1 任务正文不在仓库历史中；
+> 见 `docs/06` R-003，需向教师索取完整材料，不能自行编造。
 
 ## 5 分钟上手
 

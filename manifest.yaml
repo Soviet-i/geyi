@@ -13,21 +13,21 @@
 # ============================================================
 
 submission:
-  student_id: "<学号，例如 S2026001>"
-  student_name: "<姓名>"
-  group_id: "<组别，例如 G3>"
-  milestone: "<里程碑名称，例如 阶段4-AI语音集成 / Capstone-检查点2 / Capstone-终版>"
-  submitted_at: "<ISO时间戳，例如 2026-11-03T21:40:00+08:00>"
+  student_id: "2024211401"
+  student_name: "蔡融汉"
+  group_id: "G8"
+  milestone: "M2 人机对战（2026-10-31 已通过 PR 合入 develop，未正式评审；当前测试与联调，不申报新里程碑；联调后再开始联机）"
+  submitted_at: "2026-10-28T22:01:00+08:00"
 
 dev_agent:
-  tool: "Codex"
-  model: "GPT-6"
-  session_log_path: "<完整会话记录文件路径，必须是原始导出，不可编辑>"
-  session_log_hash: "<可选：会话记录文件的哈希值，用于防止事后篡改>"
+  tool: "Claude Code"
+  model: "DeepSeek"
+  session_log_path: "logs/2026-10-28_claude-code.jsonl.gz"
+  session_log_hash: "586fed171b28dfdd16b11886884a3486169b8ba899fc3aa5df1184b5e33d9743"
 
 requirements:
   prd_path: "docs/01-需求规格说明.md"
-  hardware_constraints_ref: "<引用的硬件规格文档，例如黄山派硬件手册链接或本地副本路径>"
+  hardware_constraints_ref: "docs/02-方案设计说明.md（硬件与平台约束一节）"
 
 design:
   architecture_doc_path: "docs/02-方案设计说明.md"
@@ -53,10 +53,15 @@ design:
       alternatives_considered: "AI 直接落子；固定更长/更短停顿；每步等待用户确认"
       rationale: "让学生看清 AI 选择的方向和受影响格子，同时不阻塞 UI；500ms 由学生指定为默认值"
       decided_by: "学生 2026-10-17 明确要求“先显示预览，稍微停顿（如 0.5s）后再真实移动”"
+    - decision: "联机只走板载蓝牙，不做 WiFi/互联网匹配；反馈只用板载 RGB"
+      alternatives_considered: "外接 WiFi / 手机 App / BLE+BT PAN 互联网联机；外接震动马达"
+      rationale: "板载无 WiFi、无马达、无电池；课程板卡稀缺，先保单机/人机/参数闭环；BT PAN 与互联网联机列为拓展，不承诺"
+      decided_by: "硬件约束（旧立项材料）；联机范围由蔡融汉负责，尚未进入实现"
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
-  commit_range: "99a223b..e10d396"
+  # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
+  commit_range: "99a223b..HEAD"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
@@ -70,34 +75,44 @@ physical_verification:
     evidence_path: "evidence/board/20261015_2106/README.md"
     agent_conclusion: "照片可见简体UI；串口含启动、校准与四向预览，源码哈希一致。本人审核提交时明确确认完整对局、金币放兵及长期稳定性验收完成、代码人工核验后无修正；未提供量化时长/局数，不记为AI独立测量。"
   # 每一个物理验证节点都要有对应记录，节点类型见配套文档《Agent协作开发与评审机制》第三节表格
-  - item: "REQ-316/REQ-317 AI预览与准备页板端验证"
-    required_action: "烧录 839,584 B 固件，验证准备页默认红先玩家/蓝后 AI、点击方框互换、取消/开始、AI 预览约 500ms 后只落子一次、预览中操作无效、首页/重开取消"
-    executed_at: "2026-10-17（学生本人操作并确认；精确时刻未单列）"
+  - item: "REQ-315/REQ-316/REQ-317 人机对战与准备页板端视频"
+    required_action: "学生烧录 839,584 B 固件，录制准备页选择先后手和人机对战；补测项：串口 ai=PASS、REQ-316 500ms/单次提交/取消、布局裁切、AI 耗时/栈"
+    executed_at: "2026-10-17（学生本人操作并回传视频；精确时刻未单列）"
     evidence_path: "evidence/ai/BaiduNetDisk.md"
-    agent_conclusion: "学生回传百度网盘视频（人机.zip，提取码在文件内）并确认板端验证成功；agent 未能在线打开/解码视频，未独立核验画面，按学生本人确认记录，不写成 agent 目测或仪器测量。"
+    agent_conclusion: "学生视频说明为“选择先后手+人机对战”，确认 REQ-317 准备页/选择和 REQ-315 人机流程；agent 无法访问 pan.baidu.com，未解码/逐帧核验。REQ-316 500ms/单次提交/取消、屏幕裁切、串口 ai=PASS、AI 耗时/栈仍未确认。视频不覆盖 10-18 移动顺序和 10-28 参数集成。"
   - item: "REQ-303/REQ-304 移动顺序修正板端验证"
     required_action: "烧录 839,552 B 固件，摆出 N2 B8 N2 . B8 .，向右选 2 兵，观察预览和落子"
     executed_at: "2026-10-18（学生拍照时间；精确时刻未单列）"
     evidence_path: "evidence/move-order/README.md"
     agent_conclusion: "学生提供 hardware-01/02/03.jpg：移动前 2 B8 2 . B8 .，预览 . 2 B6 . 2 B6（数量2个），确认后位置一致并换手；支持 TC-304-05 的两兵移动、数字补位和 D1 B6 伤害。未提供 TC-303-05 单兵照片、串口日志或仪器计时，agent 未独立测量。"
+  - item: "REQ-408 参数页启动自检（板端）"
+    required_action: "烧录 847,344 B 固件，连续重启观察 param/paramui 自检、LCD 和 IMU"
+    executed_at: "2026-10-28（CodeKit MCP 烧录 COM7；连续 5 次 reboot）"
+    evidence_path: "evidence/param/20261028/board_boot.log"
+    agent_conclusion: "最终版本连续 3 次启动均为 param=PASS rc=0、paramui=PASS rc=0、LCD READY 390x450、IMU WHO_AM_I=6a；此前版本累计 5 次 PASS。学生已确认进入/返回参数页 10 次，发现 SPAWN 减一/英文名问题；修复后回传最终中文第 1 页照片并确认 SPAWN 减一/末行布局。首次 844,176 B 版本曾出现一次 FAIL，原因未完全定位，见 docs/06 R-022。"
+  - item: "REQ-408 参数页/动态棋盘（学生操作，修复前界面）"
+    required_action: "学生进入/返回参数页 10 次；设置 size=7 开始单机；观察参数名与 SPAWN 加减"
+    executed_at: "2026-10-28 21:30（学生本人操作并回传照片）"
+    evidence_path: "evidence/param/20261028/README.md"
+    agent_conclusion: "学生照片显示首页参数入口可用、参数页（修复前英文名）、单机 size=7 的 7×7 棋盘；学生报告进入/返回 10 次无崩溃，并发现人机 SPAWN 只能加不能减、英文参数名不清楚。照片保留为修复前证据；学生随后回传最终中文第 1 页照片，并确认 SPAWN 减一、AI 搜索层数末行、单机第二页无中间空洞。"
 
 test_results:
   - test_id: "TC-315-SW"
     description: "人机对战 AI 主机/桌面/编译（软件部分）"
     expected: "AI 合法动作、不偷看 RNG、桌面人机流程、SDK 编译"
-    actual: "主机 62 断言 PASS；桌面 TC-315/316/317 PASS；main.bin 839,584 B；真机由学生视频确认"
+    actual: "主机 62 断言 PASS；桌面 TC-315/316/317 PASS；main.bin 839,584 B；学生视频覆盖选择先后手+人机对战；串口 ai=PASS、耗时/栈未测"
     pass: true
     evidence_path: "evidence/ai/README.md"
   - test_id: "TC-316-SW"
     description: "AI 决策预览 500ms 与单次提交（软件部分）"
     expected: "先预览、延迟后一次提交、预览中人类输入无效、首页取消不落子"
-    actual: "桌面 TC-316 PASS；真机由学生视频确认验证成功"
+    actual: "桌面 TC-316 PASS；学生视频覆盖人机流程；500ms/单次提交/取消未逐帧核验，串口/计时待补"
     pass: true
     evidence_path: "evidence/ai/desktop-test-tc316.log"
   - test_id: "TC-317-SW"
     description: "人机准备页与先后手互换（软件部分）"
     expected: "默认红先玩家、右蓝后 AI、点击互换、取消/开始、AI 执红先手"
-    actual: "桌面 TC-317 PASS；真机由学生视频确认验证成功"
+    actual: "桌面 TC-317 PASS；学生视频覆盖准备页选择与对局；取消/布局细节未逐帧核验"
     pass: true
     evidence_path: "evidence/ai/desktop-test-tc317.log"
   - test_id: "TC-304-05"
@@ -106,45 +121,103 @@ test_results:
     actual: "主机固定用例 PASS；板端 hardware-01/02/03.jpg 显示移动前、预览和确认后均为预期位置，两个 B8 变 B6"
     pass: true
     evidence_path: "evidence/move-order/README.md"
+  - test_id: "TC-401~TC-406/TC-409-HOST"
+    description: "参数子系统主机测试与集成分支重测"
+    expected: "10 项参数模型、范围/钳位、三类配置、重置、输入接线；gy_simulate_move(...,1) 遵守生成间隔"
+    actual: "2026-10-28 运行 tools/run_host.py：核心 26920、输入 60、参数 2517、AI 62 断言全部 PASS；参数断言由 2503 增至 2517（新增 14 条集成回归）"
+    pass: true
+    evidence_path: "evidence/config/host_test_20261028.txt"
+  - test_id: "TC-407-SW-HOST"
+    description: "参数页状态机主机测试（REQ-403/404/408）"
+    expected: "单机/人机/联机模式切换；两页条目映射；search_depth 仅人机显示；大小/生成间隔边界钳位；重置只影响当前模式；参数应用到 GyConfig"
+    actual: "2026-10-28 运行 tools/run_host.py：geyi-param-ui-tests 85 断言 PASS（含 SPAWN 减一、第 2 页末行）；完整输出见 evidence/config/host_test_20261028_param_ui.txt"
+    pass: true
+    evidence_path: "evidence/config/host_test_20261028_param_ui.txt"
+  - test_id: "TC-407-DESKTOP"
+    description: "参数页桌面 LVGL 验收（REQ-408）"
+    expected: "首页进入参数页；模式切换/加减/翻页/重置/返回；单机 size=7 开局"
+    actual: "2026-10-28 运行 tools/build_desktop.py：编译 459 个 SDK LVGL 源文件，--test 全部 PASS，含参数页 size=7；截图与日志见证据目录"
+    pass: true
+    evidence_path: "evidence/param/20261028/desktop-test.log"
+  - test_id: "FW-BUILD-PARAM"
+    description: "参数页固件编译（REQ-401~410 集成）"
+    expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
+    actual: "2026-10-28 运行 scripts/build_firmware.py：编译成功，main.bin 847,344 B；最终版本烧录后连续 3 次启动 self-test PASS（此前版本累计 5 次 PASS）"
+    pass: true
+    evidence_path: "evidence/param/20261028/firmware_build.log"
+  - test_id: "TC-407-BOOT"
+    description: "参数页固件启动自检（板端，REQ-408）"
+    expected: "烧录后启动输出 param=PASS、paramui=PASS、LCD READY、IMU 6a"
+    actual: "2026-10-28 CodeKit MCP 烧录 COM7；最终版本连续 3 次 reboot 均 PASS（此前版本 5 次 PASS）；学生回传最终中文第 1 页照片并确认 SPAWN 减一/末行布局；参数生效待验证"
+    pass: true
+    evidence_path: "evidence/param/20261028/board_boot.log"
+  - test_id: "TC-408-BALANCE"
+    description: "平衡扫描主机工具与可复现性（REQ-411）"
+    expected: "固定 20 组参数/种子，20×50 两次 CSV 完全一致；输出参数、局数、胜负、平均步数"
+    actual: "2026-10-28 tools/run_host.py 的 TC-408 测试 10 断言 PASS；balance_scan.py 20×50 与 20×500 两次 CSV 均逐字节一致；证据 evidence/balance/20261028/"
+    pass: true
+    evidence_path: "evidence/balance/20261028/balance_scan.csv"
+  - test_id: "TC-407 板端参数生效"
+    description: "参数页板端参数生效（REQ-407/410）"
+    expected: "设生成间隔 3 后每 3 次有效移动生成一次；局中改参数不生效；缓冲阈值/搜索层数手感"
+    actual: "未执行：最终中文界面与 SPAWN 减一/末行布局已确认，但生成间隔、缓冲阈值、AI 层数的实际效果尚未逐项验证"
+    pass: false
+    evidence_path: "docs/04-测试报告.md"
 
 known_issues:
+  - "【2026-10-31 更新】集成分支 integration/local-merge 已合并 PR #6/#7/#4，主机测试 26920/60/2517/85/62/10 断言 PASS；该分支已于 2026-10-31 推送并通过 PR 合入 develop（#8 阈值调整、#6、#7、承接 #4 的 #9 先行合入）。"
+  - "【2026-10-28 当前】参数页 REQ-408 主机 85 断言、桌面 LVGL --test、固件 847,344 B 编译/烧录与多次启动自检均通过；学生确认进入/返回 10 次并回传最终中文第 1 页照片；参数生效待验证。平衡扫描 REQ-411 主机完成并通过可复现性测试；历史/计时（赵志浩开发中）、联机/BLE 未完成。"
+  - "【2026-10-31 更新】开发日志断档检查：经教师确认课程没有“间隔超过 7 天”的硬性要求，按其授权将 course.config.json 的 max_gap_days 由 7 调为 30；未改动 scripts/check_*.py，也未改提交日期。check_all.py 现提交规范/开发日志/需求追踪/manifest 全部 PASS。"
+  - "【2026-10-28 当前】参数页版本已用 SDK v2.5.1 编译并烧录（main.bin 847,344 B），多次启动参数自检 PASS；学生确认进入/返回 10 次并回传最终中文第 1 页照片；参数生效待验证。"
+  - "【2026-10-28 当前】2026-10-17 学生视频只覆盖“选择先后手+人机对战”；REQ-316 的 500ms/单次提交/取消、屏幕裁切、串口 ai=PASS、AI 耗时/栈仍未确认；视频/照片不代表当前 HEAD。"
+  - "【2026-10-28 当前】TC-303-05 单兵板端照片、倾斜正确率/误触率/延迟、390×450 帧率仍缺；最近固件为 839,584 B（10-17）和 839,552 B（10-18）。"
+  - "【2026-10-28 当前】training/T0、T1 任务正文缺失，training/progress.md 空白；需向教师索取材料，不能自行编造。"
+  - "【2026-10-28 当前】会话日志为 18:59 快照，后续文档校准提交未包含；最终交接前需重新导出并更新 SHA-256。"
+  - "以下为历史条目，部分已被后续提交取代；当前状态以 2026-10-28 条目为准。"
   - "REQ-303/304 移动顺序修正已实现（前到后统一遍历、gy_eligible_count 模拟、D1 最终前方伤害）；主机 26920 断言、输入 60、AI 62、桌面 TC-313~317、SDK 编译 839552 B 通过；板端 TC-304-05 由学生三张照片确认，TC-303-05 单兵局面仅主机覆盖，倾斜数量手感和串口耗时待补。"
-  - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839552 B，含 REQ-316 预览、REQ-317 准备页和移动顺序修正）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
-  - "REQ-316 AI 决策预览已实现并在桌面测试通过（默认 500ms、移动/放兵预览、预览中人类输入无效、首页/重开取消）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
-  - "REQ-317 人机准备页已实现并在桌面测试通过（单个入口、红先/蓝后、点击方框互换、取消/开始、人类执红/执蓝两种顺序）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
-  - "REQ-316/317 板端证据为 evidence/ai/BaiduNetDisk.md 中的百度网盘链接（人机.zip，提取码在文件内）；agent 当前环境无法访问 pan.baidu.com，未在线打开/解码，结论按学生本人确认记录。"
+  - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839,584 B，含 REQ-316 预览、REQ-317 准备页）；学生 10-17 视频覆盖选择先后手+人机对战，agent 未解码；串口/耗时/栈未测。"
+  - "REQ-316 AI 决策预览已实现并在桌面测试通过（默认 500ms、移动/放兵预览、预览中人类输入无效、首页/重开取消）；学生视频确认人机流程，但 500ms/单次提交/取消未逐帧核验。"
+  - "REQ-317 人机准备页已实现并在桌面测试通过（单个入口、红先/蓝后、点击方框互换、取消/开始、人类执红/执蓝两种顺序）；学生视频确认准备页选择与对局，取消/布局细节未逐帧核验。"
+  - "REQ-316/317 板端证据为 evidence/ai/BaiduNetDisk.md 中的百度网盘链接（人机.zip，提取码在文件内）；视频说明为“选择先后手+人机对战”，agent 无法访问 pan.baidu.com，未解码；REQ-316 细节、串口/量化未确认。"
   - "AI 搜索按学生选择固定 spawn=0，不建模每步随机生成的 2/4 数字块；这是已知近似，可能低估数字块威胁。"
   - "AI 评估权重是 v0 初始值，只通过固定局面和 30 手自对弈路径测试，尚未做棋力/平衡性调参；不得宣称 AI 已平衡或足够聪明。"
-  - "人机对战默认最多 5 层、300ms、节点上限 200000；开发板上的实际耗时、线程栈和内存尚未测量，需学生烧录取证。"
-  - "自定义游戏参数中的 AI 搜索深度本轮不实现，首页对应入口继续保持禁用。"
+  - "人机对战搜索上限已按 REQ-405 从 5 层提高到 6 层（默认参数仍为 3 层，界面可调）；开发板上的实际耗时、线程栈和内存尚未测量，需学生烧录取证。"
+  - "参数页的 AI 搜索深度仅人机模式显示并写入 GyAiConfig；单机/联机不显示；桌面/板端界面尚未验收。"
   - "当前规则仍为个人原型暂定规则，AI 按当前核心规则实现，不擅自修改放兵生成/参数化规则；需团队/组长确认。"
   - "最新审核反馈：殷白玉已确认实际灯色、亮度及闪灯次数，记录为本人实测确认，无仪器亮度/计时数据；下列待确认描述为此前状态。本轮更新PR #3，不合并。"
   - "213937板端采集与当前灯效源码哈希一致，light自检及清灯/行动/红胜事件已记录，但无实物灯色/亮度/次数确认。已有团队PR #3，待本轮提交审核后更新，不重复创建。"
-  - "REQ-314先做板载RGB，无音效；调度/事件测试及SDK编译通过，物理灯色亮度和时序待烧录验证；evidence/feedback/。"
-  - "REQ-313首页与模式页已实现：仅单机可用，参数/历史/人机/联机只展示禁用；导航和软件回归通过，板端新入口未烧录验收，evidence/homepage/。"
-  - "当前快照：简体实物照片和日志已留证，本人另确认完整对局/金币放兵/长期稳定性验收完成，未提供时长/局数；下列尚未烧录等为历史状态。规则待组长确认，音效/蓝牙/人机未实现。"
-  - "REQ-312简体文本与66字小字库已通过软件检查、LVGL渲染和SDK编译；新固件待学生重烧并拍照，证据evidence/simplified/。"
+  - "REQ-314先做板载RGB，无音效；调度/事件测试及SDK编译通过；10-15 学生本人确认灯色/亮度/次数，时序无仪器数据；evidence/feedback/。"
+  - "REQ-313首页与模式页已实现：导航和软件回归通过；10-17 学生视频确认人机入口/准备页；参数/历史/BLE 入口未验收，evidence/homepage/。"
+  - "【历史快照 2026-10-15】简体实物照片和日志已留证，本人另确认完整对局/金币放兵/长期稳定性验收完成，未提供时长/局数；当时音效/蓝牙/人机未实现，人机后续在 10-17 完成。规则待组长确认。"
+  - "REQ-312简体文本与66字小字库已通过软件检查、LVGL渲染和SDK编译；10-15 学生照片/本人确认简体显示，量化对比未做，证据evidence/simplified/。"
   - "旧固件board/20261015_203552原始日志含LCD READY与IMU校准；四向、按键和真实UI验收不能仅由日志代替。下列未烧录说明属于此前准备状态。"
-  - "REQ-311已按学生B选择接板端LVGL与IMU/按键并完成构建准备，尚未烧录；四向映射、真实触摸和按键均待学生留证。"
-  - "REQ-310图形版已完成真实LVGL电脑测试和软件渲染检查，板端LVGL未启用；evidence/graphical/，不得视作真机验收。用户要求不提交上传。"
-  - "REQ-309输入层软件模拟60断言及SDK编译通过，但未读取IMU或烧录，参数待真机校准；evidence/single/input_host_test.log。"
+  - "REQ-311已按学生B选择接板端LVGL与IMU/按键并完成构建；10-15 旧固件有照片/串口，10-17 人机视频确认 UI/AI 流程；四向映射、触摸/按键量化和串口 ai=PASS 待补。"
+  - "REQ-310图形版已完成真实LVGL电脑测试和软件渲染检查，板端LVGL未启用；evidence/graphical/，不得视作真机验收。用户当时要求先不提交，后续已提交。"
+  - "REQ-309输入层软件模拟60断言及SDK编译通过；10-15 板端有四向预览照片/日志，但正确率/误触率/延迟未量化，参数待真机校准；evidence/single/input_host_test.log。"
   - "2026-10-15新增单机个人原型；主机规则与CLI通过，SDK构建通过，但未烧录，不代表板端游戏完成。"
   - "预览显示未来随机数字仅供调试；正式交互和联机应隐藏，客户端不得提交候选状态。"
   - "暂定规则、学生试玩及代码理解待确认；此前初始化缺少工具链描述属于历史状态，本轮构建证据见evidence/single/firmware_build.log。"
-  - "当前仅完成 M0 初始化准备，产品需求、成员分工与提交材料信息尚待学生确认。"
-  - "当前终端未设置 SIFLI_SDK，未找到 scons 和 arm-none-eabi-gcc，尚未验证固件编译能力。"
-  - "物理验证由学生本人在真实硬件上完成并确认；REQ-316/317 证据为网盘视频链接，agent 未独立解码，不能写成 agent 目测或仪器测量。"
+  - "【历史】M0 初始化时仅完成准备，产品需求、成员分工与提交材料信息待确认；当前状态以 2026-10-28 条目为准。"
+  - "本终端未设置 SIFLI_SDK，未找到 scons 和 arm-none-eabi-gcc；组员分支有 839,584 B / 839,552 B 构建日志，但当前代码 HEAD 未在本终端重编。"
+  - "物理验证由学生本人在真实硬件上完成并确认；10-17 人机视频说明为“选择先后手+人机对战”，agent 未访问/解码，不能写成 agent 目测或仪器测量；REQ-316 细节/串口/量化仍待补。"
   - "原始目录缺少 training/T0、T1 任务正文，需向教师索取。"
 
 self_review: |
-  本次完成 REQ-315~317 的文档、规则核心模拟接口、negamax+Alpha-Beta AI、
-  独立 AI 线程封装、人机 UI、500ms 决策预览和先后手准备页。主机 62 条 AI 断言、
-  桌面 TC-315/316/317 和 SDK 编译均通过，最新固件 839,584 B。
-  不确定/未完成：板端物理验证由学生本人完成并确认；证据为百度网盘视频链接，
-  agent 当前环境无法访问 pan.baidu.com，未独立打开/解码视频，因此没有把真机项
-  写成 agent 目测或仪器测量。AI 评估权重未调参，线程耗时/栈高水位未测，
-  自定义搜索深度未实现。关键决策由学生拍板；agent 自测发现终局分数取负错误并
-  修正；学生尚未逐行审阅代码。
+  2026-10-28 本轮把 PR #6（人机对战）、PR #7（移动顺序修正，含 10-18 日志）
+  和 PR #4（参数配置）合入本地集成分支 integration/local-merge，解决 6 个文档/工具冲突，
+  修复 gy_simulate_move 未遵守 spawn_interval 的集成语义问题，并新增 14 条回归。
+  主机测试 26920/60/2517/85/62 全部 PASS（参数页状态 85 断言，含 SPAWN 减一）。
+  参数页版本已用 SDK v2.5.1 完成桌面 LVGL 测试、固件编译/烧录与启动自检；SPAWN 减一、中文名与第 2 页末行已修复，学生已回传最终中文第 1 页照片。平衡扫描主机工具完成，20×50/500 可复现；参数生效待验证。
+  参数页软件实现：新增 geyi_param_ui 状态机（模式/分页/条目/增减/重置）、首页入口、
+  参数页界面、棋盘 4~8 动态布局、单机/人机开局应用参数、AI 读取人机搜索深度、
+  板端输入读取两项缓冲阈值；AI 上限按 REQ-405 从 5 层改为 6 层，默认参数仍为 3 层。
+  随后按 10-17 学生视频（选择先后手+人机对战）和 10-18 移动顺序照片统一
+  docs/00/01/03/04、evidence 与 manifest 的状态口径：视频只确认学生看到的流程，
+  agent 未解码，不写成 agent 实测；REQ-316 的 500ms/单次提交/取消、串口 ai=PASS、
+  AI 耗时/栈、倾斜量化、帧率仍缺。产品名统一为格弈；硬件约束与旧立项风险已整理。
+  不确定/未完成：集成分支未 push；参数页桌面/板端未验收；平衡扫描、历史/计时、联机/BLE 未完成；
+  training T0/T1 正文缺失；TC-303-05 单兵板端仍缺；参数页板端证据仍缺。关键决策由学生拍板；
+  学生本次纠正了产品名、里程碑表述和赵志浩状态；agent 自测发现终局分数取负错误并修正。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
@@ -154,23 +227,13 @@ human_checkpoints:
     student_confirmation: "学生要求 AI 决策后先显示与倾斜相同的预览，约 0.5 秒后再自动确认，预览期间人类操作无效。"
   - decision_point: "人机对战先后手入口"
     student_confirmation: "学生要求改为首页→开始游戏→人机对战→准备页；左红先手默认玩家，右蓝后手默认 AI，点击方框互换，取消返回，开始后按选择进入游戏。"
-
-# ============================================================
-# 以下为字段填写示例（仅供参考，提交时请删除本示例区块）
-# ============================================================
-# submission:
-#   student_id: "S2026007"
-#   student_name: "李四"
-#   group_id: "G3"
-#   milestone: "阶段4-AI语音集成"
-#   submitted_at: "2026-11-03T21:40:00+08:00"
-# dev_agent:
-#   tool: "Claude Code"
-#   model: "claude-sonnet-5"
-#   session_log_path: "logs/session_2026-11-03.jsonl"
-# physical_verification:
-#   - item: "蓝牙BT PAN联网"
-#     required_action: "打开手机蓝牙个人热点，尝试与开发板配对并观察是否能访问外网"
-#     executed_at: "2026-11-03T20:15:00+08:00"
-#     evidence_path: "evidence/bt_pan_connect_log.png"
-#     agent_conclusion: "配对成功，ping通外部服务器，联网延迟约800ms"
+  - decision_point: "产品名、里程碑与范围"
+    student_confirmation: "产品名确定为格弈；当前集成工作不作为新里程碑申报；赵志浩的历史/计时模块仍在开发、尚未提交，不由 agent 代管；旧立项材料只保留硬件约束与风险，产品范围按新想法更新。"
+  - decision_point: "参数页最终中文界面与交互"
+    student_confirmation: "学生要求参数名中文化，并把 AI 搜索层数放在第 2 页末行；板端测试发现 SPAWN 只能加不能减，修复后回传最终中文第 1 页照片并确认减一可用、末行布局正常。"
+  - decision_point: "当前阶段定位"
+    student_confirmation: "当前属于测试与联调，不申报新里程碑；联调完成后再开始联机部分。"
+  - decision_point: "AI 搜索深度上限"
+    student_confirmation: "学生明确要求把 AI 深度设为 6；默认参数仍为 3，界面可调。"
+  - decision_point: "人机视频证据的使用边界"
+    student_confirmation: "学生提供网盘视频（人机.zip），说明覆盖选择先后手+人机对战；按学生本人确认记录，agent 未解码，不写成 agent 目测；REQ-316 细节、串口 ai=PASS、AI 耗时/栈、倾斜量化和帧率仍需补。"

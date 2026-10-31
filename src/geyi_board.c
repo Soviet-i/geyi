@@ -2,6 +2,7 @@
 #include "geyi_board.h"
 #include "geyi_ui.h"
 #include "geyi_input.h"
+#include "geyi_config.h"
 #include "rtthread.h"
 #include "rtdevice.h"
 #include "bf0_hal.h"
@@ -18,6 +19,15 @@ static uint32_t last_revision;
 static int previous_place=-1,previous_column=-1;
 static uint32_t milliseconds(void)
 {return (uint32_t)((uint64_t)rt_tick_get()*1000/RT_TICK_PER_SECOND);}
+/* 按当前对局模式读取参数页里的方向/角度缓冲阈值。
+ * 参数页只允许在非对局页修改；每局开始/换手重置输入时应用一次，
+ * 因此局中参数不会改变当前对局的输入手感（REQ-407）。 */
+static void reset_input(void)
+{
+    const GyParamSet *p=gy_param_mode(gy_ui_ai_mode()?GY_MODE_PVE:GY_MODE_SINGLE);
+    gy_input_reset(&input);
+    if(p)gy_input_configure(&input,p->dir_buffer,p->angle_buffer);
+}
 static int read_register(struct rt_i2c_bus_device *bus,uint8_t reg,void *data,uint16_t count)
 {return rt_i2c_mem_read(bus,0x6a,reg,8,data,count)==count;}
 static int write_register(struct rt_i2c_bus_device *bus,uint8_t reg,uint8_t value)
@@ -113,20 +123,23 @@ void gy_board_poll(void)
     }
     if(cancel){
         gy_ui_action(gy_ui_has_preview()||gy_ui_is_placing()?GY_UI_CANCEL:GY_UI_PLACE);
-        gy_input_reset(&input);previous_column=-1;
+        reset_input();previous_column=-1;
         rt_kprintf("[geyi:key] KEY2 placing=%d\n",gy_ui_is_placing());
     }
     placing=gy_ui_is_placing();
     if(game->revision!=last_revision||placing!=previous_place){
-        gy_input_reset(&input);last_revision=game->revision;previous_place=placing;previous_column=-1;
+        reset_input();last_revision=game->revision;previous_place=placing;previous_column=-1;
     }
     if(!m.valid||(uint32_t)(now-m.stamp)>100||abs(m.x)>9000||abs(m.y)>9000){
         if(input.direction>=0&&gy_ui_has_preview()&&!placing)gy_ui_action(GY_UI_CANCEL);
-        gy_input_reset(&input);return;
+        reset_input();return;
     }
     if(placing){
-        if(abs(m.x)>1000){int col=(m.x+3000)*6/6001;if(col<0)col=0;if(col>5)col=5;
-            if(col!=previous_column){previous_column=col;gy_ui_cell(col,game->turn?0:5);}}
+        if(abs(m.x)>1000){int size=game->config.size;
+            int col;
+            if(size<GY_SIZE_MIN||size>GY_SIZE_MAX)size=6;
+            col=(m.x+3000)*size/6001;if(col<0)col=0;if(col>=size)col=size-1;
+            if(col!=previous_column){previous_column=col;gy_ui_cell(col,game->turn?0:size-1);}}
         if(confirm){gy_ui_action(GY_UI_CONFIRM);rt_kprintf("[geyi:key] place confirm revision=%u\n",gy_ui_game()->revision);}
         return;
     }

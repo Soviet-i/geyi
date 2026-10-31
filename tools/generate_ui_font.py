@@ -14,8 +14,9 @@ sys.stdout.reconfigure(encoding='utf-8')
 root=Path(__file__).resolve().parents[1]
 sdk=Path(os.environ.get('SIFLI_SDK',r'D:\sifli\SiFli-SDK'))
 source=sdk/'external/lvgl_v9/scripts/built_in_font/SourceHanSansSC-Normal.otf'
-ui=(root/'src/geyi_ui.c').read_text(encoding='utf-8')
-text=''.join(re.findall(r'"([^"\n]*)"',ui))
+# UI 字面量 + 参数名（gy_param_name 的表在 geyi_config.c）。
+sources=[root/'src/geyi_ui.c',root/'src/geyi_config.c']
+text=''.join(''.join(re.findall(r'"([^"\n]*)"',p.read_text(encoding='utf-8'))) for p in sources)
 characters=sorted({c for c in text if '\u4e00'<=c<='\u9fff'})
 font=ImageFont.truetype(str(source),16)
 notdef=font.getmask(chr(0x10ffff))

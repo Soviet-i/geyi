@@ -29,6 +29,9 @@ Thumbs.db
 .env
 *.key
 secrets.*
+# Claude Code 本地 MCP 配置（可能含 Bearer token）
+.mcp.json
+.claude/settings.local.json
 
 # SiFli SDK 构建产物（scons 在 project/ 下生成）
 build_*/

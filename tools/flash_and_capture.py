@@ -3,6 +3,8 @@ from pathlib import Path
 import datetime
 import hashlib
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -12,7 +14,13 @@ import serial.tools.list_ports
 sys.stdout.reconfigure(encoding='utf-8',errors='replace')
 root=Path(__file__).resolve().parents[1]
 build=root/'project/build_sf32lb52-lchspi-ulp_hcpu'
-tool=Path(r'D:\sifli\tools\tools\sftool\0.2.5\sftool.exe')
+def find_sftool():
+    candidates=[os.environ.get('SFTOOL'),shutil.which('sftool')]
+    candidates+=sorted((str(p) for p in (Path.home()/'.sifli/tools/sftool').glob('*/sftool.exe')),reverse=True)
+    for candidate in candidates:
+        if candidate and Path(candidate).is_file():return Path(candidate)
+    raise SystemExit('sftool missing; set SFTOOL to the sftool executable path.')
+tool=find_sftool()
 ports=[p.device for p in serial.tools.list_ports.comports() if (p.vid,p.pid)==(0x1a86,0x7523)]
 if len(ports)!=1:raise SystemExit('Exactly one CH340 board is required; do not guess COM ports.')
 if not tool.exists() or not (build/'sftool_param.json').exists():raise SystemExit('Build or sftool missing.')

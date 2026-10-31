@@ -26,12 +26,12 @@ static const GyParamMeta k_meta[GY_P_COUNT] = {
     { "生成间隔",      GY_SPAWN_MIN,   GY_SPAWN_MAX,   0, 1 },
     { "士兵血量",      GY_HP_MIN,      GY_HP_MAX,      0, 0 },
     { "士兵攻击力",    GY_ATTACK_MIN,  GY_ATTACK_MAX,  0, 0 },
-    { "放置费",        GY_COST_MIN,    GY_COST_MAX,    0, 0 },
-    { "合并奖励",      GY_MERGE_MIN,   GY_MERGE_MAX,   0, 0 },
-    { "击杀奖励",      GY_KILL_MIN,    GY_KILL_MAX,    0, 0 },
-    { "AI搜索深度",    GY_DEPTH_MIN,   GY_DEPTH_MAX,   1, 0 },  /* 仅人机模式 */
-    { "方向缓冲阈值",  GY_BUFFER_MIN,  GY_BUFFER_MAX,  0, 0 },
-    { "角度缓冲阈值",  GY_BUFFER_MIN,  GY_BUFFER_MAX,  0, 0 },
+    { "放置金币",        GY_COST_MIN,    GY_COST_MAX,    0, 0 },
+    { "合并金币",      GY_MERGE_MIN,   GY_MERGE_MAX,   0, 0 },
+    { "击杀金币",      GY_KILL_MIN,    GY_KILL_MAX,    0, 0 },
+    { "AI搜索层数",    GY_DEPTH_MIN,   GY_DEPTH_MAX,   1, 0 },  /* 仅人机模式 */
+    { "方向切换缓冲",  GY_BUFFER_MIN,  GY_BUFFER_MAX,  0, 0 },
+    { "数量切换缓冲",  GY_BUFFER_MIN,  GY_BUFFER_MAX,  0, 0 },
 };
 
 /* 三类配置存在 RAM 中，重启回默认（ADR-0003）。 */

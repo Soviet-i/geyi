@@ -15,8 +15,23 @@ out=root/'build/desktop'
 out.mkdir(parents=True,exist_ok=True)
 logs=[]
 executable=out/'geyi-desktop-cn.exe'
-vs=Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Microsoft Visual Studio/2022'
-vcvars=next(vs.glob('*/VC/Auxiliary/Build/vcvars64.bat'),None)
+candidates=[]
+if os.environ.get('VS_ROOT'):
+    candidates.append(Path(os.environ['VS_ROOT']))
+vswhere=Path(os.environ.get('ProgramFiles(x86)',r'C:\Program Files (x86)'))/'Microsoft Visual Studio/Installer/vswhere.exe'
+if vswhere.exists():
+    probe=subprocess.run([str(vswhere),'-latest','-products','*','-requires','Microsoft.VisualStudio.Component.VC.Tools.x86.x64','-property','installationPath'],capture_output=True,text=True)
+    for line in probe.stdout.splitlines():
+        if line.strip(): candidates.append(Path(line.strip()))
+candidates += [Path(os.environ.get('ProgramFiles',r'C:\Program Files'))/'Microsoft Visual Studio/2022',
+               Path(os.environ.get('ProgramFiles(x86)',r'C:\Program Files (x86)'))/'Microsoft Visual Studio/2022']
+vcvars=None
+for candidate in candidates:
+    found=next(candidate.glob('*/VC/Auxiliary/Build/vcvars64.bat'),None) if candidate.is_dir() else None
+    if not found and (candidate/'VC/Auxiliary/Build/vcvars64.bat').exists():
+        found=candidate/'VC/Auxiliary/Build/vcvars64.bat'
+    if found:
+        vcvars=found; break
 if not vcvars or not (lvgl/'lvgl.h').exists():raise SystemExit('MSVC or SDK LVGL v9 not found')
 result=subprocess.run('cmd.exe /d /s /c "call "'+str(vcvars)+'" >nul && set"',capture_output=True)
 if result.returncode:raise SystemExit(result.stderr.decode(errors='replace'))
@@ -50,8 +65,8 @@ try:
     r=subprocess.run([lib,'/nologo','/OUT:'+str(out/'lvgl.lib'),'@'+str(response)],cwd=out,env=env,capture_output=True)
     if r.returncode:raise RuntimeError(r.stdout.decode('mbcs',errors='replace'))
     app=[root/'src/geyi_game.c',root/'src/geyi_feedback.c',root/'src/geyi_ai.c',
-         root/'src/geyi_ai_task.c',root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',
-         root/'tools/geyi_desktop.c']
+         root/'src/geyi_ai_task.c',root/'src/geyi_config.c',root/'src/geyi_param_ui.c',
+         root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',root/'tools/geyi_desktop.c']
     app_objects=[compile_one(p) for p in app]
     command=[cc,'/nologo',*[str(p) for p in app_objects],str(out/'lvgl.lib'),
              '/Fe:'+str(executable),'/link','/SUBSYSTEM:WINDOWS','user32.lib','gdi32.lib']

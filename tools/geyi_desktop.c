@@ -1,6 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "geyi_ui.h"
+#include "geyi_config.h"
+#include "geyi_param_ui.h"
 #include "geyi_font_cn16.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,6 +65,58 @@ static void enter_ai_mode(int human_red)
     if(!human_red)click(100,200);
     click(270,372);
 }
+static int param_tests(void)
+{
+    gy_ui_action(GY_UI_HOME);
+    gy_param_ui_init();
+    click(160,282);
+    check(gy_ui_param_active(),"param page opens");
+    check(gy_param_ui_mode()==GY_MODE_SINGLE,"param default single");
+    check(gy_param_ui_page()==0,"param first page");
+    check(gy_param_ui_value(GY_P_SIZE)==6,"param size default");
+    screenshot("param_page.bmp");
+    click(338,123);
+    check(gy_param_ui_value(GY_P_SIZE)==7,"param size plus");
+    click(288,123);
+    check(gy_param_ui_value(GY_P_SIZE)==6,"param size minus");
+    click(338,161);
+    check(gy_param_ui_value(GY_P_SPAWN_INTERVAL)==3,"param spawn plus");
+    click(288,161);
+    check(gy_param_ui_value(GY_P_SPAWN_INTERVAL)==1,"param spawn minus");
+    click(324,318);
+    check(gy_param_ui_page()==1 && gy_param_ui_item_at(4)==-1,
+          "single page 2 hides depth at last row");
+    screenshot("param_page2_single.bmp");
+    click(66,318);
+    check(gy_param_ui_page()==0,"back to first page before pve");
+    click(195,81);
+    check(gy_param_ui_mode()==GY_MODE_PVE,"param pve mode");
+    click(324,318);
+    check(gy_param_ui_page()==1,"param second page");
+    screenshot("param_page2.bmp");
+    click(338,275);
+    check(gy_param_ui_value(GY_P_SEARCH_DEPTH)==4,"param depth plus");
+    click(107,359);
+    check(gy_param_ui_value(GY_P_SEARCH_DEPTH)==3,"param reset pve");
+    click(306,81);
+    check(gy_param_ui_mode()==GY_MODE_PVP,"param pvp mode");
+    click(84,81);
+    check(gy_param_ui_mode()==GY_MODE_SINGLE,"param single mode");
+    click(66,318);
+    check(gy_param_ui_page()==0,"param back to first page");
+    click(338,123);
+    check(gy_param_ui_value(GY_P_SIZE)==7,"param single size 7");
+    click(283,359);
+    check(!gy_ui_param_active(),"param page back home");
+    click(160,212);
+    click(160,126);
+    check(gy_ui_is_playing(),"single starts after params");
+    check(gy_ui_game()->config.size==7,"single applies size 7");
+    screenshot("param_size7.bmp");
+    gy_param_ui_init();
+    gy_ui_action(GY_UI_HOME);
+    return 0;
+}
 static int tests(void)
 {
     GyGame before;GyPreview p;GyMove m={GY_UP,1};
@@ -73,8 +127,8 @@ static int tests(void)
     gy_ui_action(GY_UI_UP);gy_ui_tilt_select(GY_UP,1);gy_ui_action(GY_UI_CONFIRM);
     check(!gy_ui_has_preview()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"menu ignores game input");
     check(gy_ui_take_feedback()==GY_FX_NONE,"menu game actions do not flash");
-    click(160,280);click(160,346);
-    check(!gy_ui_is_playing(),"home placeholders disabled");
+    click(160,346);
+    check(!gy_ui_is_playing(),"history placeholder disabled");
     click(160,212);screenshot("modes.bmp");
     click(160,280);
     check(!gy_ui_is_playing(),"unfinished online mode disabled");
@@ -215,6 +269,8 @@ done: ;
     check(!gy_ui_is_playing(),"home during AI preview");
     Sleep(600);gy_ui_tick();
     check(!gy_ui_is_playing(),"preview commit cancelled after home");
+    param_tests();
+    puts("PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
     puts("PASS: TC-315 AI modes, AI turn, input guard, stale result discard");

@@ -337,6 +337,68 @@ static int test_spawn_interval_effect(void)
     return 0;
 }
 
+/* 集成回归：gy_simulate_move 的 spawn_next=1 必须遵守 spawn_interval，
+ * 否则 AI 搜索会按“每次生成”模拟，与真实对局不一致。 */
+static int count_numbers(const GyGame *g)
+{
+    int n = 0, x, y;
+    for (y = 0; y < g->config.size; ++y)
+        for (x = 0; x < g->config.size; ++x)
+            n += g->cells[y][x].kind == GY_NUMBER;
+    return n;
+}
+
+static int setup_spawn_board(GyGame *g, int interval)
+{
+    GyConfig c = gy_default_config();
+    GyCell cell;
+    c.spawn_interval = interval;
+    if (gy_init(g, c, 42) != 1) return 0;
+    memset(g->cells, 0, sizeof(g->cells));
+    cell.kind = GY_SOLDIER; cell.owner = 0; cell.hp = 8; cell.value = 0;
+    g->cells[1][3] = cell;
+    cell.kind = GY_NUMBER; cell.owner = 0; cell.hp = 0; cell.value = 2;
+    g->cells[1][1] = cell;
+    cell.kind = GY_SOLDIER; cell.owner = 1; cell.hp = 8; cell.value = 0;
+    g->cells[5][5] = cell;
+    g->turn = 0;
+    g->outcome = GY_PLAYING;
+    g->moves = 0;
+    g->coins[0] = g->coins[1] = 0;
+    return 1;
+}
+
+static int test_simulate_respects_spawn_interval(void)
+{
+    GyGame g, next;
+    GyMove m = {GY_RIGHT, 1};
+
+    /* 间隔 3：第 1 次有效移动不生成 */
+    CHECK(setup_spawn_board(&g, 3));
+    CHECK(gy_simulate_move(&g, m, &next, 1) == 1);
+    CHECK(next.moves == 1);
+    CHECK(count_numbers(&next) == 1);
+
+    /* 间隔 3：第 3 次有效移动生成 */
+    CHECK(setup_spawn_board(&g, 3));
+    g.moves = 2;
+    CHECK(gy_simulate_move(&g, m, &next, 1) == 1);
+    CHECK(next.moves == 3);
+    CHECK(count_numbers(&next) == 2);
+
+    /* spawn_next=0（AI 搜索）永远不生成 */
+    CHECK(setup_spawn_board(&g, 3));
+    g.moves = 2;
+    CHECK(gy_simulate_move(&g, m, &next, 0) == 1);
+    CHECK(count_numbers(&next) == 1);
+
+    /* 间隔 1（默认）每次有效移动都生成 */
+    CHECK(setup_spawn_board(&g, 1));
+    CHECK(gy_simulate_move(&g, m, &next, 1) == 1);
+    CHECK(count_numbers(&next) == 2);
+    return 0;
+}
+
 /* TC-402/TC-409：倾斜缓冲阈值已接线到 geyi_input，并保持默认 10% 不改变既有行为 */
 static int test_input_buffer_wired(void)
 {
@@ -414,6 +476,7 @@ int main(void)
     if (test_get_set_roundtrip()) return 1;
     if (test_invalid_id()) return 1;
     if (test_spawn_interval_effect()) return 1;
+    if (test_simulate_respects_spawn_interval()) return 1;
     if (test_input_buffer_wired()) return 1;
     if (test_selftest()) return 1;
     printf("PASS: %d assertions; TC-401..TC-406 + TC-409 host tests\n", checks);
