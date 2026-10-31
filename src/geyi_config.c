@@ -1,7 +1,7 @@
 /*
  * geyi_config.c —— 游戏参数配置子系统实现（REQ-401~411）
  *
- * 设计依据：docs/02-方案设计说明.md、docs/adr/0003-param-model.md
+ * 设计依据：docs/02-方案设计说明.md、docs/adr/0006-param-model.md
  *
  * 校验策略分两层：
  *   gy_param_validate() 返回具体错误码，供界面提示与主机测试精确断言；
