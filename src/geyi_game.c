@@ -52,63 +52,93 @@ static void position(int d, int n, int line, int step, int *x, int *y)
     *x = (d == GY_LEFT || d == GY_RIGHT) ? (d == GY_LEFT ? step : n - 1 - step) : line;
     *y = (d == GY_UP || d == GY_DOWN) ? (d == GY_UP ? step : n - 1 - step) : line;
 }
-static int eligible(const GyGame *g, int x, int y, int d)
+static void move_number(GyGame *g, int d, int x, int y,
+                        unsigned char merged[GY_MAX][GY_MAX])
 {
-    const GyCell *a = &g->cells[y][x];
-    int nx = x + dx[d], ny = y + dy[d];
-    const GyCell *b;
-    if (a->kind != GY_SOLDIER || a->owner != g->turn || !inside(g, nx, ny)) return 0;
-    b = &g->cells[ny][nx];
-    /* A friendly chain may advance into the space freed by its front soldier. */
-    while (b->kind == GY_SOLDIER && b->owner == a->owner) {
-        nx += dx[d]; ny += dy[d];
-        if (!inside(g,nx,ny)) return 0;
-        b = &g->cells[ny][nx];
+    int nx, ny;
+    GyCell item = g->cells[y][x];
+    memset(&g->cells[y][x], 0, sizeof(GyCell));
+    for (;;) {
+        GyCell *target;
+        nx = x + dx[d]; ny = y + dy[d];
+        if (!inside(g, nx, ny)) break;
+        target = &g->cells[ny][nx];
+        if (target->kind == GY_EMPTY) { x = nx; y = ny; continue; }
+        if (target->kind == GY_NUMBER && target->value == item.value &&
+            item.value < 65536 && !merged[ny][nx]) {
+            target->value *= 2; merged[ny][nx] = 1;
+            add_coins(g, g->turn, g->config.merge_reward); item.kind = GY_EMPTY;
+        }
+        break;
     }
-    return b->kind == GY_EMPTY || (b->kind == GY_SOLDIER && b->owner != a->owner);
+    if (item.kind != GY_EMPTY) g->cells[y][x] = item;
+}
+static int move_soldier(GyGame *g, int d, int x, int y)
+{
+    int nx = x + dx[d], ny = y + dy[d];
+    GyCell *from = &g->cells[y][x], *to;
+    if (!inside(g, nx, ny)) return 0;
+    to = &g->cells[ny][nx];
+    if (to->kind == GY_EMPTY) {
+        *to = *from; memset(from, 0, sizeof(*from)); return 1;
+    }
+    if (to->kind == GY_SOLDIER && to->owner != g->turn && to->hp > 0) {
+        to->hp -= g->config.attack; return 1;
+    }
+    return 0;
+}
+/* D1: after all movement, each number hits the soldier directly in front. */
+static void damage_numbers(GyGame *g, int d)
+{
+    int x, y, nx, ny;
+    for (y = 0; y < g->config.size; ++y) for (x = 0; x < g->config.size; ++x) {
+        if (g->cells[y][x].kind != GY_NUMBER) continue;
+        nx = x + dx[d]; ny = y + dy[d];
+        if (inside(g, nx, ny) && g->cells[ny][nx].kind == GY_SOLDIER)
+            g->cells[ny][nx].hp -= (int)g->cells[y][x].value;
+    }
+}
+/* One front-to-back pass. Numbers and selected soldiers are interleaved so a
+ * piece sees cells vacated earlier in the same move. */
+static void move_pass(GyGame *g, int d, const unsigned char selected[GY_MAX][GY_MAX],
+                      int *actions, unsigned char acted[GY_MAX][GY_MAX])
+{
+    int n = g->config.size, line, step, x, y;
+    unsigned char merged[GY_MAX][GY_MAX] = {{0}};
+    if (actions) *actions = 0;
+    for (line = 0; line < n; ++line) for (step = 0; step < n; ++step) {
+        position(d, n, line, step, &x, &y);
+        if (g->cells[y][x].kind == GY_NUMBER) {
+            move_number(g, d, x, y, merged);
+        } else if (g->cells[y][x].kind == GY_SOLDIER &&
+                   g->cells[y][x].owner == g->turn &&
+                   g->cells[y][x].hp > 0 && selected && selected[y][x]) {
+            if (move_soldier(g, d, x, y)) {
+                if (actions) ++*actions;
+                if (acted) acted[y][x] = 1;
+            }
+        }
+    }
+    damage_numbers(g, d);
+}
+/* Simulate every own soldier selected; return how many act if all are chosen. */
+static int simulate_actions(const GyGame *g, int d, unsigned char acted[GY_MAX][GY_MAX])
+{
+    GyGame tmp = *g;
+    unsigned char all[GY_MAX][GY_MAX] = {{0}};
+    int x, y, actions = 0;
+    for (y = 0; y < tmp.config.size; ++y) for (x = 0; x < tmp.config.size; ++x)
+        if (tmp.cells[y][x].kind == GY_SOLDIER && tmp.cells[y][x].owner == tmp.turn &&
+            tmp.cells[y][x].hp > 0)
+            all[y][x] = 1;
+    move_pass(&tmp, d, all, &actions, acted);
+    return actions;
 }
 int gy_eligible_count(const GyGame *g, int direction)
 {
-    int x,y,count=0;
-    if(!g||direction<0||direction>3||g->outcome!=GY_PLAYING)return 0;
-    for(y=0;y<g->config.size;++y)for(x=0;x<g->config.size;++x)
-        count+=eligible(g,x,y,direction);
-    return count;
-}
-static void numbers(GyGame *g, int d)
-{
-    int n = g->config.size, line, step;
-    unsigned char merged[GY_MAX][GY_MAX] = {{0}};
-    for (line = 0; line < n; ++line) for (step = 0; step < n; ++step) {
-        int x, y, nx, ny;
-        GyCell item;
-        position(d, n, line, step, &x, &y);
-        if (g->cells[y][x].kind != GY_NUMBER) continue;
-        item = g->cells[y][x]; memset(&g->cells[y][x], 0, sizeof(GyCell));
-        for (;;) {
-            GyCell *target;
-            nx = x + dx[d]; ny = y + dy[d];
-            if (!inside(g, nx, ny)) break;
-            target = &g->cells[ny][nx];
-            if (target->kind == GY_EMPTY) { x = nx; y = ny; continue; }
-            if (target->kind == GY_NUMBER && target->value == item.value &&
-                item.value < 65536 && !merged[ny][nx]) {
-                target->value *= 2; merged[ny][nx] = 1;
-                add_coins(g, g->turn, g->config.merge_reward); item.kind = GY_EMPTY;
-            }
-            break;
-        }
-        if (item.kind != GY_EMPTY) g->cells[y][x] = item;
-    }
-    /* Damage after all sliding/merging: each resulting number attacks at most once. */
-    for (line = 0; line < n; ++line) for (step = 0; step < n; ++step) {
-        int x, y, nx, ny;
-        position(d, n, line, step, &x, &y);
-        nx = x + dx[d]; ny = y + dy[d];
-        if (g->cells[y][x].kind == GY_NUMBER && inside(g, nx, ny) &&
-            g->cells[ny][nx].kind == GY_SOLDIER)
-            g->cells[ny][nx].hp -= (int)g->cells[y][x].value;
-    }
+    unsigned char acted[GY_MAX][GY_MAX] = {{0}};
+    if (!g || direction < 0 || direction > 3 || g->outcome != GY_PLAYING) return 0;
+    return simulate_actions(g, direction, acted);
 }
 static void finish(GyGame *g)
 {
@@ -130,37 +160,30 @@ static void finish(GyGame *g)
 static int apply_move(GyGame *a, const GyGame *before, GyMove m)
 {
     int x, y, n, total = 0, ids[GY_MAX*GY_MAX], dist[GY_MAX*GY_MAX];
-    int i, j, d, cx, cy;
+    int i, d, cx, cy;
+    unsigned char acted[GY_MAX][GY_MAX] = {{0}};
     unsigned char selected[GY_MAX][GY_MAX] = {{0}};
     if (a->outcome != GY_PLAYING || m.direction < 0 || m.direction > 3 || m.count < 0) return 0;
     d = m.direction; n = a->config.size;
+    (void)simulate_actions(a, d, acted);
+    for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (acted[y][x]) ++total;
+    if (m.count > total || (m.count == 0 && total > 0)) return 0;
     /* Doubled coordinates retain half-cell edge centers without floats. */
     cx = d == GY_LEFT ? -1 : (d == GY_RIGHT ? 2*n-1 : n-1);
     cy = d == GY_UP ? -1 : (d == GY_DOWN ? 2*n-1 : n-1);
-    for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (eligible(a,x,y,d)) {
-        int distance = abs(2*x-cx) + abs(2*y-cy);
-        i = total++;
-        while (i > 0 && dist[i-1] > distance) {
-            ids[i] = ids[i-1]; dist[i] = dist[i-1]; --i;
+    {
+        int sel_count = 0;
+        for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (acted[y][x]) {
+            int distance = abs(2*x-cx) + abs(2*y-cy);
+            i = sel_count++;
+            while (i > 0 && dist[i-1] > distance) {
+                ids[i] = ids[i-1]; dist[i] = dist[i-1]; --i;
+            }
+            ids[i] = y*GY_MAX+x; dist[i] = distance;
         }
-        ids[i] = y*GY_MAX+x; dist[i] = distance;
+        for (i = 0; i < m.count; ++i) selected[ids[i]/GY_MAX][ids[i]%GY_MAX] = 1;
     }
-    if (m.count > total || (m.count == 0 && total > 0)) return 0;
-    for (i = 0; i < m.count; ++i) selected[ids[i]/GY_MAX][ids[i]%GY_MAX] = 1;
-    numbers(a, d);
-    for (i = 0; i < n; ++i) for (j = 0; j < n; ++j) {
-        int nx, ny;
-        GyCell *from, *to;
-        position(d,n,i,j,&x,&y);
-        if (!selected[y][x]) continue;
-        from = &a->cells[y][x];
-        if (from->kind != GY_SOLDIER || from->hp <= 0) continue;
-        nx = x+dx[d]; ny = y+dy[d]; to = &a->cells[ny][nx];
-        if (to->kind == GY_EMPTY) {
-            *to = *from; memset(from,0,sizeof(*from));
-        } else if (to->kind == GY_SOLDIER && to->owner != a->turn && to->hp > 0)
-            to->hp -= a->config.attack;
-    }
+    move_pass(a, d, selected, NULL, NULL);
     if (memcmp(a->cells,before->cells,sizeof(before->cells)) == 0 &&
         a->coins[0] == before->coins[0] && a->coins[1] == before->coins[1]) return 0;
     finish(a); ++a->moves; ++a->revision;

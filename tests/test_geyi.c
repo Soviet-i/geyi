@@ -29,6 +29,39 @@ int main(void)
     gy_init(&g,gy_default_config(),123);h=g;
     CHECK(gy_preview(&g,m,&p));CHECK(!memcmp(&g,&h,sizeof(g)));
     CHECK(gy_commit(&g,&p));CHECK(g.revision==1);CHECK(!gy_commit(&g,&p));
+    /* TC-303-05: a number behind the moving soldier follows into its old cell. */
+    g=empty();soldier(&g,3,1,0,8);number(&g,1,1,2);soldier(&g,5,5,1,8);
+    CHECK(gy_eligible_count(&g,GY_RIGHT)==1);
+    {GyPreview q;GyMove mv={GY_RIGHT,1};
+     CHECK(gy_preview(&g,mv,&q));
+     CHECK(q.visible.cells[1][2].kind==GY_EMPTY);
+     CHECK(q.visible.cells[1][3].kind==GY_NUMBER&&q.visible.cells[1][3].value==2);
+     CHECK(q.visible.cells[1][4].kind==GY_SOLDIER&&q.visible.cells[1][4].owner==0);
+     CHECK(q.visible.cells[1][4].hp==6);
+     CHECK(gy_commit(&g,&q));CHECK(g.turn==1);}
+    /* TC-304-05: the soldier blocked by a number is counted and moves after it. */
+    g=empty();g.turn=1;soldier(&g,1,1,1,8);soldier(&g,4,1,1,8);
+    number(&g,0,1,2);number(&g,2,1,2);soldier(&g,5,5,0,8);
+    CHECK(gy_eligible_count(&g,GY_RIGHT)==2);
+    {GyPreview q;GyMove mv={GY_RIGHT,2};
+     CHECK(gy_preview(&g,mv,&q));
+     CHECK(q.visible.cells[1][0].kind==GY_EMPTY);
+     CHECK(q.visible.cells[1][1].kind==GY_NUMBER&&q.visible.cells[1][1].value==2);
+     CHECK(q.visible.cells[1][2].kind==GY_SOLDIER&&q.visible.cells[1][2].owner==1&&q.visible.cells[1][2].hp==6);
+     CHECK(q.visible.cells[1][3].kind==GY_EMPTY);
+     CHECK(q.visible.cells[1][4].kind==GY_NUMBER&&q.visible.cells[1][4].value==2);
+     CHECK(q.visible.cells[1][5].kind==GY_SOLDIER&&q.visible.cells[1][5].owner==1&&q.visible.cells[1][5].hp==6);
+     CHECK(gy_commit(&g,&q));CHECK(g.outcome==GY_PLAYING);}
+    /* TC-303-06: a soldier moves into the vacated cell but does not also attack. */
+    g=empty();g.turn=1;soldier(&g,1,1,1,8);number(&g,2,1,2);
+    soldier(&g,4,1,0,8);soldier(&g,5,5,0,8);
+    CHECK(gy_eligible_count(&g,GY_RIGHT)==1);
+    {GyPreview q;GyMove mv={GY_RIGHT,1};
+     CHECK(gy_preview(&g,mv,&q));
+     CHECK(q.visible.cells[1][1].kind==GY_EMPTY);
+     CHECK(q.visible.cells[1][2].kind==GY_SOLDIER&&q.visible.cells[1][2].owner==1);
+     CHECK(q.visible.cells[1][3].kind==GY_NUMBER&&q.visible.cells[1][3].value==2);
+     CHECK(q.visible.cells[1][4].kind==GY_SOLDIER&&q.visible.cells[1][4].owner==0&&q.visible.cells[1][4].hp==6);}
     /* Numeric-only fixtures allow count zero when no soldier can move. */
     g=empty();number(&g,0,2,2);number(&g,1,2,2);number(&g,2,2,4);
     CHECK(act(&g,GY_LEFT,0));CHECK(g.cells[2][0].value==4&&g.cells[2][1].value==4);

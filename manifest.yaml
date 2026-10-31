@@ -75,6 +75,11 @@ physical_verification:
     executed_at: "2026-10-17（学生本人操作并确认；精确时刻未单列）"
     evidence_path: "evidence/ai/BaiduNetDisk.md"
     agent_conclusion: "学生回传百度网盘视频（人机.zip，提取码在文件内）并确认板端验证成功；agent 未能在线打开/解码视频，未独立核验画面，按学生本人确认记录，不写成 agent 目测或仪器测量。"
+  - item: "REQ-303/REQ-304 移动顺序修正板端验证"
+    required_action: "烧录 839,552 B 固件，摆出 N2 B8 N2 . B8 .，向右选 2 兵，观察预览和落子"
+    executed_at: "2026-10-18（学生拍照时间；精确时刻未单列）"
+    evidence_path: "evidence/move-order/README.md"
+    agent_conclusion: "学生提供 hardware-01/02/03.jpg：移动前 2 B8 2 . B8 .，预览 . 2 B6 . 2 B6（数量2个），确认后位置一致并换手；支持 TC-304-05 的两兵移动、数字补位和 D1 B6 伤害。未提供 TC-303-05 单兵照片、串口日志或仪器计时，agent 未独立测量。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -95,9 +100,16 @@ test_results:
     actual: "桌面 TC-317 PASS；真机由学生视频确认验证成功"
     pass: true
     evidence_path: "evidence/ai/desktop-test-tc317.log"
+  - test_id: "TC-304-05"
+    description: "前到后移动顺序、可行动数量和数字补位板端验证"
+    expected: "N2 B8 N2 . B8 . 向右选2兵 -> . N2 B6 . N2 B6"
+    actual: "主机固定用例 PASS；板端 hardware-01/02/03.jpg 显示移动前、预览和确认后均为预期位置，两个 B8 变 B6"
+    pass: true
+    evidence_path: "evidence/move-order/README.md"
 
 known_issues:
-  - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839584 B，含 REQ-316 预览和 REQ-317 准备页）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
+  - "REQ-303/304 移动顺序修正已实现（前到后统一遍历、gy_eligible_count 模拟、D1 最终前方伤害）；主机 26920 断言、输入 60、AI 62、桌面 TC-313~317、SDK 编译 839552 B 通过；板端 TC-304-05 由学生三张照片确认，TC-303-05 单兵局面仅主机覆盖，倾斜数量手感和串口耗时待补。"
+  - "REQ-315 AI 核心、独立线程封装、模式页入口、主机/桌面测试和 SDK 编译已完成（main.bin 839552 B，含 REQ-316 预览、REQ-317 准备页和移动顺序修正）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
   - "REQ-316 AI 决策预览已实现并在桌面测试通过（默认 500ms、移动/放兵预览、预览中人类输入无效、首页/重开取消）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
   - "REQ-317 人机准备页已实现并在桌面测试通过（单个入口、红先/蓝后、点击方框互换、取消/开始、人类执红/执蓝两种顺序）；学生已回传网盘视频确认板端验证成功，agent 未独立解码视频。"
   - "REQ-316/317 板端证据为 evidence/ai/BaiduNetDisk.md 中的百度网盘链接（人机.zip，提取码在文件内）；agent 当前环境无法访问 pan.baidu.com，未在线打开/解码，结论按学生本人确认记录。"
