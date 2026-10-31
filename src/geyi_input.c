@@ -6,6 +6,21 @@ void gy_input_reset(GyInput *s)
 {
     memset(s,0,sizeof(*s));
     s->direction = s->pending_direction = -1;
+    /* 默认 10%，与改造前的硬编码一致；调用方随后可用 gy_input_configure() 覆盖 */
+    s->dir_buffer_pct = GY_INPUT_BUFFER_DEFAULT;
+    s->angle_buffer_pct = GY_INPUT_BUFFER_DEFAULT;
+}
+static int clamp_pct(int v)
+{
+    if(v < GY_INPUT_BUFFER_MIN) return GY_INPUT_BUFFER_MIN;
+    if(v > GY_INPUT_BUFFER_MAX) return GY_INPUT_BUFFER_MAX;
+    return v;
+}
+void gy_input_configure(GyInput *s, int dir_pct, int angle_pct)
+{
+    if(!s) return;
+    s->dir_buffer_pct = clamp_pct(dir_pct);
+    s->angle_buffer_pct = clamp_pct(angle_pct);
 }
 static void clear_selection(GyInput *s, GyInputEvent *e)
 {
@@ -44,12 +59,12 @@ GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const i
     }
     if(s->latched) return e;
     d=ax>ay?(x>0?GY_RIGHT:GY_LEFT):(y>0?GY_DOWN:GY_UP);
-    /* Keep previous sector until the competing axis is >10% stronger. */
+    /* 保持原方向，直到竞争轴比它强出 dir_buffer_pct%（默认 10%，见 geyi_config）。 */
     if(s->pending_direction>=0&&d!=s->pending_direction) {
         int old=s->pending_direction;
         int oldmag=(old==GY_LEFT||old==GY_RIGHT)?ax:ay;
         int oldsign=(old==GY_LEFT?x<0:old==GY_RIGHT?x>0:old==GY_UP?y<0:y>0);
-        if(oldsign&&magnitude*100<=oldmag*110) d=old;
+        if(oldsign&&magnitude*100<=oldmag*(100+s->dir_buffer_pct)) d=old;
     }
     n=available[d];
     count=(d==s->pending_direction&&n==s->available)?s->pending_count:0;
@@ -57,7 +72,8 @@ GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const i
     /* No soldiers: retain count=0 for a possible number-only move. */
     if(n==0) count=0;
     else {
-        int band=5000/n,margin=band/10;
+        /* 数量档位之间的滞回宽度 = 每档带宽的 angle_buffer_pct%（默认 10%）。 */
+        int band=5000/n,margin=band*s->angle_buffer_pct/100;
         while(count<n&&magnitude>=1000+count*band+margin) ++count;
         while(count>0&&magnitude<1000+(count-1)*band-margin) --count;
         if(count==0) {clear_selection(s,&e);return e;}
