@@ -30,6 +30,7 @@ targets = [
     ('geyi-balance-tests', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tests/test_balance.c']),
     ('geyi-balance-scan', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tools/geyi_balance_scan.c']),
     ('geyi-ai-bench', ['src/geyi_game.c', 'src/geyi_ai.c', 'tools/geyi_ai_bench.c']),
+    ('geyi-input-bench', ['src/geyi_game.c', 'src/geyi_input.c', 'tools/geyi_input_bench.c']),
     ('geyi-cli', ['src/geyi_game.c', 'src/geyi_input.c', 'tools/geyi_cli.c']),
 ]
 for name, relative_sources in targets:
