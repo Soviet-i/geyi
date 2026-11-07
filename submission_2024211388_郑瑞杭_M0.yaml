@@ -1,0 +1,134 @@
+# ============================================================
+# 提交清单（从 manifest.yaml 派生，个人信息待学生填写）
+# 文件名请改为 submission_<学号或组号>_<里程碑>.yaml
+# ============================================================
+
+submission:
+  student_id: "2024211388"
+  student_name: "郑瑞杭"
+  group_id: "G8"
+  milestone: "M0-立项"
+  submitted_at: "2026-10-28T9:00:00+08:00"
+
+dev_agent:
+  tool: "Claude Code（本次 REQ-315~317；早期初始化/单机原型由 Codex 协助）"
+  model: "deepseek-flash[1m]"
+  session_log_path: "<完整会话记录文件路径，必须原始导出>"
+  session_log_hash: "<可选：会话记录哈希>"
+
+requirements:
+  prd_path: "docs/01-需求规格说明.md"
+  hardware_constraints_ref: "docs/02-方案设计说明.md（硬件与平台约束一节）"
+
+design:
+  architecture_doc_path: "docs/02-方案设计说明.md"
+  key_decisions:
+    - decision: "REQ-311一次集成板端显示触摸与IMU/按键后实测"
+      alternatives_considered: "A先显示触摸再倾斜；B全部接入后验证"
+      rationale: "学生选择B；保留分层日志，编译不冒充物理验收"
+      decided_by: "殷白玉明确选择B"
+    - decision: "单机原型采用纯C规则核心，独立于LVGL和外设"
+      alternatives_considered: "规则嵌入界面回调，或独立规则库并用电脑测试"
+      rationale: "后者可复用给联机房主，固定棋盘可自动验证"
+      decided_by: "Codex给出备选及规则示例，殷白玉要求按建议先做一版；团队最终规则待评审"
+    - decision: "人机对战采用 negamax+alpha-beta，搜索固定 spawn=0，独立 AI 线程"
+      alternatives_considered: "MCTS/完整Expectimax/纯规则启发式；搜索读取真实RNG；主线程阻塞搜索"
+      rationale: "想法稿要求 Alpha-Beta 剪枝对比；棋盘分支较小、板端可解释；spawn=0 避免偷看下一步随机块；独立线程保证 LVGL 不冻结"
+      decided_by: "学生 2026-10-17 选择：不建模随机块、独立 AI 线程；最终先后手入口改为 REQ-317 准备页"
+    - decision: "人机对战入口改为单入口 + 先后手准备页"
+      alternatives_considered: "模式页两个“我执红/我执蓝”按钮；固定人类执红；完整联机房间页"
+      rationale: "匹配想法稿非联机准备页，先后手关系更直观且可交换；不引入房间/旁观逻辑"
+      decided_by: "学生 2026-10-17 明确要求：左红先手默认玩家、右蓝后手默认 AI、点击方框互换、取消/开始"
+    - decision: "AI 决策先预览约 500ms 再自动确认"
+      alternatives_considered: "AI 直接落子；固定更长/更短停顿；每步等待用户确认"
+      rationale: "让学生看清 AI 选择的方向和受影响格子，同时不阻塞 UI；500ms 由学生指定为默认值"
+      decided_by: "学生 2026-10-17 明确要求“先显示预览，稍微停顿（如 0.5s）后再真实移动”"
+
+code:
+  repo_url: "https://github.com/Soviet-i/geyi"
+  commit_range: "99a223b..e10d396"
+
+physical_verification:
+  - item: "REQ-314 RGB灯反馈"
+    required_action: "观察有效行动短闪及终局闪灯，核对颜色、亮度与次数"
+    executed_at: "2026-10-15（本人确认日期；精确测试时刻未单列）"
+    evidence_path: "evidence/board/20261015_213937/serial.log"
+    agent_conclusion: "串口有 light 自检及灯事件，殷白玉审核提交说明时明确确认实物颜色/亮度/次数；无仪器测量数据，不写为 AI 独立实测。提交说明见 docs/04-测试报告.md。"
+  - item: "REQ-311/REQ-312板端启动、简体显示与倾斜预览留证"
+    required_action: "本人烧录，观察简体显示与操作，回传真实日志、照片和反馈"
+    executed_at: "2026-10-15（精确操作时刻未单独确认；采集目录205419、回传文件2106）"
+    evidence_path: "evidence/board/20261015_2106/README.md"
+    agent_conclusion: "照片可见简体UI；串口含启动、校准与四向预览，源码哈希一致。本人审核提交时明确确认完整对局、金币放兵及长期稳定性验收完成、代码人工核验后无修正；未提供量化时长/局数，不记为AI独立测量。"
+  - item: "REQ-316/REQ-317 AI预览与先后手准备页板端验证"
+    required_action: "烧录 839,584 B 固件（SHA256 13270305…731a），验证准备页默认红先玩家/蓝后 AI、点击方框互换、取消返回、开始后两种先后手、AI 预览约 500ms 后只落子一次、预览中操作无效、首页/重开取消"
+    executed_at: "2026-10-17（学生提供百度网盘视频链接的日期；具体操作时刻未单独确认）"
+    evidence_path: "evidence/ai/BaiduNetDisk.md"
+    agent_conclusion: "学生提供百度网盘视频（人机.zip，提取码在链接文件中）；agent 当前环境无法访问 pan.baidu.com，未在线打开或解码视频，不能写成 agent 目测通过。需学生提供可下载片段、串口日志或照片后才能独立确认。"
+  - item: "REQ-317 准备页视觉细化板端验证（2026-11-07）"
+    required_action: "烧录 847,944 B 固件，拍照默认/互换准备页，检查标题/先手后手/图标/玩家AI 文字居中、图标中线一致、无裁切"
+    executed_at: "2026-11-07（学生提供 board_prep_1/2 照片）"
+    evidence_path: "evidence/ui-prep/README.md"
+    agent_conclusion: "照片显示红AI/蓝玩家和交换后的红玩家/蓝AI两种状态；标题、先手/后手、图标、玩家/AI 文字居中，图标中线一致，方框和按钮无裁切。点击动作未录屏，串口/耗时未测；agent 只核对照片布局，不冒充仪器测量。"
+
+test_results:
+  - test_id: "TC-315-SW"
+    description: "人机对战 AI 主机/桌面/编译（软件部分）"
+    expected: "AI 合法动作、不偷看 RNG、桌面人机流程、SDK 编译"
+    actual: "主机 62 断言 PASS；桌面 TC-315/316/317 PASS；main.bin 839,584 B；真机未独立验证"
+    pass: true
+    evidence_path: "evidence/ai/README.md"
+  - test_id: "TC-316-SW"
+    description: "AI 决策预览 500ms 与单次提交（软件部分）"
+    expected: "先预览、延迟后一次提交、预览中人类输入无效、首页取消不落子"
+    actual: "桌面 TC-316 PASS；真机预览时长待验证"
+    pass: true
+    evidence_path: "evidence/ai/desktop-test-tc316.log"
+  - test_id: "TC-317-SW"
+    description: "人机准备页与先后手互换（软件部分）"
+    expected: "默认红先玩家、右蓝后 AI、点击互换、取消/开始、AI 执红先手"
+    actual: "桌面 TC-317 PASS；真机布局/点击待验证"
+    pass: true
+    evidence_path: "evidence/ai/desktop-test-tc317.log"
+  - test_id: "TC-317-07/08"
+    description: "准备页居中、先手/后手标签、自绘图标与互换（软件部分）"
+    expected: "标题/提示居中；红框上方先手、蓝框上方后手；人物/机器人图标+玩家/AI；点击方框互换"
+    actual: "桌面 TC-317 及回归 PASS（含学生反馈后的居中修正和人物/AI图标中线对齐）；截图 evidence/ui-prep/ai_prep.png、ai_prep_blue.png；真机待验证"
+    pass: true
+    evidence_path: "evidence/ui-prep/README.md"
+  - test_id: "TC-317-09"
+    description: "准备页视觉细化板端照片"
+    expected: "默认/互换两种先后手状态：标题/标签/图标/文字居中、图标中线一致、无裁切"
+    actual: "学生 board_prep_1/2 照片显示红AI/蓝玩家与红玩家/蓝AI两种状态，布局符合预期；点击动作未录屏，串口/耗时未测"
+    pass: true
+    evidence_path: "evidence/ui-prep/README.md"
+
+known_issues:
+  - "【2026-11-07】REQ-317 准备页视觉细化已实现：标题/提示居中、红框上方先手/蓝框上方后手、自绘人物/机器人图标+玩家/AI；学生指出第一版图标/文字偏右、第二版AI图标偏高后，已清除按钮 padding/border、用 TOP_MID 对齐并调整AI图标纵向位置使中线一致；桌面 TC-317 及回归 PASS，固件 847,944 B；学生 board_prep_1/2 照片确认默认/互换布局，点击动作未录屏、串口/耗时未测。"
+  - "学生提供百度网盘视频链接作为 REQ-316/317 板端证据；agent 当前环境无法访问百度网盘，未独立核验视频画面，不能据此写成真机通过。"
+  - "个人 submission 的 dev_agent.session_log_path 尚未填写；导出 logs/ 原始会话后补路径/哈希。"
+  - "AI 评估权重是 v0 初始值，尚未做棋力/平衡性调参；不得宣称 AI 已平衡或足够聪明。"
+  - "AI 搜索固定 spawn=0，不建模每步随机生成的 2/4 数字块；这是已知近似。"
+  - "当前规则仍为个人原型暂定规则，AI 按当前核心规则实现，需团队/组长确认。"
+  - "开发板 AI 线程耗时、栈高水位和最长思考时间尚未测量；最多 6 层/300ms/200000 节点只是配置上限。"
+  - "本地 origin 为 freewind12/geyi，文档和 manifest 写 Soviet-i/geyi；推送目标待学生确认。"
+  - "百度网盘链接文件包含提取码；公开仓库提交前请确认是否适合公开课程视频的访问码。"
+
+self_review: |
+  本次完成 REQ-315~317 的文档、规则核心模拟接口、negamax+Alpha-Beta AI、
+  独立 AI 线程封装、人机 UI、500ms 决策预览和先后手准备页。主机 62 条 AI 断言、
+  桌面 TC-315/316/317 和 SDK 编译均通过；2026-11-07 准备页视觉细化桌面
+  TC-317-07/08 通过（含学生反馈后的居中和图标中线修正），最新固件 847,944 B；
+  学生 board_prep_1/2 照片确认默认/互换布局，点击动作未录屏、串口/耗时未测。
+  不确定/未完成：板端物理核验。学生提供了百度网盘视频链接，但 agent 当前环境
+  无法访问 pan.baidu.com，未独立打开/解码视频，因此没有把真机项写成通过；
+  AI 评估权重未调参，线程耗时/栈高水位未测，自定义搜索深度未实现。
+  关键决策由学生拍板；agent 自测发现终局分数取负错误并修正；学生尚未逐行审阅
+  代码和本轮新增 UI，提交说明和最终个人信息需学生确认。
+
+human_checkpoints:
+  - decision_point: "AI 算法与随机块处理"
+    student_confirmation: "学生选择 Minimax+Alpha-Beta；搜索不建模随机生成块，避免偷看 RNG；开发板使用独立 AI 线程。"
+  - decision_point: "AI 决策预览时长与行为"
+    student_confirmation: "学生要求 AI 决策后先显示与倾斜相同的预览，约 0.5 秒后再自动确认，预览期间人类操作无效。"
+  - decision_point: "人机对战先后手入口"
+    student_confirmation: "学生要求改为首页→开始游戏→人机对战→准备页；左红先手默认玩家，右蓝后手默认 AI，点击方框互换，取消返回，开始后按选择进入游戏。"
