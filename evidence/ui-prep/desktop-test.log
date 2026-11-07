@@ -1,0 +1,8 @@
+PASS: placement through earned game coins
+PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board
+PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)
+PASS: TC-313 home/modes/disabled entries/input guard/single re-entry
+PASS: TC-315 AI modes, AI turn, input guard, stale result discard
+PASS: TC-316 AI preview before delayed single commit, input guard, cancel
+PASS: TC-317 prep default/swap/cancel/start with human red and human blue
+PASS: real LVGL UI, mouse events, preview/cancel/confirm, quantity, results, restart
