@@ -4,6 +4,12 @@
  * 用法：geyi-balance-scan [--groups N] [--games N] [--out file.csv]
  * 默认 20 组 × 每组 50 局；固定种子，同一二进制重复运行结果一致。
  */
+/* 主机侧命令行工具刻意使用 fopen：MSVC 的 C4996 属安全废弃提示，
+ * 在 run_host.py 的 /W4 /WX 下会变成编译错误，故在此局部关闭。
+ * 只影响本文件，不改动共享构建脚本。 */
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include "geyi_balance.h"
 #include <stdio.h>
 #include <stdlib.h>
