@@ -30,5 +30,7 @@ int gy_ui_prep_active(void);
 int gy_ui_prep_human_red(void);
 int gy_ui_param_active(void);
 void gy_ui_tilt_select(int direction, int count);
+/* 板上自动化测试入口：由 shell 线程写入，主循环在 gy_ui_tick 中执行。 */
+void gy_ui_test_request(const char *command);
 #endif
 #endif
