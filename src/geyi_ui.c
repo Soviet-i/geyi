@@ -16,6 +16,7 @@ static lv_obj_t *tiles[GY_MAX][GY_MAX], *labels[GY_MAX][GY_MAX], *health[GY_MAX]
 static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
 static lv_obj_t *home_page,*mode_page,*game_page,*prep_page,*param_page;
 static lv_obj_t *prep_red_label,*prep_blue_label;
+static lv_obj_t *prep_player_icon[2],*prep_ai_icon[2];
 static lv_obj_t *param_mode_buttons[GY_MODE_COUNT];
 static lv_obj_t *param_row_obj[GY_PARAM_UI_ROWS];
 static lv_obj_t *param_row_name[GY_PARAM_UI_ROWS];
@@ -62,15 +63,33 @@ static void show_page(lv_obj_t *page)
 }
 static void update_prep_labels(void)
 {
+    int i;
     if(!prep_red_label||!prep_blue_label)return;
-    lv_label_set_text(prep_red_label,prep_human_red?"红方\n先手\n玩家":"红方\n先手\nAI");
-    lv_label_set_text(prep_blue_label,prep_human_red?"蓝方\n后手\nAI":"蓝方\n后手\n玩家");
+    for(i=0;i<2;++i){
+        int human=(i==0)?prep_human_red:!prep_human_red;
+        lv_label_set_text(i==0?prep_red_label:prep_blue_label,human?"玩家":"AI");
+        if(prep_player_icon[i]){
+            if(human)lv_obj_remove_flag(prep_player_icon[i],LV_OBJ_FLAG_HIDDEN);
+            else lv_obj_add_flag(prep_player_icon[i],LV_OBJ_FLAG_HIDDEN);
+        }
+        if(prep_ai_icon[i]){
+            if(human)lv_obj_add_flag(prep_ai_icon[i],LV_OBJ_FLAG_HIDDEN);
+            else lv_obj_remove_flag(prep_ai_icon[i],LV_OBJ_FLAG_HIDDEN);
+        }
+    }
 }
 static uint32_t color(int owner) {return owner?0x5ba8ff:0xff6b7c;}
 static lv_obj_t *text(lv_obj_t *parent,const char *value,int x,int y)
 {
     lv_obj_t *a=lv_label_create(parent);lv_label_set_text(a,value);lv_obj_set_pos(a,x,y);
     lv_obj_set_style_text_color(a,lv_color_hex(0xe7edf8),0);return a;
+}
+static lv_obj_t *text_center(lv_obj_t *parent,const char *value,int x,int y,int w)
+{
+    lv_obj_t *a=text(parent,value,x,y);
+    lv_obj_set_width(a,w);
+    lv_obj_set_style_text_align(a,LV_TEXT_ALIGN_CENTER,0);
+    return a;
 }
 static void status(const char *value) {lv_label_set_text(hint,value);}
 static void layout_board(void)
@@ -354,17 +373,71 @@ static lv_obj_t *button(lv_obj_t *root,const char *name,int x,int y,int w,int h,
     lv_obj_t *label=lv_label_create(b);lv_label_set_text(label,name);lv_obj_center(label);
     lv_obj_add_event_cb(b,action_event,LV_EVENT_CLICKED,(void*)(intptr_t)action);return b;
 }
-static lv_obj_t *side_box(lv_obj_t *root,const char *name,int x,int y,int w,int h,
-                          int action,uint32_t bg,lv_obj_t **label_out)
+static lv_obj_t *icon_part(lv_obj_t *parent,int x,int y,int w,int h,int radius,uint32_t bg)
+{
+    lv_obj_t *o=lv_obj_create(parent);
+    lv_obj_set_pos(o,x,y);lv_obj_set_size(o,w,h);
+    lv_obj_set_style_radius(o,radius,0);
+    lv_obj_set_style_bg_color(o,lv_color_hex(bg),0);
+    lv_obj_set_style_bg_opa(o,LV_OPA_COVER,0);
+    lv_obj_set_style_border_width(o,0,0);
+    lv_obj_set_style_pad_all(o,0,0);
+    lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(o,LV_OBJ_FLAG_CLICKABLE);
+    return o;
+}
+static lv_obj_t *icon_group(lv_obj_t *parent,int x,int y)
+{
+    lv_obj_t *g=lv_obj_create(parent);
+    lv_obj_set_pos(g,x,y);lv_obj_set_size(g,64,64);
+    lv_obj_set_style_bg_opa(g,LV_OPA_TRANSP,0);
+    lv_obj_set_style_border_width(g,0,0);
+    lv_obj_set_style_pad_all(g,0,0);
+    lv_obj_remove_flag(g,LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(g,LV_OBJ_FLAG_CLICKABLE);
+    return g;
+}
+static lv_obj_t *person_icon(lv_obj_t *parent,int x,int y)
+{
+    lv_obj_t *g=icon_group(parent,x,y);
+    icon_part(g,22,6,20,20,LV_RADIUS_CIRCLE,0x142238);
+    icon_part(g,12,32,40,24,12,0x142238);
+    return g;
+}
+static lv_obj_t *ai_icon(lv_obj_t *parent,int x,int y)
+{
+    lv_obj_t *g=icon_group(parent,x,y);
+    icon_part(g,29,9,6,6,LV_RADIUS_CIRCLE,0x142238);
+    icon_part(g,31,15,2,8,0,0x142238);
+    icon_part(g,12,23,40,30,8,0x142238);
+    icon_part(g,21,32,7,7,LV_RADIUS_CIRCLE,0xffffff);
+    icon_part(g,36,32,7,7,LV_RADIUS_CIRCLE,0xffffff);
+    icon_part(g,24,44,16,3,1,0xffffff);
+    return g;
+}
+static lv_obj_t *side_box(lv_obj_t *root,int x,int y,int w,int h,
+                          int action,uint32_t bg,lv_obj_t **label_out,
+                          lv_obj_t **player_out,lv_obj_t **ai_out)
 {
     lv_obj_t *b=lv_button_create(root);lv_obj_set_pos(b,x,y);lv_obj_set_size(b,w,h);
     lv_obj_set_style_bg_color(b,lv_color_hex(bg),0);
     lv_obj_set_style_radius(b,10,0);lv_obj_set_style_shadow_width(b,0,0);
-    lv_obj_t *label=lv_label_create(b);lv_label_set_text(label,name);lv_obj_center(label);
+    lv_obj_set_style_pad_all(b,0,0);lv_obj_set_style_border_width(b,0,0);
+    lv_obj_t *label=lv_label_create(b);
+    lv_obj_set_width(label,w);
+    lv_obj_align(label,LV_ALIGN_TOP_MID,0,112);
+    lv_label_set_text(label,"玩家");
     lv_obj_set_style_text_color(label,lv_color_hex(0x142238),0);
     lv_obj_set_style_text_align(label,LV_TEXT_ALIGN_CENTER,0);
+    lv_obj_remove_flag(label,LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_t *player=person_icon(b,0,0);
+    lv_obj_t *ai=ai_icon(b,0,0);
+    lv_obj_align(player,LV_ALIGN_TOP_MID,0,38);
+    lv_obj_align(ai,LV_ALIGN_TOP_MID,0,38);
     lv_obj_add_event_cb(b,action_event,LV_EVENT_CLICKED,(void*)(intptr_t)action);
     if(label_out)*label_out=label;
+    if(player_out)*player_out=player;
+    if(ai_out)*ai_out=ai;
     return b;
 }
 static lv_obj_t *page(lv_obj_t *root)
@@ -401,13 +474,15 @@ void gy_ui_create(void)
     text(mode_page,"进入后选择先后手，AI 自动走子",40,228);
     unavailable(mode_page,"联机对战 - 暂未开放",260);
     button(mode_page,"返回首页",32,382,326,40,GY_UI_HOME);
-    text(prep_page,"人机对战",32,36);
-    text(prep_page,"选择先后手",32,70);
-    side_box(prep_page,"红方\n先手\n玩家",32,118,150,170,
-             GY_UI_PREP_SWAP,0xff6b7c,&prep_red_label);
-    side_box(prep_page,"蓝方\n后手\nAI",208,118,150,170,
-             GY_UI_PREP_SWAP,0x5ba8ff,&prep_blue_label);
-    text(prep_page,"点击方框交换先后手",32,300);
+    text_center(prep_page,"人机对战",32,28,326);
+    text_center(prep_page,"选择先后手",32,58,326);
+    text_center(prep_page,"先手",32,92,150);
+    text_center(prep_page,"后手",208,92,150);
+    side_box(prep_page,32,118,150,170,GY_UI_PREP_SWAP,0xff6b7c,
+             &prep_red_label,&prep_player_icon[0],&prep_ai_icon[0]);
+    side_box(prep_page,208,118,150,170,GY_UI_PREP_SWAP,0x5ba8ff,
+             &prep_blue_label,&prep_player_icon[1],&prep_ai_icon[1]);
+    text_center(prep_page,"点击方框交换先后手",32,300,326);
     button(prep_page,"取消",32,350,150,44,GY_UI_PREP_CANCEL);
     button(prep_page,"开始游戏",208,350,150,44,GY_UI_PREP_START);
     update_prep_labels();
