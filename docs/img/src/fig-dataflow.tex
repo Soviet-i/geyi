@@ -40,7 +40,7 @@
   \node[lbl,below] at (-1.4,1.68) {可见状态};
   \draw[arr] (game) -- node[lbl,above]{快照} (ai);
   \draw[arr] (ai) -- node[lbl,above]{GyMove} (aiprev);
-  \draw[arr] (aiprev.north) -- (5.6,1.90) -- (6.5,1.90) -- (render.south);
+  \draw[arr] (aiprev.north) -- (5.6,1.90) -- (3.2,1.90) -- (confirm.south);
   \node[lbl,left] at (5.5,1.55) {自动提交};
 
   % 规则核心到 UI 的可见快照总线
@@ -49,7 +49,7 @@
 
   % 数据、反馈与联机
   \node[existing,minimum width=2.4cm,minimum height=0.95cm] (cfg) at (-5.9,-0.85)
-    {\textbf{参数配置}\\ \scriptsize 10 项 / 三模式\\ \scriptsize 新开一局生效};
+    {\textbf{参数配置}\\ \scriptsize 10 项 / 三模式\\ \scriptsize 新开一局写入 game/input/AI};
   \node[planned,minimum width=2.5cm,minimum height=0.95cm] (hist) at (-2.0,-0.85)
     {\textbf{历史 / 计时（计划）}\\ \scriptsize 最近 $N$ 局\\ \scriptsize result/moves/ms/ts};
   \node[existing,minimum width=2.0cm,minimum height=0.95cm] (fb) at (1.2,-0.85)
@@ -57,7 +57,6 @@
   \node[planned,minimum width=2.8cm,minimum height=0.95cm] (net) at (4.8,-0.85)
     {\textbf{联机 net\_room（计划）}\\ \scriptsize 房主权威 / 全量快照\\ \scriptsize seq 幂等 / 10\,s 重连};
 
-  \draw[arr,blue!55!black] (cfg.east) -- node[lbl,below]{GyConfig} (hist.west);
   % 规则核心向数据层发布的事件总线
   \draw[thick] (game.south) -- (-3.0,-0.15) -- (4.8,-0.15);
   \draw[arr] (-2.0,-0.15) -- (hist.north);
@@ -72,9 +71,9 @@
 
   % 数据格式注记
   \node[font=\scriptsize,align=left,anchor=north west,text width=15.6cm] at (-8.0,-1.80)
-    {\textbf{关键数据结构}：\texttt{GyInputEvent\{dir,count,confirm\}}；
-     \texttt{GyMove\{dir,count\}}；\texttt{GySnapshot\{seq,cells[8][8],coins,turn,outcome\}}；
-     \texttt{GyHistory\{result,moves,duration\_ms,timestamp\}}。\\
+    {\textbf{关键数据结构}（带 * 为计划类型）：\texttt{GyInputEvent\{dir,count,confirm\}}；
+     \texttt{GyMove\{dir,count\}}；\texttt{GySnapshot*\{seq,cells[8][8],coins,turn,outcome\}}；
+     \texttt{GyHistory*\{result,moves,duration\_ms,timestamp\}}。\\
      \textbf{线程约束}：LVGL 只在主线程；IMU 线程 20\,ms 发布快照；AI 线程只返回动作；网络 RX 线程只入队事件。};
 \end{tikzpicture}
 \end{document}

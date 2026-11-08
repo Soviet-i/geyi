@@ -3,7 +3,9 @@
 % 优先使用开源的 Noto Sans SC（OFL）；没有时回退到系统字体，便于他机复现。
 \IfFontExistsTF{Noto Sans SC}
   {\setCJKmainfont{Noto Sans SC}}
-  {\setCJKmainfont{Microsoft YaHei}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
 \usepackage{amsmath}
 \usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc,decorations.pathreplacing}
 \tikzset{

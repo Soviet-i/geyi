@@ -56,6 +56,11 @@
 
   % 参数：新开一局时写入 game / input / AI 的配置
   \draw[arr,blue!55!black] (cfg.west) -- node[lbl,above]{参数} (ai.east);
+  % 参数总线：新开一局时写入 game / input（AI 由上面实线表示 search_depth）
+  \draw[arr,blue!55!black,dashed] (cfg.south) -- (4.3,0.55) -- (-5.4,0.55) -- (input.south);
+  \draw[arr,blue!55!black,dashed] (-2.0,0.55) -- (game.south);
+
+  \node[lbl,below] at (0.0,0.47) {参数（新局）};
 
   % 历史与反馈
   \draw[arr] (game.west) -- (-3.35,1.45) -- (-3.35,-0.42) -- (hist.north);
@@ -71,6 +76,8 @@
   \node[lbl,above] at (0.9,-0.23) {权威状态 / 快照};
   \draw[arr,darr] (2.6,2.7) -- (2.6,-0.42);
   \node[lbl,left] at (2.55,0.25) {联机事件};
+  \draw[arr,darr] (5.5,-0.42) -- (5.5,2.7);
+  \node[lbl,right] at (5.58,1.1) {事件/快照};
 
   % BLE：房主广播 + 连接态快照
   \draw[arr] (net.east) -- (7.4,-1.0) -- (7.4,3.0) -- (peer.west);
@@ -81,10 +88,10 @@
   \begin{scope}[shift={(-6.2,-4.65)}]
     \node[existing,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l1) at (0,0) {};
     \node[anchor=west,font=\scriptsize] at (0.55,0) {已实现};
-    \node[planned,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l2) at (1.8,0) {};
-    \node[anchor=west,font=\scriptsize] at (2.35,0) {计划};
-    \node[ext,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l3) at (4.1,0) {};
-    \node[anchor=west,font=\scriptsize] at (4.65,0) {外部设备};
+    \node[planned,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l2) at (2.2,0) {};
+    \node[anchor=west,font=\scriptsize] at (2.75,0) {计划};
+    \node[ext,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l3) at (4.8,0) {};
+    \node[anchor=west,font=\scriptsize] at (5.35,0) {外部设备};
   \end{scope}
 \end{tikzpicture}
 \end{document}

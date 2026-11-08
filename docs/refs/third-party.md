@@ -11,7 +11,7 @@
 | SiFli SDK | v2.5.1；https://github.com/OpenSiFli/SiFli-SDK （国内镜像 gitee.com/SiFli/sifli-sdk） | Apache-2.0 | 使用 BSP/HAL/RT-Thread/LVGL 适配、构建系统；未修改 SDK 源码；`project/` 骨架保持原样 | 仓库根目录 `LICENSE-SiFli-SDK-Apache-2.0.txt` |
 | LVGL | v9（随 SDK 提供） | MIT | 使用控件、字体、渲染；未修改 LVGL 源码；UI 代码在 `src/geyi_ui.c` | 见 SDK `external/lvgl_v9` 的 LICENSE |
 | 思源黑体 / Source Han Sans SC | 随 SDK 提供 `SourceHanSansSC-Normal.otf`（Adobe/Google） | SIL OFL-1.1 | 用 `tools/generate_ui_font.py` 生成 16 px/4bpp 中文子集 `src/geyi_font_cn16.c`；未使用保留字体名 | `docs/refs/OFL-SourceHanSansSC.txt`；源字体版权归 Adobe |
-| Noto Sans SC | Windows 系统/Google Noto | SIL OFL-1.1 | **仅用于生成文档设计图**（TikZ/XeLaTeX），不进入固件；PDF 嵌入字体子集 | https://fonts.google.com/noto/specimen/Noto+Sans+SC |
+| Noto Sans SC | Windows 系统/Google Noto | SIL OFL-1.1 | **仅用于生成文档设计图**（TikZ/XeLaTeX），不进入固件；PDF 嵌入字体子集 | `docs/refs/OFL-NotoSansSC.txt`；https://fonts.google.com/noto/specimen/Noto+Sans+SC |
 | 课程 `peripheral_lab` / `xiaozhi-sf32` 示例 | 课程提供（2026-10） | **待核实**（课程材料，未在仓库内复制） | 只参考外设初始化、LVGL、按键/IMU 的写法；未整体复制综合测试工程；具体复用点见 `docs/02` | 需向教师确认课程材料许可后再扩大复用 |
 | RT-Thread | 随 SDK 提供 | Apache-2.0 | 内核/设备框架/线程/互斥量；未修改内核 | 见 SDK |
 | CMSIS / ARM 头文件 | 随 SDK/工具链 | Apache-2.0 / BSD 类 | 编译期头文件；未修改 | 见工具链/SDK |
