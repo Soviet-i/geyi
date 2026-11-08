@@ -4,23 +4,27 @@
 
 | 文件 | 内容 | 覆盖 | 不覆盖 |
 |---|---|---|---|
-| `host_test.log` | `python tools/run_host.py` 完整输出 | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 197、平衡 10 断言；`geyi-net-tests: 197 checks PASS` | 真实 BLE、桌面 LVGL、双板时序 |
-| `firmware_build.log` | PowerShell `export.ps1` + `scons --board=sf32lb52-lchspi-ulp -j8` | 新增 `src/geyi_net_*.c` 与 `main.c` 自检编译成功，`main.bin` 851,032 B | 未烧录；编译通过不等于 BLE/UI 可用 |
+| `host_test.log` | `python tools/run_host.py` 完整输出 | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 242、app 70、平衡 10 断言；`geyi-net-tests: 242 checks PASS`、`geyi-net-app-tests: 70 checks PASS` | 真实 BLE、桌面 LVGL、双板时序 |
+| `firmware_build.log` | 主机逻辑版本的编译日志 | 新增 `src/geyi_net_*.c` 与 `main.c` 自检编译成功，`main.bin` 851,032 B | 未烧录；编译通过不等于 BLE/UI 可用 |
+| `firmware_build_ble.log` | 接入 BLE/UI 后的编译日志 | 自定义 GATT、广播/扫描、联机页面编译成功，`main.bin` 1,026,432 B | 未烧录；BLE 实际连接/吞吐/双板未验证 |
 
 ## 联机主机测试覆盖
 
 - 协议：信封/版本/类型/长度/截断、快照往返、各消息打包/解包。
 - 房间：加入/满员、准备/取消、3s 倒计时、交换红蓝、房主等待期离开转移/关房、
   落子/放兵/认输、非法与错误回合拒绝、结算保留 10s、全量快照 seq 幂等。
+- app 路由：交换红蓝后的 READY/MOVE 颜色、ROOM_STATE 与 SNAPSHOT 同 seq、
+  MOVE_REQ 幂等、对局中 LEAVE 判负、重复 JOIN、满员大厅规则。
 - 预览：只对本人/旁观可见，对手不可见；限流与 `PREVIEW_CLEAR` 由房间层状态覆盖。
-- 断线：客方 10s 重连窗口、超时判负、等待期释放席位、旁观者不冻结、客方本地终局提示。
+- 断线：客方 10s 重连窗口、超时判负、等待期释放席位、旁观者不冻结、客方本地终局提示、
+  STARTING 中断线退回 WAIT、旁观 10s 重连槽位不被顶掉。
 - 大厅：插入/更新/3s TTL/点击规则；内存管道收发与满队列。
 
-## 未执行（不得写成通过）
+## 已实现但未物理验证（不得写成通过）
 
-- BLE 广播/扫描/连接/GATT/配对；`proj.conf` BLE 配置未改。
-- 真实屏幕大厅/房间/旁观 UI；桌面 LVGL 未实现。
-- 双板发现/落子/预览私密/断线重连。
-- P-02 最大连接数、连接态广播、全量快照包长/吞吐。
+- BLE 广播/扫描/连接/GATT 服务与客户端、分片重组、CCCD 订阅；`proj.conf` 已按 SDK 例程启用。
+- 大厅/房间/对局/旁观 UI 已接入固件；桌面 LVGL 因本机缺 MSVC 未跑。
+- **未烧录、未双板验证**：真实 BLE 发现/连接/落子/预览私密/断线重连均未执行。
+- P-02 最大连接数、连接态广播、全量快照包长/吞吐未测。
 
 对应需求：REQ-501~REQ-513；测试计划：`docs/03` 的 TC-501~TC-513。
