@@ -66,6 +66,8 @@ try:
     if r.returncode:raise RuntimeError(r.stdout.decode('mbcs',errors='replace'))
     app=[root/'src/geyi_game.c',root/'src/geyi_feedback.c',root/'src/geyi_ai.c',
          root/'src/geyi_ai_task.c',root/'src/geyi_config.c',root/'src/geyi_param_ui.c',
+         root/'src/geyi_net_proto.c',root/'src/geyi_net_room.c',root/'src/geyi_net_link.c',
+         root/'src/geyi_net_app.c',
          root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',root/'tools/geyi_desktop.c']
     app_objects=[compile_one(p) for p in app]
     command=[cc,'/nologo',*[str(p) for p in app_objects],str(out/'lvgl.lib'),

@@ -25,6 +25,7 @@
 #include "geyi_net_proto.h"
 #include "geyi_net_room.h"
 #include "geyi_net_link.h"
+#include "geyi_net_app.h"
 #include "drivers/rt_drv_pwm.h"
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
@@ -99,6 +100,7 @@ int main(void)
         rt_kprintf("[geyi:lcd] FAIL initialize\n");
         return -1;
     }
+    gy_net_app_init();
     gy_ui_create();
     rt_kprintf("[geyi:lcd] READY %d x %d\n",(int)lv_display_get_horizontal_resolution(NULL),
                (int)lv_display_get_vertical_resolution(NULL));
