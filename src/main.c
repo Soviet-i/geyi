@@ -22,6 +22,9 @@
 #include "geyi_ai.h"
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
+#include "geyi_net_proto.h"
+#include "geyi_net_room.h"
+#include "geyi_net_link.h"
 #include "drivers/rt_drv_pwm.h"
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
@@ -85,6 +88,8 @@ int main(void)
     rt_kprintf("[geyi:selftest] ai=%s\n", gy_ai_selftest() ? "PASS" : "FAIL");
     {int rc=gy_param_selftest();rt_kprintf("[geyi:selftest] param=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
     {int rc=gy_param_ui_selftest();rt_kprintf("[geyi:selftest] paramui=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
+    {int ok=gy_net_proto_selftest()==0&&gy_net_room_selftest()==0&&gy_net_link_selftest()==0;
+     rt_kprintf("[geyi:selftest] net=%s (protocol/room logic only, BLE not tested)\n",ok?"PASS":"FAIL");}
 
 #ifdef GEYI_WITH_LVGL
     GyLight light={0};uint32_t last_light=UINT32_MAX;

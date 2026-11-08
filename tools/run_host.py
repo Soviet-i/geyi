@@ -27,6 +27,8 @@ targets = [
     ('geyi-config-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'src/geyi_config.c', 'tests/test_config.c']),
     ('geyi-param-ui-tests', ['src/geyi_game.c', 'src/geyi_config.c', 'src/geyi_param_ui.c', 'tests/test_param_ui.c']),
     ('geyi-ai-tests', ['src/geyi_game.c', 'src/geyi_ai.c', 'tests/test_ai.c']),
+    ('geyi-net-tests', ['src/geyi_game.c', 'src/geyi_net_proto.c', 'src/geyi_net_room.c',
+                        'src/geyi_net_link.c', 'tests/test_net.c']),
     ('geyi-balance-tests', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tests/test_balance.c']),
     ('geyi-balance-scan', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tools/geyi_balance_scan.c']),
     ('geyi-ai-bench', ['src/geyi_game.c', 'src/geyi_ai.c', 'tools/geyi_ai_bench.c']),
