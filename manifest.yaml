@@ -128,6 +128,11 @@ physical_verification:
     executed_at: "2026-11-07（学生本人烧录并回传 board_prep_1/2.jpg；精确时刻未单列）"
     evidence_path: "evidence/ui-prep/README.md"
     agent_conclusion: "学生照片显示默认红 AI/蓝玩家、互换后红玩家/蓝 AI；标题/先手后手/图标/文字居中，方框和按钮无裁切。agent 未独立解码点击动作，未测串口/耗时；照片不覆盖 10-28 参数集成与其他页面。"
+  - item: "REQ-513 联机固件单板启动（COM7）"
+    required_action: "烧录联机固件，观察启动自检 core/input/ai/param/paramui/net/light、LCD 初始化与是否 hard fault"
+    executed_at: "2026-11-08（CodeKit MCP 烧录 COM7；修复 STKOF 后复测）"
+    evidence_path: "evidence/net/20261108/board/boardA_COM7_boot_after_stackfix_20261108.log"
+    agent_conclusion: "修复前 1,026,432 B 首次烧录在 net 自检触发 hard fault（SCB_CFSR_UFSR:0x10 STKOF，main 线程 8 KB 栈）；把 net_proto/net_room/net_link 自检大对象改静态存储后重编 1,026,472 B，COM7 启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault。该证据只证明单板启动与自检，不证明 BLE 连接、真实 UI 交互、双板对局或容量 P-02。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -217,13 +222,19 @@ test_results:
   - test_id: "FW-BUILD-NET"
     description: "联机 BLE/UI 接入固件编译（REQ-513）"
     expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
-    actual: "2026-11-08 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,026,432 B；未烧录，不代表 BLE/UI 可用"
+    actual: "2026-11-08 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,026,472 B；已烧录 COM7 单板启动通过；不代表 BLE/UI/双板可用"
     pass: true
-    evidence_path: "evidence/net/20261108/firmware_build_ble.log"
+    evidence_path: "evidence/net/20261108/firmware_build_stackfix.log"
+  - test_id: "TC-513-04-BOOT"
+    description: "联机自检 main 线程栈安全与单板启动（REQ-513/NFR-09）"
+    expected: "8 KB main 线程栈执行 net 自检不 STKOF；烧录后 net=PASS、light=PASS、LCD READY，无 hard fault"
+    actual: "首次烧录 1,026,432 B 在 net 自检 STKOF；net_proto/net_room/net_link 自检大对象改静态后重编 1,026,472 B，COM7 启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault。仅单板启动，双板/BLE/UI 交互未执行"
+    pass: true
+    evidence_path: "evidence/net/20261108/board/boardA_COM7_boot_after_stackfix_20261108.log"
   - test_id: "TC-501~TC-513-HW"
     description: "联机 BLE/UI/双板物理测试（REQ-501~REQ-513 未执行段）"
     expected: "双板 BLE 发现/连接、落子同步、预览私密、断线重连、容量 P-02；大厅/房间/旁观真实 UI"
-    actual: "未执行：BLE 后端/真实 UI/proj.conf 配置已实现并编译通过，但未烧录、未双板验证；需两块板同时在线；不得把主机测试写成联机可用"
+    actual: "单板启动已通过（net=PASS、LCD READY，无 hard fault）；BLE 发现/连接、真实 UI 交互、双板落子/预览/断线重连、容量 P-02 仍未执行；需两块板同时在线；不得把主机测试或单板启动写成联机可用"
     pass: false
     evidence_path: "docs/04-测试报告.md"
   - test_id: "TC-601~TC-606"
@@ -252,8 +263,9 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-08 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输（自定义 GATT/广播/扫描/分片）、net_app 与大厅/房间/对局/旁观 UI（242 + app 70 checks PASS，固件 1,026,432 B 编译通过）；烧录与双板验证未执行，不能写成联机可用。历史/计时 REQ-601~606 仍只有文档基线。"
-  - "【2026-11-08 当前】当前板端证据来自历史构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；当前分支已改固件源码并编译到 1,026,432 B，但未烧录，不能把旧构建写成当前 HEAD 通过。"
+  - "【2026-11-08 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输（自定义 GATT/广播/扫描/分片）、net_app 与大厅/房间/对局/旁观 UI（242 + app 70 checks PASS，固件 1,026,472 B 编译通过）；COM7 单板启动 net=PASS、light=PASS、LCD READY，无 hard fault。双板 BLE/真实 UI 交互/容量 P-02 未执行，不能写成联机可用。历史/计时 REQ-601~606 仍只有文档基线。"
+  - "【2026-11-08 当前】联机固件首次烧录（1,026,432 B）在 net 自检触发 STKOF：main 线程栈 8 KB，gy_net_link_selftest 的 GyNetMemoryLink 约 25 KB。已把 net_proto/net_room/net_link 自检大对象改静态存储，重编 1,026,472 B 后 COM7 启动通过；失败日志与修复后日志均在 evidence/net/20261108/board/。"
+  - "【2026-11-08 当前】历史板端证据来自旧构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；当前联机固件 1,026,472 B 仅完成单板启动，不能把旧构建或单板启动写成双板联机通过。"
   - "【2026-11-08 当前】REQ-407/410 参数生效只验证了启动自检，TC-406 板端段（SPAWN=3、size=5/7、缓冲 0/50、AI 层数 6）未执行。"
   - "【2026-11-08 当前】TC-303-05 单兵板端、REQ-316 的 500ms/单次提交/取消、串口 ai=PASS、倾斜正确率/真实延迟、390×450 帧率、AI 板端耗时/栈、24h soak 仍缺。"
   - "【2026-11-08 当前】历史/计时 ADR-0010 为 RAM-only 提议，待学生确认；若要求持久化，需先评估 NOR 占用/掉电写入/寿命并另立 ADR。"
@@ -297,8 +309,12 @@ self_review: |
   大厅/房间/对局/旁观 UI；tests/test_net.c 242 checks + tests/test_net_app.c 70 checks；
   main.c 启动自检增加 net=PASS。
   python tools/run_host.py 全部通过；proj.conf 按 SDK 例程启用 BLE/GATT/连接管理器/FlashDB；
-  PowerShell export.ps1 + scons 编译成功，main.bin 1,026,432 B。未烧录、未双板验证；
-  P-02 容量、快照吞吐、真实断线重连仍未测；不得写成联机可用。
+  PowerShell export.ps1 + scons 编译成功，main.bin 1,026,432 B。
+  2026-11-08 学生首次真机烧录发现 net 自检 STKOF：main 线程栈 8 KB，而
+  gy_net_link_selftest 的 GyNetMemoryLink 约 25 KB；协议/房间自检也分别约 5.4/3.7 KB。
+  三个自检的大对象改为函数内静态存储，重编 main.bin 1,026,472 B；CodeKit MCP 烧录 COM7，
+  启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault。
+  仍未双板验证；P-02 容量、快照吞吐、真实断线重连仍未测；不得写成联机可用。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
@@ -331,6 +347,6 @@ human_checkpoints:
   - decision_point: "历史/计时是否持久化"
     student_confirmation: "尚未拍板；ADR-0010 暂记为“RAM-only 提议”，需学生确认重启清空是否可接受。"
   - decision_point: "联机范围与双板止损"
-    student_confirmation: "学生 2026-11-08 要求先写测试再实现；agent 已实现主机纯逻辑、BLE 传输与 UI（242 + app 70 checks PASS、固件 1,026,432 B），双板物理验证未执行。联机是否必达、双板排期与止损日期仍需学生拍板。"
+    student_confirmation: "学生 2026-11-08 要求先写测试再实现；agent 已实现主机纯逻辑、BLE 传输与 UI（242 + app 70 checks PASS、固件 1,026,472 B），并完成 COM7 单板启动；双板物理验证未执行。联机是否必达、双板排期与止损日期仍需学生拍板。"
   - decision_point: "联机主机实现边界"
     student_confirmation: "学生要求“写相关测试，写完测试后规划具体实现方案并实现”；agent 按纯逻辑优先实现 net_proto/net_room/net_link 内存管道，未擅自改 proj.conf 或伪造 BLE/双板结果。是否继续 BLE 绑定与 UI 由学生决定。"
