@@ -90,11 +90,16 @@ typedef struct {
 
     uint8_t   host_absent;
     uint32_t  host_absent_since_ms;
+    GyConfig  config;           /* 联机参数：房主新开一局时使用，客户端从快照获得 */
 } GyNetRoom;
 
 void gy_net_room_init_host(GyNetRoom *room, uint32_t room_id, uint32_t now_ms,
                            uint8_t max_spectators);
 void gy_net_room_init_client(GyNetRoom *room, uint32_t room_id, uint32_t now_ms);
+/* 房主在开局前设置联机参数（来自 GY_MODE_PVP）；非法配置被忽略。 */
+int gy_net_room_set_config(GyNetRoom *room, const GyConfig *config);
+/* 等待阶段房主退出后，客方接管房间：只保留自己的席位并转成房主。 */
+int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32_t now_ms);
 
 /* 房主处理加入：role=PLAYER/SPECTATOR。成功返回 0，并写 token/color。 */
 int gy_net_room_join(GyNetRoom *host, uint8_t role, uint32_t now_ms,
@@ -112,6 +117,7 @@ void gy_net_room_snapshot(const GyNetRoom *host, GyNetSnapshot *out);
 int gy_net_room_apply_snapshot(GyNetRoom *client, const GyNetSnapshot *snapshot);
 void gy_net_room_state(const GyNetRoom *host, GyNetRoomState *out);
 int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state);
+int gy_net_room_apply_result(GyNetRoom *client, const GyNetResult *result);
 
 /* 预览：房主保存/清除；visible 决定是否转发给某角色/颜色。 */
 int gy_net_room_preview(GyNetRoom *host, const GyNetPreview *preview);

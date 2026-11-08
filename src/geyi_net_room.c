@@ -93,6 +93,7 @@ void gy_net_room_init_host(GyNetRoom *room, uint32_t room_id, uint32_t now_ms,
     room->connected = 1;
     room->now_ms = now_ms;
     room->next_token = room_id ? room_id : 1;
+    room->config = gy_default_config();
     room->seats[GY_NET_COLOR_RED].role = GY_NET_ROLE_HOST;
     room->seats[GY_NET_COLOR_RED].color = GY_NET_COLOR_RED;
     room->seats[GY_NET_COLOR_RED].connected = 1;
@@ -117,6 +118,47 @@ void gy_net_room_init_client(GyNetRoom *room, uint32_t room_id, uint32_t now_ms)
     room->local_color = GY_NET_COLOR_NONE;
     room->connected = 1;
     room->now_ms = now_ms;
+    room->config = gy_default_config();
+}
+
+int gy_net_room_set_config(GyNetRoom *room, const GyConfig *config)
+{
+    GyGame probe;
+    if (!room || !config) return GY_NET_ERR_ARG;
+    if (!gy_init(&probe, *config, 1)) return GY_NET_ERR_RANGE;
+    room->config = *config;
+    return GY_NET_OK;
+}
+
+int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32_t now_ms)
+{
+    uint8_t other;
+    if (!client || !color_valid(new_host_color)) return GY_NET_ERR_ARG;
+    other = new_host_color == GY_NET_COLOR_RED ? GY_NET_COLOR_BLUE : GY_NET_COLOR_RED;
+    client->role = GY_NET_ROLE_HOST;
+    client->local_color = new_host_color;
+    client->connected = 1;
+    client->view.host_color = new_host_color;
+    client->view.guest_color = other;
+    client->view.phase = GY_NET_PHASE_WAIT;
+    client->view.phase_since_ms = now_ms;
+    client->view.player_count = 1;
+    client->view.host_ready = 0;
+    client->view.guest_ready = 0;
+    client->view.game_valid = 0;
+    client->view.result = GY_PLAYING;
+    client->view.result_reason = GY_NET_REASON_NORMAL;
+    client->view.local_terminal = 0;
+    client->view.seq++;
+    memset(&client->seats[0], 0, sizeof(client->seats[0]));
+    memset(&client->seats[1], 0, sizeof(client->seats[1]));
+    client->seats[new_host_color].role = GY_NET_ROLE_HOST;
+    client->seats[new_host_color].color = new_host_color;
+    client->seats[new_host_color].connected = 1;
+    client->seats[new_host_color].token = client->token;
+    client->seats[other].role = GY_NET_ROLE_PLAYER;
+    client->seats[other].color = other;
+    return GY_NET_OK;
 }
 
 int gy_net_room_join(GyNetRoom *host, uint8_t role, uint32_t now_ms,
@@ -229,7 +271,7 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
 
     if (room->view.phase == GY_NET_PHASE_STARTING) {
         if ((uint32_t)(now_ms - room->view.phase_since_ms) >= GY_NET_START_MS) {
-            if (!gy_init(&room->view.game, gy_default_config(),
+            if (!gy_init(&room->view.game, room->config,
                          room->view.room_id ? room->view.room_id : 1))
                 return 0;
             room->view.phase = GY_NET_PHASE_PLAYING;
@@ -384,6 +426,19 @@ int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
     client->view.room_id = state->room_id;
     client->view.seq = state->seq;
     client->last_seq = state->seq;
+    client->view.local_terminal = 0;
+    return 1;
+}
+
+int gy_net_room_apply_result(GyNetRoom *client, const GyNetResult *result)
+{
+    if (!client || !result) return GY_NET_ERR_ARG;
+    if (result->seq && result->seq <= client->last_seq) return 0;
+    client->view.phase = GY_NET_PHASE_RESULT;
+    client->view.result = result->outcome;
+    client->view.result_reason = result->reason;
+    if (result->seq) client->view.seq = result->seq;
+    if (result->seq) client->last_seq = result->seq;
     client->view.local_terminal = 0;
     return 1;
 }

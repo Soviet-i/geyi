@@ -402,6 +402,41 @@ static int test_disconnect_rejoin(void)
     return 0;
 }
 
+static int test_room_config_and_promote(void)
+{
+    GyNetRoom host, client;
+    GyConfig cfg = gy_default_config();
+    uint32_t token = 0;
+
+    gy_net_room_init_host(&host, 1012, 0, 2);
+    cfg.size = 7;
+    CHECK(gy_net_room_set_config(&host, &cfg) == GY_NET_OK);
+    cfg.size = 99;
+    CHECK(gy_net_room_set_config(&host, &cfg) == GY_NET_ERR_RANGE);
+    CHECK(start_game(&host, &token) == 0);
+    CHECK(host.view.game.config.size == 7);
+
+    gy_net_room_init_client(&client, 1013, 0);
+    client.token = 0x1234;
+    client.local_color = GY_NET_COLOR_BLUE;
+    CHECK(gy_net_room_promote_client(&client, GY_NET_COLOR_BLUE, 100) == GY_NET_OK);
+    CHECK(client.role == GY_NET_ROLE_HOST);
+    CHECK(client.local_color == GY_NET_COLOR_BLUE);
+    CHECK(client.view.player_count == 1);
+    CHECK(client.seats[GY_NET_COLOR_BLUE].token == 0x1234);
+    CHECK(client.seats[GY_NET_COLOR_BLUE].role == GY_NET_ROLE_HOST);
+
+    gy_net_room_init_client(&client, 1013, 0);
+    {
+        GyNetResult r = {GY_RED_WIN, GY_NET_REASON_NORMAL, 5};
+        CHECK(gy_net_room_apply_result(&client, &r) == 1);
+        CHECK(client.view.phase == GY_NET_PHASE_RESULT);
+        CHECK(client.view.result == GY_RED_WIN);
+        CHECK(gy_net_room_apply_result(&client, &r) == 0);
+    }
+    return 0;
+}
+
 static int test_client_host_lost(void)
 {
     GyNetRoom client;
@@ -458,9 +493,10 @@ int main(void)
     if (test_room_state_sync()) return 9;
     if (test_preview_privacy()) return 10;
     if (test_disconnect_rejoin()) return 11;
-    if (test_client_host_lost()) return 12;
-    if (test_memory_link()) return 13;
-    if (test_selftests()) return 14;
+    if (test_room_config_and_promote()) return 12;
+    if (test_client_host_lost()) return 13;
+    if (test_memory_link()) return 14;
+    if (test_selftests()) return 15;
     printf("geyi-net-tests: %d checks PASS\n", checks);
     return 0;
 }
