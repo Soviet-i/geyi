@@ -77,8 +77,13 @@ int gy_net_memory_link_recv_client(GyNetMemoryLink *link, GyNetMsg *msg)
 
 int gy_net_link_selftest(void)
 {
-    GyNetMemoryLink link;
-    GyNetMsg in, out;
+    /*
+     * 板端 main 线程栈只有 8 KB（rtconfig.h），而 GyNetMemoryLink 约 25 KB。
+     * 主机测试的线程栈有几 MB，所以这个栈帧在 PC 上不会暴露问题，真机会直接
+     * STKOF。自检只跑一次且不与其他线程并发，放在静态区，避免占用调用栈。
+     */
+    static GyNetMemoryLink link;
+    static GyNetMsg in, out;
     int i;
 
     gy_net_memory_link_init(&link);

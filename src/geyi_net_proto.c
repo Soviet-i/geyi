@@ -570,10 +570,12 @@ int gy_net_unpack_reject(const GyNetMsg *m, GyNetReject *v)
 
 int gy_net_proto_selftest(void)
 {
-    GyGame g;
-    GyNetSnapshot s, out;
-    GyNetMsg in, msg;
-    uint8_t buf[GY_NET_MAX_PACKET];
+    /* 快照 1 KB + 两个 GyNetMsg 1.5 KB + 发送缓冲 780 B，合计约 5.4 KB，
+     * 在 8 KB 的 main 线程栈上余量过小；自检改放静态区，避免板端 STKOF。 */
+    static GyGame g;
+    static GyNetSnapshot s, out;
+    static GyNetMsg in, msg;
+    static uint8_t buf[GY_NET_MAX_PACKET];
     int n;
 
     if (!gy_init(&g, gy_default_config(), 7)) return -1;

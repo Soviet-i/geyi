@@ -703,8 +703,10 @@ int gy_net_lobby_click(const GyNetRoomSummary *room, int max_spectators)
 
 int gy_net_room_selftest(void)
 {
-    GyNetRoom host, client;
-    GyNetSnapshot snap;
+    /* 板端 main 线程栈仅 8 KB；两个 GyNetRoom + 快照接近 3.7 KB，放静态区
+     * 避免与协议自检叠加后逼近栈上限（自检只在启动时单线程运行）。 */
+    static GyNetRoom host, client;
+    static GyNetSnapshot snap;
     uint32_t t1 = 0, t2 = 0;
     uint8_t c1 = GY_NET_COLOR_NONE, c2 = GY_NET_COLOR_NONE;
 
