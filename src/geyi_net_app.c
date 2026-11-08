@@ -21,6 +21,8 @@
 #define APP_MAX_CONN 4
 #define APP_ROOM_TTL_MS 3000u
 #define APP_HEARTBEAT_MS 1000u
+/* 首次加入要等服务发现 + CCCD 写入；5s 在板端太短。 */
+#define APP_JOIN_TIMEOUT_MS 12000u
 
 typedef struct {
     uint8_t  used;
@@ -56,6 +58,7 @@ static struct {
     int      pending_join;
     uint8_t  join_sent;
     uint32_t join_at;
+    uint32_t join_sent_at;
     uint8_t  join_role;
     uint8_t  join_addr[6];
     uint8_t  join_addr_type;
@@ -579,6 +582,9 @@ void gy_net_app_init(void)
 void gy_net_app_tick(uint32_t now_ms)
 {
     g.now = now_ms;
+#ifdef GEYI_WITH_RTTHREAD
+    gy_net_ble_poll();
+#endif
     lobby_drain();
 #ifdef GEYI_WITH_RTTHREAD
     {
@@ -625,10 +631,16 @@ void gy_net_app_tick(uint32_t now_ms)
             if (gy_net_pack_join_req(&m, &j) == GY_NET_OK) {
                 send_msg(conn, &m);
                 g.join_sent = 1;
+                g.join_sent_at = now_ms;
                 g.last_rx = now_ms;
             }
         }
-        if (g.pending_join && (uint32_t)(now_ms - g.join_at) >= 5000u) {
+        /* JOIN_ACK 可能因 CCCD 尚未生效而丢失；1s 未收到 ACK 就重发。 */
+        if (g.pending_join && g.join_sent &&
+            (uint32_t)(now_ms - g.join_sent_at) >= 1000u) {
+            g.join_sent = 0;
+        }
+        if (g.pending_join && (uint32_t)(now_ms - g.join_at) >= APP_JOIN_TIMEOUT_MS) {
             g.join_rejected = 1;
             g.pending_join = 0;
             g.join_sent = 0;
@@ -693,6 +705,23 @@ int gy_net_app_local_ready(void)
 int gy_net_app_host_ready(void) { return g.room.view.host_ready; }
 int gy_net_app_guest_ready(void) { return g.room.view.guest_ready; }
 int gy_net_app_spectator_count(void) { return g.room.view.spectator_count; }
+int gy_net_app_player_count(void) { return g.room.view.player_count; }
+int gy_net_app_seq(void) { return (int)g.room.view.seq; }
+int gy_net_app_local_id(void)
+{
+#ifdef GEYI_WITH_RTTHREAD
+    return gy_net_ble_local_id();
+#else
+    return 0;
+#endif
+}
+int gy_net_app_seat_occupied(int color)
+{
+    if (color != GY_NET_COLOR_RED && color != GY_NET_COLOR_BLUE) return 0;
+    if (color == g.room.view.host_color) return 1;
+    if (color == g.room.view.guest_color) return g.room.view.player_count >= 2;
+    return 0;
+}
 int gy_net_app_connected(void)
 {
 #ifdef GEYI_WITH_RTTHREAD

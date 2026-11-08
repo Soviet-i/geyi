@@ -267,6 +267,21 @@ static int test_room_swap_and_leave(void)
     gy_net_room_init_host(&host, 1004, 0, 2);
     CHECK(gy_net_room_leave(&host, host.view.host_color, 10) == GY_NET_LEAVE_CLOSED);
     CHECK(host.view.phase == GY_NET_PHASE_CLOSED);
+
+    /* 只有房主时也能和“空位”交换先后手；空位应保持 token=0。 */
+    gy_net_room_init_host(&host, 1006, 0, 2);
+    host_token = host.seats[host.view.host_color].token;
+    CHECK(host.view.player_count == 1);
+    CHECK(gy_net_room_swap_seats(&host) == GY_NET_OK);
+    CHECK(host.view.host_color == GY_NET_COLOR_BLUE);
+    CHECK(host.view.guest_color == GY_NET_COLOR_RED);
+    CHECK(host.view.player_count == 1);
+    CHECK(host.seats[GY_NET_COLOR_BLUE].role == GY_NET_ROLE_HOST);
+    CHECK(host.seats[GY_NET_COLOR_BLUE].token == host_token);
+    CHECK(host.seats[GY_NET_COLOR_RED].token == 0);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 20, &t1, &c1) == GY_NET_OK);
+    CHECK(c1 == GY_NET_COLOR_RED);
+    CHECK(host.view.player_count == 2);
     return 0;
 }
 

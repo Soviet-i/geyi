@@ -12,7 +12,13 @@
 
 #include "geyi_net_proto.h"
 
-#define GY_NET_PIPE_CAP 16
+/*
+ * 该管道只用于主机双实例测试和启动自检，不承载真实 BLE 数据。
+ * 板端 main 线程只有 8 KB 栈，自检会把 GyNetMemoryLink 放静态区；
+ * 容量取 4 即可覆盖满/空/断开语义，同时避免 16 条消息（约 25 KB）
+ * 长期占用 BSS，给 BLE 协议栈留出堆空间。
+ */
+#define GY_NET_PIPE_CAP 4
 
 typedef struct {
     GyNetMsg msg[GY_NET_PIPE_CAP];

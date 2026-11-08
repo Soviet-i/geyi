@@ -256,7 +256,8 @@ int gy_net_room_swap_seats(GyNetRoom *host)
     GyNetSeat tmp;
     uint8_t old_host, old_guest;
     if (!host) return GY_NET_ERR_ARG;
-    if (host->view.phase != GY_NET_PHASE_WAIT || host->view.player_count != 2)
+    if (host->view.phase != GY_NET_PHASE_WAIT ||
+        host->view.player_count < 1 || host->view.player_count > 2)
         return GY_NET_ERR_STATE;
     old_host = host->view.host_color;
     old_guest = host->view.guest_color;

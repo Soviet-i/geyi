@@ -28,14 +28,25 @@
 #define GY_BLE_TXQ_CAP  8
 #define GY_BLE_FRAG_HDR 4
 
-/* 16-byte UUIDs (ASCII, easy to recognize in logs). */
-#define GY_SVC_UUID {'G','Y','N','E','T','-','R','O','O','M','-','S','V','C','0','1'}
-#define GY_RX_UUID  {'G','Y','N','E','T','-','R','X','-','C','H','A','R','0','0','1'}
-#define GY_TX_UUID  {'G','Y','N','E','T','-','T','X','-','C','H','A','R','0','0','1'}
+/* 16-byte UUIDs. BLE/GATT stores 128-bit UUIDs LSB-first, so these arrays
+ * are the byte-reversed form of the readable names:
+ *   GYNET-ROOM-SVC01 / GYNET-RX-CHAR001 / GYNET-TX-CHAR001
+ * Using the readable order here makes the on-air UUID reversed and prevents
+ * the client's UUID search from matching the server's service. */
+#define GY_SVC_UUID {'1','0','C','V','S','-','M','O','O','R','-','T','E','N','Y','G'}
+#define GY_RX_UUID  {'1','0','0','R','A','H','C','-','X','R','-','T','E','N','Y','G'}
+#define GY_TX_UUID  {'1','0','0','R','A','H','C','-','X','T','-','T','E','N','Y','G'}
 #define SERIAL_UUID_16(x) {((uint8_t)(x & 0xff)), ((uint8_t)((x >> 8) & 0xff))}
 static const uint8_t g_svc_uuid[ATT_UUID_128_LEN] = GY_SVC_UUID;
 static const uint8_t g_rx_uuid[ATT_UUID_128_LEN] = GY_RX_UUID;
 static const uint8_t g_tx_uuid[ATT_UUID_128_LEN] = GY_TX_UUID;
+/* 搜索接口使用可读（MSB-first）顺序；GATT 数据库/空口使用 LSB-first。 */
+static const uint8_t g_svc_uuid_be[ATT_UUID_128_LEN] =
+    {'G','Y','N','E','T','-','R','O','O','M','-','S','V','C','0','1'};
+static const uint8_t g_rx_uuid_be[ATT_UUID_128_LEN] =
+    {'G','Y','N','E','T','-','R','X','-','C','H','A','R','0','0','1'};
+static const uint8_t g_tx_uuid_be[ATT_UUID_128_LEN] =
+    {'G','Y','N','E','T','-','T','X','-','C','H','A','R','0','0','1'};
 
 enum {
     GY_BLE_SVC = 0,
@@ -102,13 +113,17 @@ static struct rt_mutex g_conn_lock;
 static int g_conn_lock_ready;
 
 static uint8_t g_power_on;
+static uint8_t g_service_ready;
+static uint8_t g_pending_search_conn = 0xff;
 static uint8_t g_mode;              /* 0 = none, 1 = host, 2 = client */
 static uint8_t g_client_conn = 0xff;
 static sibles_hdl g_srv;
 static uint16_t g_rmt_svc = 0;
+static uint8_t g_remote_svc_ok;
 static uint16_t g_rx_val_hdl, g_tx_val_hdl, g_tx_cccd_hdl;
 static uint8_t g_cccd_ok;
 static uint8_t g_adv_active;
+static uint8_t g_adv_started;   /* ADV_STARTED 事件已到，才允许 update */
 static uint8_t g_adv_stopping;
 static uint8_t g_scan_active;
 static uint8_t g_pending_host, g_pending_scan;
@@ -175,6 +190,7 @@ static void conn_free(uint8_t conn_idx)
     if (g_client_conn == conn_idx) {
         g_client_conn = 0xff;
         g_rmt_svc = 0;
+        g_remote_svc_ok = 0;
         g_cccd_ok = 0;
     }
     c_unlock();
@@ -307,11 +323,15 @@ static int send_bytes(uint8_t conn_idx, const uint8_t *data, uint16_t len)
                 ok = (sibles_write_value(conn_idx, &v) == (int)(n + GY_BLE_FRAG_HDR));
             } else {
                 sibles_write_remote_value_t v;
+                int wr;
                 v.handle = g_rx_val_hdl;
                 v.write_type = SIBLES_WRITE_WITHOUT_RSP;
                 v.len = (uint16_t)(n + GY_BLE_FRAG_HDR);
                 v.value = frag;
-                ok = (sibles_write_remote_value(g_rmt_svc, conn_idx, &v) == SIBLES_WRITE_NO_ERR);
+                wr = sibles_write_remote_value(g_rmt_svc, conn_idx, &v);
+                ok = (wr == SIBLES_WRITE_NO_ERR);
+                if (!ok) BLE_LOG("remote write fail conn=%d hdl=%d ret=%d",
+                                 conn_idx, g_rx_val_hdl, wr);
             }
             if (!ok) rt_thread_mdelay(5);
         }
@@ -351,7 +371,7 @@ static void tx_thread_entry(void *parameter)
             c_unlock();
             for (i = 0; i < count; ++i) ok |= send_bytes(conns[i], buf, (uint16_t)n);
             (void)ok;
-        } else if (g_client_conn != 0xff && g_rmt_svc) {
+        } else if (g_client_conn != 0xff && g_remote_svc_ok) {
             send_bytes(g_client_conn, buf, (uint16_t)n);
         }
     }
@@ -408,11 +428,11 @@ static void adv_fill_para(sibles_advertising_para_t *para, int connectable)
     char name[20];
     uint16_t company = SIG_SIFLI_COMPANY_ID;
     para->own_addr_type = GAPM_STATIC_ADDR;
+    /* 与 SDK v2.5.1 example/ble/peripheral 的 ble_app_advertising_start
+     * 保持一致：LEGACY CONNECT 模式、名称放 rsp_data、自动重启广播。 */
     para->config.adv_mode = connectable ? SIBLES_ADV_CONNECT_MODE : SIBLES_ADV_BROADCAST_MODE;
     para->config.max_tx_pwr = 0x7F;
-    /* 多连接/旁观需要连接后仍可被发现；显式在连接/断开事件里重启广播，
-     * 不能依赖 is_auto_restart（SDK 例程 multi_connection 同样手动管理）。 */
-    para->config.is_auto_restart = 0;
+    para->config.is_auto_restart = 1;
     if (connectable) {
         para->config.mode_config.conn_config.duration = 0;
         para->config.mode_config.conn_config.interval = 0x30;
@@ -424,6 +444,15 @@ static void adv_fill_para(sibles_advertising_para_t *para, int connectable)
     rt_snprintf(name, sizeof(name), "GEYI-%08x", (unsigned)(g_adv_payload[3] |
         ((uint32_t)g_adv_payload[4] << 8) | ((uint32_t)g_adv_payload[5] << 16) |
         ((uint32_t)g_adv_payload[6] << 24)));
+    {
+        ble_gap_dev_name_t *dn = rt_malloc(sizeof(ble_gap_dev_name_t) + strlen(name));
+        if (dn) {
+            dn->len = (uint8_t)strlen(name);
+            memcpy(dn->name, name, strlen(name));
+            ble_gap_set_dev_name(dn);
+            rt_free(dn);
+        }
+    }
     para->rsp_data.completed_name = rt_malloc(sizeof(sibles_adv_type_name_t) + strlen(name));
     if (para->rsp_data.completed_name) {
         para->rsp_data.completed_name->name_len = (uint8_t)strlen(name);
@@ -440,8 +469,10 @@ static void adv_fill_para(sibles_advertising_para_t *para, int connectable)
 
 static void adv_free_para(sibles_advertising_para_t *para)
 {
+    if (para->adv_data.completed_name) rt_free(para->adv_data.completed_name);
     if (para->rsp_data.completed_name) rt_free(para->rsp_data.completed_name);
     if (para->adv_data.manufacturer_data) rt_free(para->adv_data.manufacturer_data);
+    para->adv_data.completed_name = RT_NULL;
     para->rsp_data.completed_name = RT_NULL;
     para->adv_data.manufacturer_data = RT_NULL;
 }
@@ -459,9 +490,11 @@ static uint8_t geyi_adv_event(uint8_t event, void *context, void *data)
     (void)context; (void)data;
     if (event == SIBLES_ADV_EVT_ADV_STARTED) {
         g_adv_active = 1;
+        g_adv_started = 1;
         BLE_LOG("adv started");
     } else if (event == SIBLES_ADV_EVT_ADV_STOPPED) {
         g_adv_active = 0;
+        g_adv_started = 0;
         BLE_LOG("adv stopped");
         if (!g_adv_stopping && g_mode == 1 && g_adv_connectable && adv_has_space()) {
             if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
@@ -475,19 +508,28 @@ static int adv_start(int connectable)
 {
     sibles_advertising_para_t para;
     uint8_t ret;
-    if (!g_power_on) { g_pending_host = 1; g_adv_connectable = (uint8_t)connectable; return 0; }
+    if (!g_power_on) {
+        g_pending_host = 1;
+        g_adv_connectable = (uint8_t)connectable;
+        BLE_LOG("adv pending power=0");
+        return 0;
+    }
+    BLE_LOG("adv_start connectable=%d", connectable);
     g_adv_stopping = 1;
     if (g_adv_active) {
         sibles_advertising_stop(g_geyi_adv_ctx);
         sibles_advertising_delete(g_geyi_adv_ctx);
         g_adv_active = 0;
     }
+    g_adv_started = 0;
     memset(&para, 0, sizeof(para));
     adv_fill_para(&para, connectable);
     ret = sibles_advertising_init(g_geyi_adv_ctx, &para);
     adv_free_para(&para);
+    BLE_LOG("adv init ret=%d", ret);
     if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv init err %d", ret); return -1; }
     ret = sibles_advertising_start(g_geyi_adv_ctx);
+    BLE_LOG("adv start ret=%d", ret);
     if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv start err %d", ret); return -1; }
     g_adv_active = 1;
     g_adv_connectable = (uint8_t)connectable;
@@ -498,9 +540,14 @@ static int adv_start(int connectable)
 int gy_net_ble_host_start(uint32_t room_id, uint8_t players, uint8_t phase,
                           uint8_t spectators, uint8_t max_spectators)
 {
+    int ret;
     g_mode = 1;
     build_adv_payload(room_id, players, phase, spectators, max_spectators);
-    return adv_start(1);
+    BLE_LOG("host_start room=%08x players=%d power=%d",
+            (unsigned)room_id, players, g_power_on);
+    ret = adv_start(1);
+    BLE_LOG("host_start ret=%d", ret);
+    return ret;
 }
 
 int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
@@ -513,6 +560,7 @@ int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
     build_adv_payload(room_id, players, phase, spectators, max_spectators);
     if (mode_changed) return adv_start(connectable);
     if (!g_adv_active) return adv_start(connectable);
+    if (!g_adv_started) return 0;
     {
         sibles_advertising_para_t para;
         uint8_t ret;
@@ -542,7 +590,8 @@ void gy_net_ble_host_stop(void)
 int gy_net_ble_scan_start(void)
 {
     ble_gap_scan_start_t p;
-    if (!g_power_on) { g_pending_scan = 1; return 0; }
+    int ret;
+    if (!g_power_on) { g_pending_scan = 1; BLE_LOG("scan pending power=0"); return 0; }
     memset(&p, 0, sizeof(p));
     p.own_addr_type = GAPM_STATIC_ADDR;
     p.type = GAPM_SCAN_TYPE_OBSERVER;
@@ -551,7 +600,9 @@ int gy_net_ble_scan_start(void)
     p.scan_param_1m.scan_wd = 0x30;
     p.duration = 0;
     p.period = 0;
-    if (ble_gap_scan_start(&p) != HL_ERR_NO_ERROR) return -1;
+    ret = ble_gap_scan_start(&p);
+    BLE_LOG("scan_start ret=%d", ret);
+    if (ret != HL_ERR_NO_ERROR) return -1;
     g_scan_active = 1;
     return 0;
 }
@@ -604,7 +655,7 @@ int gy_net_ble_connected(void)
 }
 int gy_net_ble_ready(void)
 {
-    return (g_client_conn != 0xff && g_rmt_svc && g_rx_val_hdl &&
+    return (g_client_conn != 0xff && g_remote_svc_ok && g_rx_val_hdl &&
             g_tx_val_hdl && g_tx_cccd_hdl && g_cccd_ok) ? 1 : 0;
 }
 uint8_t gy_net_ble_conn_count(void)
@@ -642,6 +693,14 @@ uint16_t gy_net_ble_mtu(uint8_t conn)
     uint16_t ret = 23;
     if (c) { c_lock(); ret = c->mtu; c_unlock(); }
     return ret;
+}
+
+int gy_net_ble_local_id(void)
+{
+    bd_addr_t addr;
+    if (ble_get_public_address(&addr) == HL_ERR_NO_ERROR)
+        return ((int)addr.addr[4] << 8) | addr.addr[5];
+    return 0;
 }
 
 static uint8_t *ble_get_cb(uint8_t conn_idx, uint8_t idx, uint16_t *len)
@@ -717,11 +776,15 @@ static int geyi_gattc_event(uint16_t event_id, uint8_t *data, uint16_t len)
         if (rsp->status == 0 && g_tx_cccd_hdl) {
             sibles_write_remote_value_t v;
             uint8_t cccd[2] = {1, 0};
+            int wr;
             v.handle = g_tx_cccd_hdl;
             v.write_type = SIBLES_WRITE;
             v.len = 2;
             v.value = cccd;
-            if (sibles_write_remote_value(g_rmt_svc, rsp->conn_idx, &v) == SIBLES_WRITE_NO_ERR)
+            wr = sibles_write_remote_value(g_rmt_svc, rsp->conn_idx, &v);
+            BLE_LOG("cccd write conn=%d hdl=%d ret=%d", rsp->conn_idx,
+                    g_tx_cccd_hdl, wr);
+            if (wr == SIBLES_WRITE_NO_ERR)
                 g_cccd_ok = 1;
         }
     }
@@ -734,7 +797,9 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
     switch (event_id) {
     case BLE_POWER_ON_IND:
         g_power_on = 1;
-        ble_service_init();
+        /* 不能在 BLE 事件回调里注册 GATT：sibles_register_svc_128() 会等
+         * 同一个事件线程处理注册响应，直接在这里调用会自锁，后续 GAP
+         * 事件永远不来。注册推迟到 gy_net_ble_poll()（主线程）。 */
         if (g_pending_host) { g_pending_host = 0; adv_start(g_adv_connectable); }
         if (g_pending_scan) { g_pending_scan = 0; gy_net_ble_scan_start(); }
         BLE_LOG("power on");
@@ -750,7 +815,7 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             sibles_exchange_mtu(ind->conn_idx);
             BLE_LOG("connected idx=%d role=%d", ind->conn_idx, ind->role);
             if (g_mode == 2)
-                sibles_search_service(ind->conn_idx, ATT_UUID_128_LEN, (uint8_t *)g_svc_uuid);
+                g_pending_search_conn = ind->conn_idx;
             if (g_mode == 1 && g_adv_connectable && adv_has_space()) {
                 if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
                     g_adv_active = 1;
@@ -779,15 +844,26 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         sibles_svc_search_rsp_t *rsp = (sibles_svc_search_rsp_t *)data;
         uint8_t i;
         uint8_t *p;
-        BLE_LOG("search svc result=%d conn=%d", rsp->result, rsp->conn_idx);
+        BLE_LOG("search svc result=%d conn=%d chars=%d uuid_len=%d",
+                rsp->result, rsp->conn_idx, rsp->svc ? rsp->svc->char_count : -1,
+                rsp->svc ? rsp->svc->uuid_len : -1);
+        if (rsp->svc && rsp->svc->char_count) {
+            int di;
+            BLE_LOG("svc uuid %02x%02x%02x%02x ... hdl %d-%d",
+                    rsp->svc->uuid[0], rsp->svc->uuid[1], rsp->svc->uuid[2],
+                    rsp->svc->uuid[3], rsp->svc->hdl_start, rsp->svc->hdl_end);
+            (void)di;
+        }
         if (rsp->result != HL_ERR_NO_ERROR || !rsp->svc) break;
         p = rsp->svc->att_db;
         for (i = 0; i < rsp->svc->char_count; ++i) {
             sibles_svc_search_char_t *ch = (sibles_svc_search_char_t *)p;
             if (ch->uuid_len == ATT_UUID_128_LEN) {
-                if (memcmp(ch->uuid, g_rx_uuid, ATT_UUID_128_LEN) == 0)
+                if (memcmp(ch->uuid, g_rx_uuid, ATT_UUID_128_LEN) == 0 ||
+                    memcmp(ch->uuid, g_rx_uuid_be, ATT_UUID_128_LEN) == 0)
                     g_rx_val_hdl = ch->pointer_hdl;
-                else if (memcmp(ch->uuid, g_tx_uuid, ATT_UUID_128_LEN) == 0) {
+                else if (memcmp(ch->uuid, g_tx_uuid, ATT_UUID_128_LEN) == 0 ||
+                         memcmp(ch->uuid, g_tx_uuid_be, ATT_UUID_128_LEN) == 0) {
                     g_tx_val_hdl = ch->pointer_hdl;
                     g_tx_cccd_hdl = sibles_descriptor_handle_find(ch, ATT_DESC_CLIENT_CHAR_CFG);
                 }
@@ -796,10 +872,13 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
                  ch->desc_count * sizeof(struct sibles_disc_char_desc_ind);
         }
         g_cccd_ok = 0;
+        g_remote_svc_ok = 0;
         g_rmt_svc = sibles_register_remote_svc(rsp->conn_idx, rsp->svc->hdl_start,
                                                rsp->svc->hdl_end, geyi_gattc_event);
-        BLE_LOG("chars rx=%d tx=%d cccd=%d rmt=%d", g_rx_val_hdl, g_tx_val_hdl,
-                g_tx_cccd_hdl, g_rmt_svc);
+        g_remote_svc_ok = 1;   /* 返回 0 是合法索引，不能用非零判断 */
+        BLE_LOG("chars rx=%d tx=%d cccd=%d rmt=%d hdl=%d-%d", g_rx_val_hdl,
+                g_tx_val_hdl, g_tx_cccd_hdl, g_rmt_svc, rsp->svc->hdl_start,
+                rsp->svc->hdl_end);
         break;
     }
     case BLE_GAP_EXT_ADV_REPORT_IND:
@@ -818,6 +897,23 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
     return 0;
 }
 BLE_EVENT_REGISTER(geyi_ble_event, NULL);
+
+void gy_net_ble_poll(void)
+{
+    if (!g_power_on) return;
+    if (!g_service_ready) {
+        g_service_ready = 1;
+        BLE_LOG("service init");
+        ble_service_init();
+        BLE_LOG("service init done srv=%d", (int)(uintptr_t)g_srv);
+    }
+    if (g_pending_search_conn != 0xff) {
+        uint8_t conn = g_pending_search_conn;
+        g_pending_search_conn = 0xff;
+        BLE_LOG("search start conn=%d", conn);
+        sibles_search_service(conn, ATT_UUID_128_LEN, (uint8_t *)g_svc_uuid);
+    }
+}
 
 void gy_net_ble_init(void)
 {

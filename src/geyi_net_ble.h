@@ -33,6 +33,8 @@ typedef struct {
 
 /* 初始化 BLE 栈；必须在主线程/启动阶段调用一次。 */
 void gy_net_ble_init(void);
+/* 主线程轮询：BLE_POWER_ON_IND 之后注册 GATT（不能在事件回调里注册）。 */
+void gy_net_ble_poll(void);
 
 /* 房主：启动/更新/停止可连接广播。满员时可传 connectable=0 改为只广播摘要。 */
 int  gy_net_ble_host_start(uint32_t room_id, uint8_t players, uint8_t phase,
@@ -54,6 +56,8 @@ uint8_t  gy_net_ble_conn_count(void);
 uint8_t  gy_net_ble_conn_at(uint8_t index);
 uint8_t  gy_net_ble_client_conn(void);
 uint16_t gy_net_ble_mtu(uint8_t conn);
+/* 本板 BLE 地址后 2 字节，作为 UI 的简短玩家标识（如 #FD5C）。 */
+int      gy_net_ble_local_id(void);
 
 /* 发送：conn 为具体连接号；GY_NET_BLE_BROADCAST_CONN 表示房主发给所有已连接端。 */
 int gy_net_ble_send(uint8_t conn, const GyNetMsg *msg);
