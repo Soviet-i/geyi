@@ -1,0 +1,20 @@
+% 公共导言：XeLaTeX + TikZ + 中文字体
+\usepackage{xeCJK}
+% 优先使用开源的 Noto Sans SC（OFL）；没有时回退到系统字体，便于他机复现。
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\setCJKmainfont{Microsoft YaHei}}
+\usepackage{amsmath}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc,decorations.pathreplacing}
+\tikzset{
+  block/.style={draw,rounded corners=2pt,align=center,font=\small,inner sep=4pt},
+  existing/.style={block,fill=blue!8,draw=blue!55!black},
+  planned/.style={block,fill=gray!10,draw=gray!60!black,dashed},
+  ui/.style={block,fill=green!8,draw=green!45!black},
+  ext/.style={block,fill=orange!10,draw=orange!65!black},
+  auth/.style={block,fill=red!7,draw=red!55!black},
+  layer/.style={draw,rounded corners=4pt,fill=black!3,inner sep=6pt},
+  arr/.style={-{Latex[length=2mm]},thick},
+  darr/.style={-{Latex[length=2mm]},thick,dashed},
+  lbl/.style={font=\scriptsize,fill=white,inner sep=1pt}
+}

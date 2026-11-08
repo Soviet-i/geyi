@@ -1,0 +1,90 @@
+\documentclass[tikz,border=8pt]{standalone}
+\input{_preamble}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % 板卡边界
+  \draw[rounded corners=6pt,fill=blue!2,draw=blue!45!black,dashed] (-7.4,-4.3) rectangle (6.5,4.35);
+  \node[anchor=south west,font=\small\bfseries,text=blue!45!black] at (-7.35,4.38)
+    {黄山派 SF32LB525UC6（sf32lb52-lchspi-ulp）};
+
+  % UI 层
+  \node[ui,minimum width=12.6cm,minimum height=1.0cm] (ui) at (-0.55,3.2)
+    {\textbf{UI 层（LVGL v9，仅主线程）}\\[0.5pt]
+     \footnotesize 首页 · 模式页 · 人机准备页 · 联机大厅/房间 · 棋盘 · 结算 · 历史 · 参数页};
+
+  % 核心模块
+  \node[existing,minimum width=2.9cm,minimum height=1.45cm] (game) at (-2.0,1.45)
+    {\textbf{规则核心}\\ \texttt{gy\_game.c}\\ \scriptsize 预览/提交/合并\\ \scriptsize 伤害/金币/胜负};
+  \node[existing,minimum width=2.4cm,minimum height=1.35cm] (input) at (-5.4,1.45)
+    {\textbf{输入状态机}\\ \texttt{gy\_input.c}\\ \scriptsize 200\,ms 稳定 + 滞回};
+  \node[existing,minimum width=2.2cm,minimum height=1.5cm] (ai) at (0.9,1.45)
+    {\textbf{AI 搜索}\\ \texttt{gy\_ai.c}\\ \texttt{gy\_ai\_task.c}\\ \scriptsize negamax + $\alpha\beta$};
+  \node[existing,minimum width=2.35cm,minimum height=1.35cm] (cfg) at (4.3,1.45)
+    {\textbf{参数配置}\\ \texttt{gy\_config.c}\\ \texttt{gy\_param\_ui.c}\\ \scriptsize 10 项 / 三模式};
+
+  % 计划中的模块
+  \node[planned,minimum width=2.8cm,minimum height=1.15cm] (hist) at (-4.8,-1.0)
+    {\textbf{历史/计时（计划）}\\ \texttt{geyi\_history.c}\\ \scriptsize 最近 $N$ 局 + 单局计时};
+  \node[existing,minimum width=2.4cm,minimum height=1.15cm] (fb) at (0.55,-1.0)
+    {\textbf{反馈}\\ \scriptsize \texttt{gy\_feedback.c}\\ \scriptsize RGB 事件调度};
+  \node[planned,minimum width=3.3cm,minimum height=1.55cm] (net) at (4.05,-1.0)
+    {\textbf{联机（计划）}\\ \scriptsize \texttt{net\_room}\\ \scriptsize \texttt{net\_proto}\\ \scriptsize \texttt{net\_link}\\ \scriptsize 房主权威 + 全量快照};
+
+  % 板级与系统层
+  \node[existing,minimum width=9.6cm,minimum height=0.9cm] (board) at (-1.55,-2.55)
+    {\textbf{板级驱动 \texttt{gy\_board.c}}\quad
+     \scriptsize LCD/触摸（SDK BSP） · IMU（I2C3, 20\,ms） · KEY1/KEY2 · RGB（PA32）};
+  \node[layer,minimum width=9.6cm,minimum height=0.6cm] (bsp) at (-1.55,-3.55)
+    {\small BSP + HAL + RT-Thread + SiFli SDK v2.5.1 + LVGL v9};
+
+  % 外部角色
+  \node[ext,minimum width=3.0cm,minimum height=1.1cm] (peer) at (9.2,3.0)
+    {\textbf{对手板}\\ \scriptsize BLE 中央设备};
+  \node[ext,minimum width=3.0cm,minimum height=1.1cm] (spec) at (9.2,1.2)
+    {\textbf{旁观板 / 手机}\\ \scriptsize BLE 中央，只读};
+
+  % 核心数据/控制流
+  \draw[arr] (input) -- node[lbl,above]{确认} (game);
+  \draw[arr] ([xshift=-0.45cm]game.north) -- node[lbl,above left]{事件} ([xshift=-0.45cm]ui.south);
+  \draw[arr] ([xshift=0.45cm]game.north) -- node[lbl,above right]{重绘} ([xshift=0.45cm]ui.south);
+  \draw[arr] ([yshift=0.22cm]ai.west) -- node[lbl,above]{动作} ([yshift=0.22cm]game.east);
+  \draw[arr] ([yshift=-0.22cm]game.east) -- ([yshift=-0.22cm]ai.west);
+
+  % 输入从板级驱动绕左侧进入
+  \draw[arr] (board.west) -- (-7.25,-2.55) -- (-7.25,1.45)
+    node[lbl,left,pos=0.72]{角度 / 按键 20\,ms} -- (input.west);
+
+  % 参数：新开一局时写入 game / input / AI 的配置
+  \draw[arr,blue!55!black] (cfg.west) -- node[lbl,above]{参数} (ai.east);
+
+  % 历史与反馈
+  \draw[arr] (game.west) -- (-3.35,1.45) -- (-3.35,-0.42) -- (hist.north);
+  \node[lbl,above] at (-4.08,-0.23) {终局记录};
+  \draw[arr,darr] (hist.west) -- (-6.95,-1.0) -- (-6.95,3.2)
+    node[lbl,right,pos=0.75]{历史列表} -- (ui.west);
+  \draw[arr] (game.south) .. controls (-1.2,0.2) and (0.2,0.2) .. (fb.north)
+    node[lbl,above,pos=0.55]{行动 / 终局事件};
+  \draw[arr] (fb.south) -- node[lbl,right]{RGB 颜色 / 时序} (board.north -| fb.south);
+
+  % 联机：房主权威状态与 UI 事件
+  \draw[arr] (game.east |- net.north) -- (net.north west);
+  \node[lbl,above] at (0.9,-0.23) {权威状态 / 快照};
+  \draw[arr,darr] (2.6,2.7) -- (2.6,-0.42);
+  \node[lbl,left] at (2.55,0.25) {联机事件};
+
+  % BLE：房主广播 + 连接态快照
+  \draw[arr] (net.east) -- (7.4,-1.0) -- (7.4,3.0) -- (peer.west);
+  \draw[arr] (net.east) -- (7.4,-1.0) -- (7.4,1.2) -- (spec.west);
+  \node[lbl,above] at (6.35,-0.93) {BLE GATT / 广播};
+
+  % 图例
+  \begin{scope}[shift={(-6.2,-4.65)}]
+    \node[existing,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l1) at (0,0) {};
+    \node[anchor=west,font=\scriptsize] at (0.55,0) {已实现};
+    \node[planned,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l2) at (1.8,0) {};
+    \node[anchor=west,font=\scriptsize] at (2.35,0) {计划};
+    \node[ext,minimum width=1.0cm,minimum height=0.3cm,font=\scriptsize] (l3) at (4.1,0) {};
+    \node[anchor=west,font=\scriptsize] at (4.65,0) {外部设备};
+  \end{scope}
+\end{tikzpicture}
+\end{document}

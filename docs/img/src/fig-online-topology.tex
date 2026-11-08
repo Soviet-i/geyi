@@ -1,0 +1,42 @@
+\documentclass[tikz,border=8pt]{standalone}
+\input{_preamble}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  host/.style={draw,rounded corners=6pt,fill=red!6,draw=red!55!black,minimum width=4.2cm,minimum height=2.0cm,align=center,font=\small},
+  peer/.style={draw,rounded corners=6pt,fill=blue!6,draw=blue!50!black,minimum width=3.9cm,minimum height=1.5cm,align=center,font=\small},
+  spec/.style={draw,rounded corners=6pt,fill=orange!8,draw=orange!55!black,minimum width=3.9cm,minimum height=1.5cm,align=center,font=\small},
+  air/.style={draw,rounded corners=18pt,fill=gray!8,draw=gray!55!black,dashed,minimum width=3.2cm,minimum height=1.4cm,align=center,font=\small},
+  note/.style={draw,rounded corners=5pt,fill=black!2,draw=black!35,align=left,font=\scriptsize,text width=15.6cm}]
+
+  \node[host] (host) at (-6.4,0) {\textbf{房主板}\\
+    BLE 外设 + GATT 服务端\\ 唯一裁判 + 房间状态\\ 随机块唯一来源};
+  \node[air] (air) at (-0.6,0) {\textbf{BLE 空中接口}\\ GATT / 广播\\ 连接数待实测};
+  \node[peer] (opp) at (5.4,2.0) {\textbf{对手板}\\ BLE 中央设备\\ 只发意图，镜像快照\\ \textcolor{red!60!black}{不接收 PREVIEW}};
+  \node[spec] (spect) at (5.4,-2.0) {\textbf{旁观板 / 手机}\\ BLE 中央设备\\ 只读；接收双方预览};
+
+  % 广播与连接
+  \draw[arr] (host.east) -- node[lbl,above]{ADV\_ROOM} (air.west);
+  \draw[arr] (air.east) -- (2.2,0.9) -- (opp.west);
+  \node[lbl,above] at (1.3,0.35) {扫描 / 连接};
+  \draw[arr] (air.east) -- (2.2,-0.9) -- (spect.west);
+  \node[lbl,below] at (1.3,-0.35) {扫描 / 连接};
+
+  % 对手：意图上行、快照下行
+  \draw[<->,thick] ([yshift=0.30cm]host.east) -- node[lbl,above]{意图 $\uparrow$ / 快照 $\downarrow$} ([yshift=0.30cm]opp.west);
+
+  % 旁观：只读请求、快照 + 双方预览
+  \draw[<->,thick] ([yshift=-0.30cm]host.east) -- node[lbl,below]{只读请求 $\uparrow$ / 快照 + 双方预览 $\downarrow$} ([yshift=-0.30cm]spect.west);
+
+  % 消息集、隐私、容量、重连
+  \node[note] at (0,-3.9)
+    {\textbf{消息集}：\texttt{ADV\_ROOM}、\texttt{JOIN\_REQ/ACK/REJECT}、\texttt{ROOM\_STATE}、
+     \texttt{READY/SET\_SEAT/LEAVE}、\texttt{START}、\texttt{MOVE\_REQ}、
+     \texttt{SNAPSHOT/RESULT}、\texttt{PREVIEW/PREVIEW\_CLEAR}、
+     \texttt{HEARTBEAT/PING/REJOIN/RESUME}。\\
+     \textbf{隐私}：对手不接收 \texttt{PREVIEW}；房主只把预览转发给旁观者；客户端只接受“来自自己”的预览。\\
+     \textbf{容量与多房间}：旁观上限 $K$ = 实测并发连接数 $-1$；未实测前不宣称旁观可用。
+     多房间 = 多台房主各自广播，大厅按 \texttt{roomId} 维护列表，3\,s TTL 移除。\\
+     \textbf{断线 / 重连}：客方 10\,s 重连窗口，对局冻结；\texttt{REJOIN(token,last\_seq)} 校验后回全量快照；
+     超时由在场方判缺席方负；房主掉线由客方 10\,s 重试后判负；旁观掉线不冻结对局。};
+\end{tikzpicture}
+\end{document}
