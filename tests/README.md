@@ -6,9 +6,10 @@
 ## 运行
 
 ```bash
-python tools/run_host.py                 # 构建并运行全部 6 组
+python tools/run_host.py                 # 构建并运行全部主机组（含联机 253 + app 70）
 python tools/coverage.py --min 70        # 每模块行覆盖率
 python tools/verify_all.py               # 文档检查 + 主机测试
+python tools/net_board_test.py --port-a COM7 --port-b COM8  # 双板 BLE 自动冒烟
 ```
 
 ## 测试文件
@@ -21,6 +22,11 @@ python tools/verify_all.py               # 文档检查 + 主机测试
 | `test_param_ui.c` | 参数页状态 `src/geyi_param_ui.c` | 模式/分页/条目/增减/重置/应用；85 断言 |
 | `test_ai.c` | AI `src/geyi_ai.c` | 合法动作/终局/避免自伤/不读 RNG/剪枝/取消/自对弈；62 断言 |
 | `test_balance.c` | 平衡扫描 `tools/geyi_balance.c` | 参数网格/固定 seed/CSV 可复现；10 断言 |
+| `test_net.c` | 联机协议/房间/大厅/内存管道 `src/geyi_net_*.c` | 编码/版本/seq/快照/准备/开局/落子/断线/重连/旁观/大厅 TTL/空位换座；253 断言 |
+| `test_net_app.c` | 联机 app 路由 `src/geyi_net_app.c` | 换座颜色、state+snapshot 同 seq、MOVE_REQ 幂等、对局 LEAVE、重复 JOIN、满员；70 断言 |
+
+`tools/net_board_test.py` 是**两块真板**的自动冒烟，不是主机测试；它通过串口 shell
+把 `gy_net ...` 动作排入 UI 主线程，覆盖发现/连接/服务发现/CCCD/加入/准备/双向落子。
 
 ## 新增测试
 
