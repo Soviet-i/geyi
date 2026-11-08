@@ -89,7 +89,7 @@ design:
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
   # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
-  commit_range: "origin/develop 8f23712..docs/req-5xx-gap-fill HEAD（2026-11-08 文档补全；交接时更新为精确 SHA）"
+  commit_range: "8f23712..HEAD（docs/req-5xx-gap-fill；2026-11-08 文档补全与审查修正；封版 tag 记精确 SHA）"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
