@@ -29,6 +29,8 @@ typedef struct {
     uint8_t  color;
     uint32_t token;
     uint32_t last_rx;
+    uint32_t last_intent_seq;
+    uint8_t  intent_seen;
 } ConnMap;
 
 static struct {
@@ -44,6 +46,7 @@ static struct {
     uint32_t last_ping;
     uint32_t last_rx;
     uint8_t  dropped;
+    uint8_t  spectator_lost;
     uint32_t drop_at;
     uint32_t reconnect_at;
     uint8_t  rejoin_sent;
@@ -51,13 +54,19 @@ static struct {
     GyNetAppRoom rooms[GY_NET_APP_MAX_ROOMS];
     int      room_count;
     int      pending_join;
+    uint8_t  join_sent;
+    uint32_t join_at;
     uint8_t  join_role;
     uint8_t  join_addr[6];
     uint8_t  join_addr_type;
     uint8_t  join_rejected;
     uint8_t  pending_move;
+    uint8_t  local_ready;
     int      dir;
     int      count;
+    int      last_dir;
+    int      last_count;
+    uint8_t  last_preview_valid;
     int      placing;
     int      place_col;
     GyNetPreview preview[2];
@@ -150,6 +159,30 @@ static void send_reject(uint8_t conn, uint8_t reason)
     r.seq = g.room.view.seq;
     if (gy_net_pack_reject(&m, &r) == GY_NET_OK) send_msg(conn, &m);
 }
+static void send_preview_clear_to_spectators(uint8_t side)
+{
+    GyNetPreviewClear p;
+    GyNetMsg m;
+    memset(&p, 0, sizeof(p));
+    p.side = side;
+    if (gy_net_pack_preview_clear(&m, &p) == GY_NET_OK) send_spectators(&m);
+}
+
+static uint8_t conn_color(const ConnMap *c)
+{
+    int i;
+    if (!c) return GY_NET_COLOR_NONE;
+    for (i = 0; i < 2; ++i)
+        if (g.room.seats[i].token && g.room.seats[i].token == c->token)
+            return (uint8_t)i;
+    return c->color;
+}
+static uint8_t conn_role(const ConnMap *c)
+{
+    uint8_t color = conn_color(c);
+    if (!color_valid(color)) return GY_NET_ROLE_SPECTATOR;
+    return g.room.seats[color].role;
+}
 
 static ConnMap *conn_find(uint8_t conn)
 {
@@ -160,26 +193,22 @@ static ConnMap *conn_find(uint8_t conn)
 }
 static ConnMap *conn_alloc(uint8_t conn, uint8_t role, uint8_t color, uint32_t token)
 {
-    int i;
+    int i, slot = -1, stale = -1;
     for (i = 0; i < APP_MAX_CONN; ++i) {
-        if (!g.conns[i].used) {
-            g.conns[i].used = 1;
-            g.conns[i].conn = conn;
-            g.conns[i].role = role;
-            g.conns[i].color = color;
-            g.conns[i].token = token;
-            g.conns[i].last_rx = g.now;
-            return &g.conns[i];
-        }
+        if (!g.conns[i].used && slot < 0) slot = i;
+        else if (g.conns[i].used && g.conns[i].conn == 0xff && stale < 0) stale = i;
     }
-    return NULL;
+    if (slot < 0) slot = stale;
+    if (slot < 0) return NULL;
+    memset(&g.conns[slot], 0, sizeof(g.conns[slot]));
+    g.conns[slot].used = 1;
+    g.conns[slot].conn = conn;
+    g.conns[slot].role = role;
+    g.conns[slot].color = color;
+    g.conns[slot].token = token;
+    g.conns[slot].last_rx = g.now;
+    return &g.conns[slot];
 }
-static void conn_drop(uint8_t conn)
-{
-    ConnMap *c = conn_find(conn);
-    if (c) c->conn = 0xff;
-}
-
 #ifdef GEYI_WITH_RTTHREAD
 static int ble_has_conn(uint8_t conn)
 {
@@ -196,7 +225,8 @@ static void host_sync_conns(void)
     int i;
     for (i = 0; i < APP_MAX_CONN; ++i) {
         if (!g.conns[i].used || g.conns[i].conn == 0xff) continue;
-        if (!ble_has_conn(g.conns[i].conn)) {
+        if (!ble_has_conn(g.conns[i].conn) ||
+            (uint32_t)(g.now - g.conns[i].last_rx) >= 10000u) {
             gy_net_room_disconnect_token(&g.room, g.conns[i].token, g.now);
             g.conns[i].conn = 0xff;
         }
@@ -236,6 +266,8 @@ static void host_phase_change(int old_phase)
 
 static void host_process(uint8_t conn, const GyNetMsg *msg)
 {
+    ConnMap *rxconn = conn_find(conn);
+    if (rxconn) rxconn->last_rx = g.now;
     switch (msg->type) {
     case GY_NET_JOIN_REQ: {
         GyNetJoinReq j;
@@ -244,6 +276,15 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         uint8_t room_role;
         if (gy_net_unpack_join_req(msg, &j) != GY_NET_OK) return;
         if (j.room_id != g.room.view.room_id) { send_join_reject(conn, GY_NET_ERR_STATE); return; }
+        {
+            ConnMap *existing = conn_find(conn);
+            if (existing) {
+                send_join_ack(conn, conn_color(existing), existing->token);
+                send_state_to(conn);
+                if (g.room.view.game_valid) send_snapshot_to(conn);
+                return;
+            }
+        }
         room_role = (j.role == 0) ? GY_NET_ROLE_PLAYER : GY_NET_ROLE_SPECTATOR;
         if (gy_net_room_join(&g.room, room_role, g.now, &token, &color) != GY_NET_OK) {
             send_join_reject(conn, GY_NET_ERR_FULL);
@@ -252,6 +293,7 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         conn_alloc(conn, room_role, color, token);
         send_join_ack(conn, color, token);
         send_state_to(conn);
+        if (g.room.view.game_valid) send_snapshot_to(conn);
         broadcast_state();
         host_update_adv();
         break;
@@ -260,7 +302,7 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         GyNetReady r;
         ConnMap *c = conn_find(conn);
         if (!c || gy_net_unpack_ready(msg, &r) != GY_NET_OK) return;
-        if (gy_net_room_set_ready(&g.room, c->color, r.ready, g.now) == GY_NET_OK) {
+        if (gy_net_room_set_ready(&g.room, conn_color(c), r.ready, g.now) == GY_NET_OK) {
             broadcast_state();
             host_update_adv();
         }
@@ -268,8 +310,15 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
     }
     case GY_NET_SET_SEAT: {
         ConnMap *c = conn_find(conn);
-        if (!c || c->role != GY_NET_ROLE_HOST) return;
-        if (gy_net_room_swap_seats(&g.room) == GY_NET_OK) broadcast_state();
+        if (!c || conn_role(c) != GY_NET_ROLE_HOST) return;
+        if (gy_net_room_swap_seats(&g.room) == GY_NET_OK) {
+            int i;
+            for (i = 0; i < APP_MAX_CONN; ++i)
+                if (g.conns[i].used && g.conns[i].conn != 0xff &&
+                    color_valid(conn_color(&g.conns[i])))
+                    send_join_ack(g.conns[i].conn, conn_color(&g.conns[i]), g.conns[i].token);
+            broadcast_state();
+        }
         break;
     }
     case GY_NET_LEAVE: {
@@ -278,10 +327,13 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         int old_phase;
         if (!c || gy_net_unpack_leave(msg, &l) != GY_NET_OK) return;
         old_phase = g.room.view.phase;
-        if (l.reason == GY_NET_REASON_RESIGN && g.room.view.phase == GY_NET_PHASE_PLAYING)
-            gy_net_room_resign(&g.room, c->color, g.now);
-        else
-            gy_net_room_leave_token(&g.room, c->token, g.now);
+        {
+            uint8_t color = conn_color(c);
+            if (g.room.view.phase == GY_NET_PHASE_PLAYING && color_valid(color))
+                gy_net_room_resign(&g.room, color, g.now);
+            else
+                gy_net_room_leave_token(&g.room, c->token, g.now);
+        }
         c->used = 0;
         broadcast_state();
         host_phase_change(old_phase);
@@ -293,14 +345,21 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         ConnMap *c = conn_find(conn);
         int rc;
         if (!c || gy_net_unpack_move_req(msg, &mr) != GY_NET_OK) return;
+        if (c->intent_seen && mr.seq <= c->last_intent_seq) {
+            send_reject(conn, (uint8_t)(-GY_NET_ERR_STATE));
+            return;
+        }
         if (mr.kind == 0)
-            rc = gy_net_room_move(&g.room, c->color, mr.direction, mr.count, g.now);
+            rc = gy_net_room_move(&g.room, conn_color(c), mr.direction, mr.count, g.now);
         else
-            rc = gy_net_room_place(&g.room, c->color, mr.column, g.now);
+            rc = gy_net_room_place(&g.room, conn_color(c), mr.column, g.now);
         if (rc != GY_NET_OK) {
             send_reject(conn, (uint8_t)(rc < 0 ? -rc : rc));
         } else {
-            gy_net_room_preview_clear(&g.room, c->color);
+            c->intent_seen = 1;
+            c->last_intent_seq = mr.seq;
+            gy_net_room_preview_clear(&g.room, conn_color(c));
+            send_preview_clear_to_spectators(conn_color(c));
             broadcast_snapshot();
             host_phase_change(GY_NET_PHASE_PLAYING);
         }
@@ -311,7 +370,7 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         ConnMap *c = conn_find(conn);
         GyNetMsg out;
         if (!c || gy_net_unpack_preview(msg, &p) != GY_NET_OK) return;
-        p.side = c->color;
+        p.side = conn_color(c);
         if (gy_net_room_preview(&g.room, &p) > 0) {
             if (gy_net_pack_preview(&out, &p) == GY_NET_OK) send_spectators(&out);
         }
@@ -322,8 +381,8 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         ConnMap *c = conn_find(conn);
         GyNetMsg out;
         if (!c || gy_net_unpack_preview_clear(msg, &p) != GY_NET_OK) return;
-        p.side = c->color;
-        gy_net_room_preview_clear(&g.room, c->color);
+        p.side = conn_color(c);
+        gy_net_room_preview_clear(&g.room, conn_color(c));
         if (gy_net_pack_preview_clear(&out, &p) == GY_NET_OK) send_spectators(&out);
         break;
     }
@@ -358,10 +417,13 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
 
 static void client_process(const GyNetMsg *msg)
 {
+    g.last_rx = g.now;
     switch (msg->type) {
     case GY_NET_JOIN_ACK: {
         GyNetJoinAck a;
         if (gy_net_unpack_join_ack(msg, &a) != GY_NET_OK) return;
+        if (a.color != GY_NET_COLOR_NONE &&
+            a.color != GY_NET_COLOR_RED && a.color != GY_NET_COLOR_BLUE) return;
         g.token = a.token;
         g.local_color = a.color;
         g.role = a.color == GY_NET_COLOR_NONE ? GY_NET_ROLE_SPECTATOR : GY_NET_ROLE_PLAYER;
@@ -369,6 +431,9 @@ static void client_process(const GyNetMsg *msg)
         g.room.local_color = a.color;
         g.room.token = a.token;
         g.join_rejected = 0;
+        g.pending_join = 0;
+        g.join_sent = 0;
+        g.local_ready = 0;
         g.dropped = 0;
         g.rejoin_sent = 0;
         g.drop_at = 0;
@@ -378,6 +443,9 @@ static void client_process(const GyNetMsg *msg)
     }
     case GY_NET_JOIN_REJECT:
         g.join_rejected = 1;
+        g.pending_join = 0;
+        g.join_sent = 0;
+        g.active = 0;
         break;
     case GY_NET_ROOM_STATE: {
         GyNetRoomState s;
@@ -385,18 +453,29 @@ static void client_process(const GyNetMsg *msg)
         if (s.phase == GY_NET_PHASE_CLOSED) {
             g.active = 0;
             g.role = GY_NET_ROLE_SPECTATOR;
+#ifdef GEYI_WITH_RTTHREAD
+            if (gy_net_ble_client_conn() != 0xff)
+                gy_net_ble_disconnect(gy_net_ble_client_conn());
+#endif
             return;
         }
         if (g.role == GY_NET_ROLE_PLAYER && g.local_color == s.host_color &&
             s.player_count == 1 && s.phase == GY_NET_PHASE_WAIT) {
             /* 等待阶段原房主退出：本机接管房间，开始广播。 */
             uint32_t token = g.token;
+            GyConfig cfg;
             gy_net_room_promote_client(&g.room, s.host_color, g.now);
+            if (gy_param_apply(GY_MODE_PVP, &cfg)) gy_net_room_set_config(&g.room, &cfg);
             g.room.seats[s.host_color].token = token;
             g.token = token;
             g.active = 1;
             g.role = GY_NET_ROLE_HOST;
             g.local_color = s.host_color;
+            g.local_ready = 0;
+            g.pending_join = 0;
+            g.pending_move = 0;
+            g.preview_valid[0] = g.preview_valid[1] = 0;
+            g.last_preview_valid = 0;
 #ifdef GEYI_WITH_RTTHREAD
             gy_net_ble_scan_stop();
             if (gy_net_ble_client_conn() != 0xff)
@@ -415,6 +494,9 @@ static void client_process(const GyNetMsg *msg)
         if (gy_net_unpack_snapshot(msg, &s) != GY_NET_OK) return;
         gy_net_room_apply_snapshot(&g.room, &s);
         g.pending_move = 0;
+        g.placing = 0;
+        g.last_preview_valid = 0;
+        if (color_valid(g.local_color)) g.preview_valid[g.local_color] = 0;
         break;
     }
     case GY_NET_RESULT: {
@@ -425,6 +507,8 @@ static void client_process(const GyNetMsg *msg)
     }
     case GY_NET_REJECT:
         g.pending_move = 0;
+        g.last_preview_valid = 0;
+        if (color_valid(g.local_color)) g.preview_valid[g.local_color] = 0;
         break;
     case GY_NET_PREVIEW: {
         GyNetPreview p;
@@ -528,16 +612,27 @@ void gy_net_app_tick(uint32_t now_ms)
     } else if (g.active == 2) {
 #ifdef GEYI_WITH_RTTHREAD
         uint8_t conn = gy_net_ble_client_conn();
-        if (g.pending_join && gy_net_ble_ready()) {
+        if (g.pending_join && conn == 0xff &&
+            (uint32_t)(now_ms - g.reconnect_at) >= 1000u) {
+            g.reconnect_at = now_ms;
+            gy_net_ble_connect(g.join_addr, g.join_addr_type);
+        }
+        if (g.pending_join && !g.join_sent && gy_net_ble_ready()) {
             GyNetJoinReq j;
             GyNetMsg m;
             j.role = g.join_role == GY_NET_ROLE_SPECTATOR ? 1 : 0;
             j.room_id = g.room_id;
             if (gy_net_pack_join_req(&m, &j) == GY_NET_OK) {
                 send_msg(conn, &m);
-                g.pending_join = 0;
+                g.join_sent = 1;
                 g.last_rx = now_ms;
             }
+        }
+        if (g.pending_join && (uint32_t)(now_ms - g.join_at) >= 5000u) {
+            g.join_rejected = 1;
+            g.pending_join = 0;
+            g.join_sent = 0;
+            g.active = 0;
         }
         if (conn == 0xff && !g.dropped) {
             g.dropped = 1;
@@ -573,7 +668,11 @@ void gy_net_app_tick(uint32_t now_ms)
             send_msg(conn, &m);
         }
 #endif
-        gy_net_room_client_host_lost(&g.room, now_ms);
+        if (gy_net_room_client_host_lost(&g.room, now_ms) &&
+            g.role == GY_NET_ROLE_SPECTATOR) {
+            g.spectator_lost = 1;
+            g.active = 0;
+        }
     }
 }
 
@@ -581,9 +680,12 @@ int gy_net_app_active(void) { return g.active; }
 int gy_net_app_role(void) { return g.role; }
 int gy_net_app_phase(void) { return g.room.view.phase; }
 int gy_net_app_local_color(void) { return g.local_color; }
+int gy_net_app_host_color(void) { return g.room.view.host_color; }
+int gy_net_app_guest_color(void) { return g.room.view.guest_color; }
 int gy_net_app_local_ready(void)
 {
     const GyNetSeat *s;
+    if (g.active == 2) return g.local_ready;
     if (g.role != GY_NET_ROLE_HOST && g.role != GY_NET_ROLE_PLAYER) return 0;
     s = &g.room.seats[g.local_color];
     return s->ready;
@@ -600,6 +702,8 @@ int gy_net_app_connected(void)
     return 0;
 }
 int gy_net_app_local_terminal(void) { return g.room.view.local_terminal; }
+int gy_net_app_join_rejected(void) { return g.join_rejected; }
+int gy_net_app_spectator_lost(void) { return g.spectator_lost; }
 int gy_net_app_result(void) { return g.room.view.result; }
 int gy_net_app_local_turn(void)
 {
@@ -608,6 +712,7 @@ int gy_net_app_local_turn(void)
     return g.room.view.game.turn == g.local_color;
 }
 int gy_net_app_is_spectator(void) { return g.role == GY_NET_ROLE_SPECTATOR; }
+int gy_net_app_pending_move(void) { return g.pending_move ? 1 : 0; }
 const GyGame *gy_net_app_game(void) { return &g.room.view.game; }
 
 int gy_net_app_lobby_start(void)
@@ -659,10 +764,25 @@ int gy_net_app_create_room(uint32_t room_id)
 int gy_net_app_join_index(int index)
 {
     const GyNetAppRoom *r = gy_net_app_room_at(index);
+    GyNetRoomSummary summary;
+    int join_role;
     if (!r) return -1;
+    memset(&summary, 0, sizeof(summary));
+    summary.valid = 1;
+    summary.room_id = r->room_id;
+    summary.players = r->players;
+    summary.phase = r->phase;
+    summary.spectators = r->spectators;
+    summary.max_spectators = r->max_spectators;
+    join_role = gy_net_lobby_click(&summary, r->max_spectators);
+    if (join_role < 0) {
+        gy_net_app_leave();
+        g.join_rejected = 1;
+        return -1;
+    }
     gy_net_app_leave();
     g.room_id = r->room_id;
-    g.join_role = (r->players < 2) ? GY_NET_ROLE_PLAYER : GY_NET_ROLE_SPECTATOR;
+    g.join_role = (uint8_t)join_role;
     memcpy(g.join_addr, r->addr, 6);
     g.join_addr_type = r->addr_type;
     gy_net_room_init_client(&g.room, r->room_id, g.now);
@@ -670,6 +790,8 @@ int gy_net_app_join_index(int index)
     g.role = g.join_role;
     g.local_color = GY_NET_COLOR_NONE;
     g.pending_join = 1;
+    g.join_sent = 0;
+    g.join_at = g.now;
     g.dropped = 0;
     g.last_rx = g.now;
 #ifdef GEYI_WITH_RTTHREAD
@@ -685,9 +807,25 @@ void gy_net_app_leave(void)
     if (g.active == 1) {
         if (g.room.view.phase == GY_NET_PHASE_WAIT) {
             /* 等待期退出：有对手则把房主转给他；没有对手则关房。
-             * 先把新状态发给当前连接，再停止广播。 */
-            if (gy_net_room_leave(&g.room, g.room.view.host_color, g.now) != GY_NET_ERR_ARG)
+             * 先把新状态发给当前连接，再断开并停止广播。 */
+            if (gy_net_room_leave(&g.room, g.room.view.host_color, g.now) != GY_NET_ERR_ARG) {
+                g.room.view.host_ready = 0;
+                g.room.view.guest_ready = 0;
                 broadcast_state();
+            }
+        } else if (g.room.view.phase == GY_NET_PHASE_PLAYING) {
+            /* 对局中主动退出 = 认输；先广播权威结果再断开。 */
+            if (gy_net_room_resign(&g.room, g.local_color, g.now) == GY_NET_OK) {
+                broadcast_result();
+                broadcast_state();
+            }
+        }
+        {
+            uint8_t conns[GY_NET_BLE_MAX_CONN];
+            uint8_t i, n = gy_net_ble_conn_count();
+            for (i = 0; i < n; ++i) conns[i] = gy_net_ble_conn_at(i);
+            gy_net_ble_flush(200);
+            for (i = 0; i < n; ++i) gy_net_ble_disconnect(conns[i]);
         }
         gy_net_ble_host_stop();
     } else if (g.active == 2) {
@@ -695,8 +833,10 @@ void gy_net_app_leave(void)
         if (conn != 0xff) {
             GyNetLeave l;
             GyNetMsg m;
-            l.reason = GY_NET_REASON_LEFT;
+            l.reason = (g.room.view.phase == GY_NET_PHASE_PLAYING)
+                       ? GY_NET_REASON_RESIGN : GY_NET_REASON_LEFT;
             if (gy_net_pack_leave(&m, &l) == GY_NET_OK) send_msg(conn, &m);
+            gy_net_ble_flush(200);
             gy_net_ble_disconnect(conn);
         }
     }
@@ -706,8 +846,14 @@ void gy_net_app_leave(void)
     g.role = GY_NET_ROLE_SPECTATOR;
     g.local_color = GY_NET_COLOR_NONE;
     g.pending_join = 0;
+    g.join_sent = 0;
     g.pending_move = 0;
+    g.placing = 0;
+    g.place_col = -1;
+    g.last_preview_valid = 0;
+    g.local_ready = 0;
     g.join_rejected = 0;
+    g.spectator_lost = 0;
     g.dropped = 0;
     g.drop_at = 0;
     g.reconnect_at = 0;
@@ -729,16 +875,27 @@ int gy_net_app_set_ready(int ready)
         GyNetReady r;
         GyNetMsg m;
         r.ready = ready ? 1 : 0;
-        if (gy_net_pack_ready(&m, &r) == GY_NET_OK) { send_msg(0xff, &m); return 1; }
+        if (gy_net_pack_ready(&m, &r) == GY_NET_OK) {
+            send_msg(0xff, &m);
+            g.local_ready = r.ready;
+            return 1;
+        }
     }
     return 0;
 }
 
 int gy_net_app_swap(void)
 {
+    int i;
     if (g.active != 1 || g.role != GY_NET_ROLE_HOST) return 0;
     if (gy_net_room_swap_seats(&g.room) != GY_NET_OK) return 0;
     g.local_color = g.room.view.host_color;
+    for (i = 0; i < APP_MAX_CONN; ++i) {
+        if (!g.conns[i].used || g.conns[i].conn == 0xff) continue;
+        g.conns[i].color = conn_color(&g.conns[i]);
+        if (color_valid(g.conns[i].color))
+            send_join_ack(g.conns[i].conn, g.conns[i].color, g.conns[i].token);
+    }
     broadcast_state();
     return 1;
 }
@@ -747,6 +904,10 @@ int gy_net_app_preview(int direction, int count)
 {
     GyNetPreview p;
     if (!gy_net_app_local_turn()) return 0;
+    if (g.last_preview_valid && g.last_dir == direction && g.last_count == count) return 0;
+    g.last_preview_valid = 1;
+    g.last_dir = direction;
+    g.last_count = count;
     g.dir = direction;
     g.count = count;
     memset(&p, 0, sizeof(p));
@@ -772,11 +933,17 @@ int gy_net_app_confirm(void)
 {
     if (g.active == 1) {
         int rc;
-        if (g.placing) rc = gy_net_room_place(&g.room, g.local_color, g.place_col, g.now);
-        else rc = gy_net_room_move(&g.room, g.local_color, g.dir, g.count, g.now);
+        if (g.placing) {
+            if (g.place_col < 0) return 0;
+            rc = gy_net_room_place(&g.room, g.local_color, g.place_col, g.now);
+        } else {
+            rc = gy_net_room_move(&g.room, g.local_color, g.dir, g.count, g.now);
+        }
         if (rc != GY_NET_OK) return 0;
         gy_net_room_preview_clear(&g.room, g.local_color);
+        send_preview_clear_to_spectators(g.local_color);
         g.preview_valid[g.local_color] = 0;
+        g.last_preview_valid = 0;
         g.placing = 0;
         broadcast_snapshot();
         host_phase_change(GY_NET_PHASE_PLAYING);
@@ -785,6 +952,8 @@ int gy_net_app_confirm(void)
     if (g.active == 2 && g.role == GY_NET_ROLE_PLAYER) {
         GyNetMoveReq mr;
         GyNetMsg m;
+        if (g.pending_move) return 0;
+        if (g.placing && g.place_col < 0) return 0;
         memset(&mr, 0, sizeof(mr));
         mr.side = g.local_color;
         mr.kind = g.placing ? 1 : 0;
@@ -818,6 +987,8 @@ int gy_net_app_cancel(void)
         }
     }
     g.placing = 0;
+    g.place_col = -1;
+    g.last_preview_valid = 0;
     return 1;
 }
 

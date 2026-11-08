@@ -156,7 +156,10 @@ int gy_net_unpack_adv_room(const GyNetMsg *m, GyNetAdvRoom *v)
     v->phase = get8(&r);
     v->spectators = get8(&r);
     v->max_spectators = get8(&r);
-    return unpack_end(&r);
+    if (unpack_end(&r)) return r.err;
+    if (v->players > 2 || v->phase > 4u ||
+        v->spectators > 8 || v->max_spectators > 8) return GY_NET_ERR_RANGE;
+    return GY_NET_OK;
 }
 
 int gy_net_pack_join_req(GyNetMsg *m, const GyNetJoinReq *v)
@@ -176,7 +179,9 @@ int gy_net_unpack_join_req(const GyNetMsg *m, GyNetJoinReq *v)
     rc = unpack_begin(m, GY_NET_JOIN_REQ, &r, 5); if (rc) return rc;
     v->role = get8(&r);
     v->room_id = get32(&r);
-    return unpack_end(&r);
+    if (unpack_end(&r)) return r.err;
+    if (v->role > 1) return GY_NET_ERR_RANGE;
+    return GY_NET_OK;
 }
 
 int gy_net_pack_join_ack(GyNetMsg *m, const GyNetJoinAck *v)
@@ -254,7 +259,12 @@ int gy_net_unpack_room_state(const GyNetMsg *m, GyNetRoomState *v)
     v->spectator_count = get8(&r);
     v->room_id = get32(&r);
     v->seq = get32(&r);
-    return unpack_end(&r);
+    if (unpack_end(&r)) return r.err;
+    if (v->phase > 4u ||
+        v->host_color > 1 || v->guest_color > 1 ||
+        v->host_color == v->guest_color ||
+        v->player_count > 2 || v->spectator_count > 8) return GY_NET_ERR_RANGE;
+    return GY_NET_OK;
 }
 
 int gy_net_pack_ready(GyNetMsg *m, const GyNetReady *v)
@@ -360,7 +370,9 @@ int gy_net_unpack_move_req(const GyNetMsg *m, GyNetMoveReq *v)
     v->count = get8(&r);
     v->column = get8(&r);
     v->seq = get32(&r);
-    return unpack_end(&r);
+    if (unpack_end(&r)) return r.err;
+    if (v->side > 1 || v->kind > 1 || v->direction > 3) return GY_NET_ERR_RANGE;
+    return GY_NET_OK;
 }
 
 static void put_cell(uint8_t *p, int *pos, const GyCell *c)
@@ -463,7 +475,9 @@ int gy_net_unpack_result(const GyNetMsg *m, GyNetResult *v)
     v->outcome = get8(&r);
     v->reason = get8(&r);
     v->seq = get32(&r);
-    return unpack_end(&r);
+    if (unpack_end(&r)) return r.err;
+    if (v->outcome > GY_DRAW) return GY_NET_ERR_RANGE;
+    return GY_NET_OK;
 }
 
 int gy_net_pack_preview(GyNetMsg *m, const GyNetPreview *v)
@@ -491,7 +505,9 @@ int gy_net_unpack_preview(const GyNetMsg *m, GyNetPreview *v)
     v->column = get8(&r);
     v->indicator = get16(&r);
     v->seq = get32(&r);
-    return unpack_end(&r);
+    if (unpack_end(&r)) return r.err;
+    if (v->side > 1 || v->direction > 3) return GY_NET_ERR_RANGE;
+    return GY_NET_OK;
 }
 
 int gy_net_pack_preview_clear(GyNetMsg *m, const GyNetPreviewClear *v)

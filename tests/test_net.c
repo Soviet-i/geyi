@@ -216,8 +216,25 @@ static int test_room_join_ready_start(void)
     CHECK(gy_net_room_apply_snapshot(&client, &snap) == 1);
     CHECK(client.view.seq == snap.seq && client.view.phase == GY_NET_PHASE_PLAYING);
     CHECK(gy_net_room_apply_snapshot(&client, &snap) == 0);
-    snap.seq++;
-    CHECK(gy_net_room_apply_snapshot(&client, &snap) == 1);
+    {
+        GyNetSnapshot same = snap;
+        snap.seq++;
+        CHECK(gy_net_room_apply_snapshot(&client, &snap) == 1);
+
+        /* ROOM_STATE 与 SNAPSHOT 使用同一条 seq 时，快照不能被 room seq 丢掉。 */
+        {
+            GyNetRoomState rs;
+            GyNetRoom c2;
+            gy_net_room_state(&host, &rs);
+            CHECK(rs.seq == host.view.seq);
+            CHECK(same.seq == rs.seq);
+            gy_net_room_init_client(&c2, 1001, 0);
+            CHECK(gy_net_room_apply_room_state(&c2, &rs) == 1);
+            CHECK(gy_net_room_apply_snapshot(&c2, &same) == 1);
+            CHECK(c2.view.game_valid == 1);
+            CHECK(c2.view.phase == GY_NET_PHASE_PLAYING);
+        }
+    }
     return 0;
 }
 
@@ -437,6 +454,36 @@ static int test_room_config_and_promote(void)
     return 0;
 }
 
+static int test_starting_disconnect_and_spectator_slot(void)
+{
+    GyNetRoom host;
+    uint32_t t1 = 0, t2 = 0;
+    uint8_t c1 = GY_NET_COLOR_NONE, c2 = GY_NET_COLOR_NONE;
+
+    gy_net_room_init_host(&host, 1014, 0, 2);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_RED, 1, 10) == GY_NET_OK);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_BLUE, 1, 20) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_STARTING);
+    CHECK(gy_net_room_disconnect_token(&host, t1, 1000) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 3020) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);   /* 倒计时中断线不能开局 */
+    CHECK(gy_net_room_tick(&host, 11001) == 1);
+    CHECK(host.view.player_count == 1);            /* 等待期超时只释放席位 */
+
+    /* 旁观者 10s 重连窗口内不能被新旁观者顶掉 token。 */
+    gy_net_room_init_host(&host, 1015, 0, 1);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_disconnect_token(&host, t1, 1000) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 2000, &t2, &c2) == GY_NET_ERR_FULL);
+    CHECK(gy_net_room_rejoin(&host, t1, 0, 2000, &c1) == GY_NET_OK);
+    CHECK(c1 == GY_NET_COLOR_NONE);
+    CHECK(gy_net_room_disconnect_token(&host, t1, 3000) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 14000) == 1);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 14001, &t2, &c2) == GY_NET_OK);
+    return 0;
+}
+
 static int test_client_host_lost(void)
 {
     GyNetRoom client;
@@ -494,7 +541,8 @@ int main(void)
     if (test_preview_privacy()) return 10;
     if (test_disconnect_rejoin()) return 11;
     if (test_room_config_and_promote()) return 12;
-    if (test_client_host_lost()) return 13;
+    if (test_starting_disconnect_and_spectator_slot()) return 13;
+    if (test_client_host_lost()) return 14;
     if (test_memory_link()) return 14;
     if (test_selftests()) return 15;
     printf("geyi-net-tests: %d checks PASS\n", checks);

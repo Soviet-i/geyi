@@ -57,6 +57,8 @@ uint16_t gy_net_ble_mtu(uint8_t conn);
 
 /* 发送：conn 为具体连接号；GY_NET_BLE_BROADCAST_CONN 表示房主发给所有已连接端。 */
 int gy_net_ble_send(uint8_t conn, const GyNetMsg *msg);
+/* 等待 TX 队列清空（最多 timeout_ms），用于退出/断开前把 LEAVE/RESULT 发出去。 */
+void gy_net_ble_flush(uint32_t timeout_ms);
 
 /* 轮询收到的消息/广播摘要。返回 1 表示取到。 */
 int gy_net_ble_recv(GyNetBleRx *out);

@@ -143,13 +143,18 @@ int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32
     client->view.phase = GY_NET_PHASE_WAIT;
     client->view.phase_since_ms = now_ms;
     client->view.player_count = 1;
+    client->view.max_spectators = 2;
     client->view.host_ready = 0;
     client->view.guest_ready = 0;
     client->view.game_valid = 0;
     client->view.result = GY_PLAYING;
     client->view.result_reason = GY_NET_REASON_NORMAL;
     client->view.local_terminal = 0;
+    client->view.spectator_count = 0;
     client->view.seq++;
+    memset(client->spectators, 0, sizeof(client->spectators));
+    memset(client->spectator_disconnect_ms, 0, sizeof(client->spectator_disconnect_ms));
+    if (client->next_token <= client->token) client->next_token = client->token + 1;
     memset(&client->seats[0], 0, sizeof(client->seats[0]));
     memset(&client->seats[1], 0, sizeof(client->seats[1]));
     client->seats[new_host_color].role = GY_NET_ROLE_HOST;
@@ -193,16 +198,25 @@ int gy_net_room_join(GyNetRoom *host, uint8_t role, uint32_t now_ms,
         if (host->view.spectator_count >= GY_NET_MAX_SPECTATORS ||
             host->view.spectator_count >= host->view.max_spectators)
             return GY_NET_ERR_FULL;
-        for (i = 0; i < GY_NET_MAX_SPECTATORS; ++i)
-            if (!host->spectators[i].connected) break;
+        for (i = 0; i < GY_NET_MAX_SPECTATORS; ++i) {
+            if (!host->spectators[i].token) break;
+            if (!host->spectators[i].connected &&
+                host->spectator_disconnect_ms[i] &&
+                (uint32_t)(now_ms - host->spectator_disconnect_ms[i]) >= GY_NET_RECONNECT_MS) {
+                break;
+            }
+        }
         if (i >= GY_NET_MAX_SPECTATORS) return GY_NET_ERR_FULL;
-        token = make_token(host);
-        host->spectators[i].role = GY_NET_ROLE_SPECTATOR;
-        host->spectators[i].color = GY_NET_COLOR_NONE;
-        host->spectators[i].connected = 1;
-        host->spectators[i].token = token;
-        host->spectator_disconnect_ms[i] = 0;
-        host->view.spectator_count++;
+        {
+            uint8_t reused = host->spectators[i].token ? 1 : 0;
+            token = make_token(host);
+            host->spectators[i].role = GY_NET_ROLE_SPECTATOR;
+            host->spectators[i].color = GY_NET_COLOR_NONE;
+            host->spectators[i].connected = 1;
+            host->spectators[i].token = token;
+            host->spectator_disconnect_ms[i] = 0;
+            if (!reused) host->view.spectator_count++;
+        }
         host->view.seq++;
         *token_out = token;
         *color_out = GY_NET_COLOR_NONE;
@@ -270,6 +284,12 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
     room->now_ms = now_ms;
 
     if (room->view.phase == GY_NET_PHASE_STARTING) {
+        if (!room->seats[room->view.guest_color].connected) {
+            room->view.phase = GY_NET_PHASE_WAIT;
+            room->view.phase_since_ms = now_ms;
+            room->view.seq++;
+            return 1;
+        }
         if ((uint32_t)(now_ms - room->view.phase_since_ms) >= GY_NET_START_MS) {
             if (!gy_init(&room->view.game, room->config,
                          room->view.room_id ? room->view.room_id : 1))
@@ -385,11 +405,12 @@ void gy_net_room_snapshot(const GyNetRoom *host, GyNetSnapshot *out)
 int gy_net_room_apply_snapshot(GyNetRoom *client, const GyNetSnapshot *snapshot)
 {
     if (!client || !snapshot) return GY_NET_ERR_ARG;
-    if (snapshot->seq <= client->last_seq) return 0;
+    if (snapshot->seq <= client->last_snapshot_seq) return 0;
     client->view.game = snapshot->game;
     client->view.game_valid = 1;
     client->view.seq = snapshot->seq;
-    client->last_seq = snapshot->seq;
+    client->last_snapshot_seq = snapshot->seq;
+    if (snapshot->seq > client->last_seq) client->last_seq = snapshot->seq;
     client->view.phase = snapshot->game.outcome ? GY_NET_PHASE_RESULT : GY_NET_PHASE_PLAYING;
     client->view.result = (uint8_t)snapshot->game.outcome;
     client->view.local_terminal = 0;
@@ -415,7 +436,10 @@ void gy_net_room_state(const GyNetRoom *host, GyNetRoomState *out)
 int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
 {
     if (!client || !state) return GY_NET_ERR_ARG;
-    if (state->seq <= client->last_seq) return 0;
+    if (state->seq <= client->last_room_seq) return 0;
+    if (!color_valid(state->host_color) || !color_valid(state->guest_color) ||
+        state->host_color == state->guest_color ||
+        state->phase > GY_NET_PHASE_CLOSED) return GY_NET_ERR_RANGE;
     client->view.phase = state->phase;
     client->view.host_color = state->host_color;
     client->view.guest_color = state->guest_color;
@@ -425,7 +449,8 @@ int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
     client->view.spectator_count = state->spectator_count;
     client->view.room_id = state->room_id;
     client->view.seq = state->seq;
-    client->last_seq = state->seq;
+    client->last_room_seq = state->seq;
+    if (state->seq > client->last_seq) client->last_seq = state->seq;
     client->view.local_terminal = 0;
     return 1;
 }
@@ -433,12 +458,14 @@ int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
 int gy_net_room_apply_result(GyNetRoom *client, const GyNetResult *result)
 {
     if (!client || !result) return GY_NET_ERR_ARG;
-    if (result->seq && result->seq <= client->last_seq) return 0;
+    if (result->outcome > GY_DRAW) return GY_NET_ERR_RANGE;
+    if (result->seq && result->seq <= client->last_result_seq) return 0;
     client->view.phase = GY_NET_PHASE_RESULT;
     client->view.result = result->outcome;
     client->view.result_reason = result->reason;
     if (result->seq) client->view.seq = result->seq;
-    if (result->seq) client->last_seq = result->seq;
+    if (result->seq) client->last_result_seq = result->seq;
+    if (result->seq && result->seq > client->last_seq) client->last_seq = result->seq;
     client->view.local_terminal = 0;
     return 1;
 }
@@ -666,6 +693,8 @@ int gy_net_lobby_tick(GyNetLobby *lobby, uint32_t now_ms)
 int gy_net_lobby_click(const GyNetRoomSummary *room, int max_spectators)
 {
     if (!room || !room->valid) return -1;
+    if (room->phase == GY_NET_PHASE_RESULT || room->phase == GY_NET_PHASE_CLOSED)
+        return -1;
     if (room->players < 2) return GY_NET_ROLE_PLAYER;
     if (max_spectators < 0) max_spectators = room->max_spectators;
     if (room->spectators < (uint8_t)max_spectators) return GY_NET_ROLE_SPECTATOR;

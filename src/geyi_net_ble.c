@@ -25,6 +25,7 @@
 
 #define GY_BLE_RXQ_CAP  16
 #define GY_BLE_ADVQ_CAP 8
+#define GY_BLE_TXQ_CAP  8
 #define GY_BLE_FRAG_HDR 4
 
 /* 16-byte UUIDs (ASCII, easy to recognize in logs). */
@@ -86,8 +87,19 @@ static GyNetBleRx g_rxq[GY_BLE_RXQ_CAP];
 static uint8_t g_rx_head, g_rx_tail, g_rx_count;
 static GyNetBleAdv g_advq[GY_BLE_ADVQ_CAP];
 static uint8_t g_adv_head, g_adv_tail, g_adv_count;
+typedef struct {
+    uint8_t  conn;
+    GyNetMsg msg;
+} GyBleTx;
+static GyBleTx g_txq[GY_BLE_TXQ_CAP];
+static uint8_t g_tx_head, g_tx_tail, g_tx_count;
+static struct rt_semaphore g_tx_sem;
+static rt_thread_t g_tx_thread;
+static int g_tx_ready;
 static struct rt_mutex g_q_lock;
 static int g_q_lock_ready;
+static struct rt_mutex g_conn_lock;
+static int g_conn_lock_ready;
 
 static uint8_t g_power_on;
 static uint8_t g_mode;              /* 0 = none, 1 = host, 2 = client */
@@ -95,7 +107,9 @@ static uint8_t g_client_conn = 0xff;
 static sibles_hdl g_srv;
 static uint16_t g_rmt_svc = 0;
 static uint16_t g_rx_val_hdl, g_tx_val_hdl, g_tx_cccd_hdl;
+static uint8_t g_cccd_ok;
 static uint8_t g_adv_active;
+static uint8_t g_adv_stopping;
 static uint8_t g_scan_active;
 static uint8_t g_pending_host, g_pending_scan;
 static uint8_t g_adv_payload[16];
@@ -111,34 +125,48 @@ static void q_init(void)
         if (rt_mutex_init(&g_q_lock, "gy_net_q", RT_IPC_FLAG_PRIO) == RT_EOK)
             g_q_lock_ready = 1;
     }
+    if (!g_conn_lock_ready) {
+        if (rt_mutex_init(&g_conn_lock, "gy_net_c", RT_IPC_FLAG_PRIO) == RT_EOK)
+            g_conn_lock_ready = 1;
+    }
 }
 static void q_lock(void) { if (g_q_lock_ready) rt_mutex_take(&g_q_lock, RT_WAITING_FOREVER); }
 static void q_unlock(void) { if (g_q_lock_ready) rt_mutex_release(&g_q_lock); }
+static void c_lock(void) { if (g_conn_lock_ready) rt_mutex_take(&g_conn_lock, RT_WAITING_FOREVER); }
+static void c_unlock(void) { if (g_conn_lock_ready) rt_mutex_release(&g_conn_lock); }
 
 static GyBleConn *conn_find(uint8_t conn_idx)
 {
     int i;
+    GyBleConn *found = RT_NULL;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
-        if (g_conn[i].used && g_conn[i].conn_idx == conn_idx) return &g_conn[i];
-    return RT_NULL;
+        if (g_conn[i].used && g_conn[i].conn_idx == conn_idx) { found = &g_conn[i]; break; }
+    c_unlock();
+    return found;
 }
 static GyBleConn *conn_alloc(uint8_t conn_idx)
 {
     int i;
+    GyBleConn *found = RT_NULL;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i) {
         if (!g_conn[i].used) {
             memset(&g_conn[i], 0, sizeof(g_conn[i]));
             g_conn[i].used = 1;
             g_conn[i].conn_idx = conn_idx;
             g_conn[i].mtu = 23;
-            return &g_conn[i];
+            found = &g_conn[i];
+            break;
         }
     }
-    return RT_NULL;
+    c_unlock();
+    return found;
 }
 static void conn_free(uint8_t conn_idx)
 {
     int i;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
         if (g_conn[i].used && g_conn[i].conn_idx == conn_idx) {
             memset(&g_conn[i], 0, sizeof(g_conn[i]));
@@ -147,7 +175,9 @@ static void conn_free(uint8_t conn_idx)
     if (g_client_conn == conn_idx) {
         g_client_conn = 0xff;
         g_rmt_svc = 0;
+        g_cccd_ok = 0;
     }
+    c_unlock();
 }
 
 static void push_rx(uint8_t conn, GyNetMsg *msg)
@@ -213,36 +243,48 @@ static void frag_input(uint8_t conn_idx, const uint8_t *data, uint16_t len)
     GyNetMsg msg;
     uint16_t total, offset;
     if (!data || len < GY_BLE_FRAG_HDR) return;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
         if (g_conn[i].used && g_conn[i].conn_idx == conn_idx) { f = &g_frag[i]; break; }
-    if (!f) return;
+    if (!f) { c_unlock(); return; }
     total = (uint16_t)(data[0] | ((uint16_t)data[1] << 8));
     offset = (uint16_t)(data[2] | ((uint16_t)data[3] << 8));
-    if (!total || total > GY_NET_MAX_PACKET) return;
+    if (!total || total > GY_NET_MAX_PACKET) { c_unlock(); return; }
     if (offset == 0) {
         f->active = 1;
         f->total = total;
         f->got = 0;
     }
-    if (!f->active || offset != f->got) { f->active = 0; return; }
+    if (!f->active || offset != f->got) { f->active = 0; c_unlock(); return; }
     len = (uint16_t)(len - GY_BLE_FRAG_HDR);
     if (f->got + len > f->total) len = (uint16_t)(f->total - f->got);
     memcpy(f->buf + f->got, data + GY_BLE_FRAG_HDR, len);
     f->got = (uint16_t)(f->got + len);
     if (f->got == f->total) {
-        if (gy_net_proto_decode(&msg, f->buf, f->total) == GY_NET_OK)
-            push_rx(conn_idx, &msg);
+        int ok = gy_net_proto_decode(&msg, f->buf, f->total);
         f->active = 0;
+        c_unlock();
+        if (ok == GY_NET_OK) push_rx(conn_idx, &msg);
+        return;
     }
+    c_unlock();
 }
 
 static int send_bytes(uint8_t conn_idx, const uint8_t *data, uint16_t len)
 {
-    GyBleConn *c = conn_find(conn_idx);
-    uint16_t mtu, chunk, offset = 0;
+    uint16_t mtu = 23, chunk, offset = 0;
     uint8_t frag[GY_NET_MAX_PACKET + GY_BLE_FRAG_HDR];
-    if (!c || !len) return 0;
-    mtu = c->mtu > 10 ? c->mtu : 23;
+    int i, found = 0;
+    if (!len) return 0;
+    c_lock();
+    for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
+        if (g_conn[i].used && g_conn[i].conn_idx == conn_idx) {
+            mtu = g_conn[i].mtu > 10 ? g_conn[i].mtu : 23;
+            found = 1;
+            break;
+        }
+    c_unlock();
+    if (!found) return 0;
     chunk = (uint16_t)(mtu - 7);
     if (chunk < 16) chunk = 16;
     if (chunk > sizeof(frag) - GY_BLE_FRAG_HDR) chunk = sizeof(frag) - GY_BLE_FRAG_HDR;
@@ -279,21 +321,69 @@ static int send_bytes(uint8_t conn_idx, const uint8_t *data, uint16_t len)
     return 1;
 }
 
+static void tx_thread_entry(void *parameter)
+{
+    GyBleTx item;
+    (void)parameter;
+    for (;;) {
+        uint8_t buf[GY_NET_MAX_PACKET];
+        int n, i, ok = 0;
+        rt_sem_take(&g_tx_sem, RT_WAITING_FOREVER);
+        q_lock();
+        if (!g_tx_count) { q_unlock(); continue; }
+        item = g_txq[g_tx_head];
+        g_tx_head = (uint8_t)((g_tx_head + 1) % GY_BLE_TXQ_CAP);
+        g_tx_count--;
+        q_unlock();
+        n = gy_net_proto_encode(&item.msg, buf, (int)sizeof(buf));
+        if (n <= 0) continue;
+        if (g_mode == 1) {
+            uint8_t conns[GY_NET_BLE_MAX_CONN];
+            int count = 0;
+            if (item.conn != GY_NET_BLE_BROADCAST_CONN) {
+                send_bytes(item.conn, buf, (uint16_t)n);
+                continue;
+            }
+            c_lock();
+            for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
+                if (g_conn[i].used && g_conn[i].notify)
+                    conns[count++] = g_conn[i].conn_idx;
+            c_unlock();
+            for (i = 0; i < count; ++i) ok |= send_bytes(conns[i], buf, (uint16_t)n);
+            (void)ok;
+        } else if (g_client_conn != 0xff && g_rmt_svc) {
+            send_bytes(g_client_conn, buf, (uint16_t)n);
+        }
+    }
+}
+
 int gy_net_ble_send(uint8_t conn, const GyNetMsg *msg)
 {
-    uint8_t buf[GY_NET_MAX_PACKET];
-    int n, i, ok = 0;
-    if (!msg) return 0;
-    n = gy_net_proto_encode(msg, buf, (int)sizeof(buf));
-    if (n <= 0) return 0;
-    if (g_mode == 1) {
-        if (conn != GY_NET_BLE_BROADCAST_CONN) return send_bytes(conn, buf, (uint16_t)n);
-        for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
-            if (g_conn[i].used && g_conn[i].notify) ok |= send_bytes(g_conn[i].conn_idx, buf, (uint16_t)n);
-        return ok;
+    if (!msg || !g_tx_ready) return 0;
+    q_lock();
+    if (g_tx_count >= GY_BLE_TXQ_CAP) { q_unlock(); return 0; }
+    g_txq[g_tx_tail].conn = conn;
+    g_txq[g_tx_tail].msg = *msg;
+    g_tx_tail = (uint8_t)((g_tx_tail + 1) % GY_BLE_TXQ_CAP);
+    g_tx_count++;
+    q_unlock();
+    rt_sem_release(&g_tx_sem);
+    return 1;
+}
+
+void gy_net_ble_flush(uint32_t timeout_ms)
+{
+    uint32_t waited = 0;
+    if (!g_tx_ready) return;
+    for (;;) {
+        int pending;
+        q_lock();
+        pending = g_tx_count;
+        q_unlock();
+        if (!pending || waited >= timeout_ms) return;
+        rt_thread_mdelay(5);
+        waited += 5;
     }
-    if (g_client_conn == 0xff || !g_rmt_svc) return 0;
-    return send_bytes(g_client_conn, buf, (uint16_t)n);
 }
 
 static void build_adv_payload(uint32_t room_id, uint8_t players, uint8_t phase,
@@ -320,7 +410,9 @@ static void adv_fill_para(sibles_advertising_para_t *para, int connectable)
     para->own_addr_type = GAPM_STATIC_ADDR;
     para->config.adv_mode = connectable ? SIBLES_ADV_CONNECT_MODE : SIBLES_ADV_BROADCAST_MODE;
     para->config.max_tx_pwr = 0x7F;
-    para->config.is_auto_restart = connectable ? 1 : 0;
+    /* 多连接/旁观需要连接后仍可被发现；显式在连接/断开事件里重启广播，
+     * 不能依赖 is_auto_restart（SDK 例程 multi_connection 同样手动管理）。 */
+    para->config.is_auto_restart = 0;
     if (connectable) {
         para->config.mode_config.conn_config.duration = 0;
         para->config.mode_config.conn_config.interval = 0x30;
@@ -354,11 +446,28 @@ static void adv_free_para(sibles_advertising_para_t *para)
     para->adv_data.manufacturer_data = RT_NULL;
 }
 
+static int adv_has_space(void)
+{
+    uint8_t players = g_adv_payload[7];
+    uint8_t spectators = g_adv_payload[9];
+    uint8_t max_spectators = g_adv_payload[10];
+    return (players < 2 || spectators < max_spectators) ? 1 : 0;
+}
+
 static uint8_t geyi_adv_event(uint8_t event, void *context, void *data)
 {
     (void)context; (void)data;
-    if (event == SIBLES_ADV_EVT_ADV_STARTED) BLE_LOG("adv started");
-    else if (event == SIBLES_ADV_EVT_ADV_STOPPED) BLE_LOG("adv stopped");
+    if (event == SIBLES_ADV_EVT_ADV_STARTED) {
+        g_adv_active = 1;
+        BLE_LOG("adv started");
+    } else if (event == SIBLES_ADV_EVT_ADV_STOPPED) {
+        g_adv_active = 0;
+        BLE_LOG("adv stopped");
+        if (!g_adv_stopping && g_mode == 1 && g_adv_connectable && adv_has_space()) {
+            if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
+                g_adv_active = 1;
+        }
+    }
     return 0;
 }
 
@@ -367,6 +476,7 @@ static int adv_start(int connectable)
     sibles_advertising_para_t para;
     uint8_t ret;
     if (!g_power_on) { g_pending_host = 1; g_adv_connectable = (uint8_t)connectable; return 0; }
+    g_adv_stopping = 1;
     if (g_adv_active) {
         sibles_advertising_stop(g_geyi_adv_ctx);
         sibles_advertising_delete(g_geyi_adv_ctx);
@@ -376,11 +486,12 @@ static int adv_start(int connectable)
     adv_fill_para(&para, connectable);
     ret = sibles_advertising_init(g_geyi_adv_ctx, &para);
     adv_free_para(&para);
-    if (ret != SIBLES_ADV_NO_ERR) { BLE_LOG("adv init err %d", ret); return -1; }
+    if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv init err %d", ret); return -1; }
     ret = sibles_advertising_start(g_geyi_adv_ctx);
-    if (ret != SIBLES_ADV_NO_ERR) { BLE_LOG("adv start err %d", ret); return -1; }
+    if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv start err %d", ret); return -1; }
     g_adv_active = 1;
     g_adv_connectable = (uint8_t)connectable;
+    g_adv_stopping = 0;
     return 0;
 }
 
@@ -417,12 +528,15 @@ int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
 
 void gy_net_ble_host_stop(void)
 {
+    g_mode = 0;
+    g_pending_host = 0;
+    g_adv_stopping = 1;
     if (g_adv_active) {
         sibles_advertising_stop(g_geyi_adv_ctx);
         sibles_advertising_delete(g_geyi_adv_ctx);
         g_adv_active = 0;
     }
-    g_pending_host = 0;
+    g_adv_stopping = 0;
 }
 
 int gy_net_ble_scan_start(void)
@@ -481,36 +595,53 @@ void gy_net_ble_disconnect(uint8_t conn)
 
 int gy_net_ble_connected(void)
 {
-    int i;
+    int i, found = 0;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
-        if (g_conn[i].used) return 1;
-    return 0;
+        if (g_conn[i].used) { found = 1; break; }
+    c_unlock();
+    return found;
 }
 int gy_net_ble_ready(void)
 {
-    return (g_client_conn != 0xff && g_rmt_svc && g_rx_val_hdl && g_tx_val_hdl) ? 1 : 0;
+    return (g_client_conn != 0xff && g_rmt_svc && g_rx_val_hdl &&
+            g_tx_val_hdl && g_tx_cccd_hdl && g_cccd_ok) ? 1 : 0;
 }
 uint8_t gy_net_ble_conn_count(void)
 {
     int i, n = 0;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i) if (g_conn[i].used) n++;
+    c_unlock();
     return (uint8_t)n;
 }
 uint8_t gy_net_ble_conn_at(uint8_t index)
 {
     int i, n = 0;
+    uint8_t ret = 0xff;
+    c_lock();
     for (i = 0; i < GY_NET_BLE_MAX_CONN; ++i)
         if (g_conn[i].used) {
-            if (n == index) return g_conn[i].conn_idx;
+            if (n == index) { ret = g_conn[i].conn_idx; break; }
             n++;
         }
-    return 0xff;
+    c_unlock();
+    return ret;
 }
-uint8_t gy_net_ble_client_conn(void) { return g_client_conn; }
+uint8_t gy_net_ble_client_conn(void)
+{
+    uint8_t ret;
+    c_lock();
+    ret = g_client_conn;
+    c_unlock();
+    return ret;
+}
 uint16_t gy_net_ble_mtu(uint8_t conn)
 {
     GyBleConn *c = conn_find(conn);
-    return c ? c->mtu : 23;
+    uint16_t ret = 23;
+    if (c) { c_lock(); ret = c->mtu; c_unlock(); }
+    return ret;
 }
 
 static uint8_t *ble_get_cb(uint8_t conn_idx, uint8_t idx, uint16_t *len)
@@ -583,6 +714,16 @@ static int geyi_gattc_event(uint16_t event_id, uint8_t *data, uint16_t len)
     } else if (event_id == SIBLES_REGISTER_REMOTE_SVC_RSP) {
         sibles_register_remote_svc_rsp_t *rsp = (sibles_register_remote_svc_rsp_t *)data;
         BLE_LOG("remote svc registered conn=%d status=%d", rsp->conn_idx, rsp->status);
+        if (rsp->status == 0 && g_tx_cccd_hdl) {
+            sibles_write_remote_value_t v;
+            uint8_t cccd[2] = {1, 0};
+            v.handle = g_tx_cccd_hdl;
+            v.write_type = SIBLES_WRITE;
+            v.len = 2;
+            v.value = cccd;
+            if (sibles_write_remote_value(g_rmt_svc, rsp->conn_idx, &v) == SIBLES_WRITE_NO_ERR)
+                g_cccd_ok = 1;
+        }
     }
     return 0;
 }
@@ -610,6 +751,10 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             BLE_LOG("connected idx=%d role=%d", ind->conn_idx, ind->role);
             if (g_mode == 2)
                 sibles_search_service(ind->conn_idx, ATT_UUID_128_LEN, (uint8_t *)g_svc_uuid);
+            if (g_mode == 1 && g_adv_connectable && adv_has_space()) {
+                if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
+                    g_adv_active = 1;
+            }
         }
         break;
     }
@@ -617,6 +762,10 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         ble_gap_disconnected_ind_t *ind = (ble_gap_disconnected_ind_t *)data;
         conn_free(ind->conn_idx);
         BLE_LOG("disconnected idx=%d reason=%d", ind->conn_idx, ind->reason);
+        if (g_mode == 1 && g_adv_connectable && adv_has_space()) {
+            if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
+                g_adv_active = 1;
+        }
         break;
     }
     case SIBLES_MTU_EXCHANGE_IND: {
@@ -646,17 +795,9 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             p += sizeof(sibles_svc_search_char_t) +
                  ch->desc_count * sizeof(struct sibles_disc_char_desc_ind);
         }
+        g_cccd_ok = 0;
         g_rmt_svc = sibles_register_remote_svc(rsp->conn_idx, rsp->svc->hdl_start,
                                                rsp->svc->hdl_end, geyi_gattc_event);
-        if (g_rmt_svc && g_tx_cccd_hdl) {
-            sibles_write_remote_value_t v;
-            uint8_t cccd[2] = {1, 0};
-            v.handle = g_tx_cccd_hdl;
-            v.write_type = SIBLES_WRITE;
-            v.len = 2;
-            v.value = cccd;
-            sibles_write_remote_value(g_rmt_svc, rsp->conn_idx, &v);
-        }
         BLE_LOG("chars rx=%d tx=%d cccd=%d rmt=%d", g_rx_val_hdl, g_tx_val_hdl,
                 g_tx_cccd_hdl, g_rmt_svc);
         break;
@@ -687,6 +828,13 @@ void gy_net_ble_init(void)
     memset(g_conn, 0, sizeof(g_conn));
     memset(g_frag, 0, sizeof(g_frag));
     g_client_conn = 0xff;
+    if (rt_sem_init(&g_tx_sem, "gy_net_tx", 0, RT_IPC_FLAG_FIFO) == RT_EOK) {
+        g_tx_thread = rt_thread_create("gy_net_tx", tx_thread_entry, RT_NULL, 4096, 22, 10);
+        if (g_tx_thread) {
+            rt_thread_startup(g_tx_thread);
+            g_tx_ready = 1;
+        }
+    }
     sifli_ble_enable();
 }
 

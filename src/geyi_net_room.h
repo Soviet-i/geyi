@@ -76,6 +76,9 @@ typedef struct {
     uint8_t  local_color;      /* 房主/玩家颜色；旁观为 NONE */
     uint32_t token;
     uint32_t last_seq;
+    uint32_t last_room_seq;
+    uint32_t last_snapshot_seq;
+    uint32_t last_result_seq;
     uint32_t now_ms;
     uint8_t  connected;
     uint32_t next_token;

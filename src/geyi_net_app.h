@@ -31,15 +31,20 @@ int gy_net_app_active(void);          /* 0=无，1=房主，2=客户端/旁观 *
 int gy_net_app_role(void);            /* GY_NET_ROLE_HOST/PLAYER/SPECTATOR */
 int gy_net_app_phase(void);
 int gy_net_app_local_color(void);
+int gy_net_app_host_color(void);
+int gy_net_app_guest_color(void);
 int gy_net_app_local_ready(void);
 int gy_net_app_host_ready(void);
 int gy_net_app_guest_ready(void);
 int gy_net_app_spectator_count(void);
 int gy_net_app_connected(void);
 int gy_net_app_local_terminal(void);
+int gy_net_app_join_rejected(void);
+int gy_net_app_spectator_lost(void);
 int gy_net_app_result(void);
 int gy_net_app_local_turn(void);
 int gy_net_app_is_spectator(void);
+int gy_net_app_pending_move(void);
 const GyGame *gy_net_app_game(void);
 
 /* 大厅 */
