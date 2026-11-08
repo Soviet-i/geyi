@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -15,3 +16,16 @@ jobs:
       - run: pip install -r requirements.txt
       - name: 课程一键检查（提交规范 / 开发日志 / 需求追踪 / manifest）
         run: python scripts/check_all.py
+      - name: 主机逻辑测试（6 组断言，gcc）
+        run: python tools/run_host.py
+      - name: 核心模块覆盖率（行覆盖率 ≥70%）
+        run: python tools/coverage.py --min 70
+      - name: 上传主机测试与覆盖率日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-test-and-coverage
+          path: |
+            build/host/host_test.log
+            build/coverage/coverage.txt
+          if-no-files-found: ignore
