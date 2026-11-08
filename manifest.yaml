@@ -16,7 +16,7 @@ submission:
   student_id: "2024211401"
   student_name: "蔡融汉"
   group_id: "G8"
-  milestone: "M2 人机对战（2026-10-31 已通过 PR 合入 develop，未正式评审；当前测试与联调，不申报新里程碑；联调后再开始联机）"
+  milestone: "M3 功能完成（进行中；M2 人机对战 2026-10-31 已合入 develop，未正式评审；2026-11-08 联机模块已立需求/设计/测试文档基线 REQ-501~513，代码与双板验证未开始；不申报新里程碑）"
   submitted_at: "2026-10-28T22:01:00+08:00"
 
 dev_agent:
@@ -57,11 +57,31 @@ design:
       alternatives_considered: "外接 WiFi / 手机 App / BLE+BT PAN 互联网联机；外接震动马达"
       rationale: "板载无 WiFi、无马达、无电池；课程板卡稀缺，先保单机/人机/参数闭环；BT PAN 与互联网联机列为拓展，不承诺"
       decided_by: "硬件约束（旧立项材料）；联机范围由蔡融汉负责，尚未进入实现"
+    - decision: "联机采用房主权威 + 全量快照 + 客户端只发意图"
+      alternatives_considered: "双端锁步 / 房主权威+增量同步 / 客户端权威 / P2P / 经手机中继"
+      rationale: "房主是唯一裁判，随机块只由房主生成；客户端不本地提交，状态分叉风险低；6×6 全量快照体积可控，断线后一发快照即可恢复；多房间=多房主，不需要中心服务器"
+      decided_by: "蔡融汉 2026-11-08 联机方案明确选择；备选与权衡由 agent 整理"
+    - decision: "房主作为 BLE 外设/GATT 服务端，对手与旁观者作为中央设备连接房主"
+      alternatives_considered: "所有端都做中央经手机/中继 / 经典蓝牙 SPP / BT PAN 互联网 / 外接 WiFi"
+      rationale: "板载无 WiFi；房主广播便于大厅发现，多房间即多台房主；旁观者天然是只读镜像；BT PAN 与互联网列为拓展"
+      decided_by: "蔡融汉 2026-11-08 联机方案"
+    - decision: "断线采用 1s 心跳 + 10s 判连 + 10s 冻结重连窗口 + token REJOIN + 在场方判缺席方负"
+      alternatives_considered: "立即判负 / 无限等待 / 只依赖 BLE 链路监督超时 / 断线后新开一局"
+      rationale: "避免 BLE 瞬断误判；token 绑定席位防止随便重连占位；窗口内全量快照恢复；房主单点按 L-07 不做局内迁移"
+      decided_by: "蔡融汉 2026-11-08 联机方案"
+    - decision: "联机预览只转发给旁观者，对手不可见"
+      alternatives_considered: "预览广播给房间内所有人 / 完全不转发远程预览 / 落子后才给对手看"
+      rationale: "预览是本地临时状态，广播会让对手偷看操作意图；旁观者可看双方预览；路由规则可做成 net_room 纯逻辑测试"
+      decided_by: "蔡融汉 2026-11-08 联机方案"
+    - decision: "旁观容量 K 待 P-02 实测后决定；若房主只能 1 条并发连接，首版砍旁观或改中继"
+      alternatives_considered: "先承诺旁观 / 直接砍掉旁观 / 经手机中继 / 多房主分区"
+      rationale: "BLE 并发连接数未实测，不能先写死 K；容量是旁观功能的生死线，必须在双板+旁观设备上实测"
+      decided_by: "蔡融汉 2026-11-08 方案列为待实测；实测后由学生拍板"
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
   # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
-  commit_range: "99a223b..HEAD"
+  commit_range: "99a223b..HEAD（含 2026-11-08 联机文档基线；交接时更新为精确 SHA）"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
@@ -163,8 +183,16 @@ test_results:
     actual: "未执行：最终中文界面与 SPAWN 减一/末行布局已确认，但生成间隔、缓冲阈值、AI 层数的实际效果尚未逐项验证"
     pass: false
     evidence_path: "docs/04-测试报告.md"
+  - test_id: "TC-501~TC-513"
+    description: "联机模块主机内存管道/桌面 LVGL/双板物理测试（REQ-501~REQ-513）"
+    expected: "net_proto 编解码/版本/seq；net_room 准备/开局/落子/拒绝/断线/重连/旁观路由；双板 BLE 发现、同步、预览私密、断线重连与容量"
+    actual: "2026-11-08 仅建立需求/设计/测试文档基线；代码、BLE 配置、烧录与双板验证均未开始，TC-501~TC-513 全部未实现/未执行"
+    pass: false
+    evidence_path: "docs/04-测试报告.md"
 
 known_issues:
+  - "【2026-11-08 当前】联机模块仅完成 REQ-501~REQ-513、ADR 0007~0009、TC-501~TC-513 文档基线；代码、proj.conf BLE 配置、烧录和双板验证均未开始，不得宣称联机可用。"
+  - "【2026-11-08 当前】联机双板物理验证需两块板同时在线（R-021）；P-02 最大 BLE 并发连接数、连接态广播、全量快照包长/吞吐均未实测；旁观容量 K 未定，若只能 1 条连接则首版砍旁观或改中继。"
   - "【2026-10-31 更新】集成分支 integration/local-merge 已合并 PR #6/#7/#4，主机测试 26920/60/2517/85/62/10 断言 PASS；该分支已于 2026-10-31 推送并通过 PR 合入 develop（#8 阈值调整、#6、#7、承接 #4 的 #9 先行合入）。"
   - "【2026-10-28 当前】参数页 REQ-408 主机 85 断言、桌面 LVGL --test、固件 847,344 B 编译/烧录与多次启动自检均通过；学生确认进入/返回 10 次并回传最终中文第 1 页照片；参数生效待验证。平衡扫描 REQ-411 主机完成并通过可复现性测试；历史/计时（赵志浩开发中）、联机/BLE 未完成。"
   - "【2026-10-31 更新】开发日志断档检查：经教师确认课程没有“间隔超过 7 天”的硬性要求，按其授权将 course.config.json 的 max_gap_days 由 7 调为 30；未改动 scripts/check_*.py，也未改提交日期。check_all.py 现提交规范/开发日志/需求追踪/manifest 全部 PASS。"
@@ -219,6 +247,12 @@ self_review: |
   training T0/T1 正文缺失；TC-303-05 单兵板端仍缺；参数页板端证据仍缺。关键决策由学生拍板；
   学生本次纠正了产品名、里程碑表述和赵志浩状态；agent 自测发现终局分数取负错误并修正。
 
+  2026-11-08 更新：在 develop 上新建 feat/req-5xx-net-online，建立联机文档基线
+  （REQ-501~REQ-513、ADR 0007~0009、TC-501~TC-513），明确房主权威 + 全量快照 +
+  BLE 外设/GATT 服务端、1s 心跳/10s 判连/10s 重连窗口、预览仅旁观可见。
+  未写网络代码、未改 proj.conf、未烧录、未做双板验证；P-02 连接数、连接态广播、
+  快照包长/吞吐待实测。文档提交前重跑 check_all.py；联机 TC 全部未执行。
+
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
   - decision_point: "AI 算法与随机块处理"
@@ -237,3 +271,11 @@ human_checkpoints:
     student_confirmation: "学生明确要求把 AI 深度设为 6；默认参数仍为 3，界面可调。"
   - decision_point: "人机视频证据的使用边界"
     student_confirmation: "学生提供网盘视频（人机.zip），说明覆盖选择先后手+人机对战；按学生本人确认记录，agent 未解码，不写成 agent 目测；REQ-316 细节、串口 ai=PASS、AI 耗时/栈、倾斜量化和帧率仍需补。"
+  - decision_point: "联机拓扑与权威模型"
+    student_confirmation: "学生 2026-11-08 明确选择：房主同时充当 BLE 外设、GATT 服务端与唯一裁判；对手/旁观者为中央设备；客户端只发意图；房主每个合法动作广播带单调 seq 的全量快照；不做增量同步。"
+  - decision_point: "联机断线与重连"
+    student_confirmation: "学生明确要求：1s 心跳、10s 判连、10s 冻结重连窗口；客方用 token REJOIN + 最后 seq 恢复；房主掉线客方重试 10s 后判负；旁观者掉线不冻结；主动退出二次确认后立即判负；结算保留约 10s。"
+  - decision_point: "联机预览可见性"
+    student_confirmation: "学生明确要求：预览只发房主，房主只转发给旁观者；对手看不到、不回传；客户端只接受自己的预览；旁观者用双方颜色叠加；确认/回中/取消发 PREVIEW_CLEAR。"
+  - decision_point: "联机旁观容量与降级"
+    student_confirmation: "学生 2026-11-08 方案将 K 定义为房主可接受连接数−1，并要求先实测 P-02；若只能 1 条连接，首版砍旁观或改中继。具体 K 与降级方案待实测后由学生拍板。"
