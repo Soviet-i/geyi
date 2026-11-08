@@ -1,4 +1,8 @@
-"""Student-operated board bring-up. Requires explicit interactive FLASH confirmation."""
+"""Student-operated board bring-up. Requires explicit interactive FLASH confirmation.
+
+Add --assert to exit non-zero when any boot self-test marker (core/input/param/
+paramui/lcd/imu) is missing. This still does not prove screen/touch/tilt feel.
+"""
 from pathlib import Path
 import datetime
 import hashlib
@@ -73,7 +77,16 @@ except serial.SerialException as exc:
     print('\nSerial error:',exc,'. Keep the existing logs; do not assume test passed.')
 finally:device.close()
 print('\nEvidence folder:',folder)
-markers=[b'core=PASS',b'input=PASS',b'[geyi:lcd] READY',b'WHO_AM_I=6a',b'[geyi:imu] calibrated']
-for marker in markers:print(marker.decode(),':','CAPTURED' if marker in received else 'MISSING')
+markers=[b'core=PASS',b'input=PASS',b'param=PASS',b'paramui=PASS',b'[geyi:lcd] READY',b'WHO_AM_I=6a',b'[geyi:imu] calibrated']
+missing=[]
+for marker in markers:
+    found=marker in received
+    print(marker.decode(),':','CAPTURED' if found else 'MISSING')
+    if not found:missing.append(marker.decode())
+if missing and '--assert' in sys.argv:
+    print('ASSERT FAIL: missing markers:',', '.join(missing))
+    raise SystemExit(1)
+if '--assert' in sys.argv:
+    print('ASSERT PASS: all boot self-test markers captured')
 print('Send screen photo, terminal output and your observed four-direction/key behavior.')
 print('Captured logs do not prove correct hardware behavior. No Git commit/upload was made.')
