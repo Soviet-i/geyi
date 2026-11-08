@@ -202,10 +202,22 @@ test_results:
     actual: "学生烧录 847,944 B 固件并回传 evidence/ui-prep/board_prep_1.jpg、board_prep_2.jpg；照片显示默认/互换布局与居中符合；点击动作未录屏，串口/耗时未测"
     pass: true
     evidence_path: "evidence/ui-prep/README.md"
-  - test_id: "TC-501~TC-513"
-    description: "联机模块主机内存管道/桌面 LVGL/双板物理测试（REQ-501~REQ-513）"
-    expected: "net_proto 编解码/版本/seq；net_room 准备/开局/落子/拒绝/断线/重连/旁观路由；双板 BLE 发现、同步、预览私密、断线重连与容量"
-    actual: "2026-11-08 仅建立需求/设计/测试文档基线；代码、BLE 配置、烧录与双板验证均未开始，TC-501~TC-513 全部未实现/未执行"
+  - test_id: "TC-501~TC-513-HOST"
+    description: "联机主机纯逻辑测试（REQ-501~REQ-513 主机段）"
+    expected: "net_proto 编解码/版本/seq/截断；net_room 准备/开局/落子/放兵/拒绝/断线/重连/旁观路由；大厅 TTL；内存管道"
+    actual: "2026-11-08 运行 python tools/run_host.py：geyi-net-tests 197 checks PASS；已覆盖 TC-501-01/02、502-01~04、504-01~03、505-01~04、506-01~04、507-01~03/05、508-01/02、509-01~03、510-01/02、511-01~03、512-01~03、513-01/02；未覆盖 BLE/UI/双板/容量"
+    pass: true
+    evidence_path: "evidence/net/20261108/host_test.log"
+  - test_id: "FW-BUILD-NET"
+    description: "联机主机逻辑接入固件编译（REQ-513）"
+    expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
+    actual: "2026-11-08 通过 PowerShell export.ps1 + scons 编译成功，main.bin 851,032 B；未烧录，不代表 BLE/UI 可用"
+    pass: true
+    evidence_path: "evidence/net/20261108/firmware_build.log"
+  - test_id: "TC-501~TC-513-HW"
+    description: "联机 BLE/UI/双板物理测试（REQ-501~REQ-513 未执行段）"
+    expected: "双板 BLE 发现/连接、落子同步、预览私密、断线重连、容量 P-02；大厅/房间/旁观真实 UI"
+    actual: "未执行：BLE 后端、真实 UI、proj.conf BLE 配置均未实现；需两块板同时在线；不得把主机测试写成联机可用"
     pass: false
     evidence_path: "docs/04-测试报告.md"
   - test_id: "TC-601~TC-606"
@@ -234,7 +246,7 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-08 当前】联机 REQ-501~513、历史/计时 REQ-601~606 只有需求/设计/测试文档基线；代码、proj.conf BLE 配置、编译、烧录、双板验证均未开始，所有相关 TC 未实现/未执行。"
+  - "【2026-11-08 当前】联机 REQ-501~513 已实现主机纯逻辑（net_proto/net_room/net_link 内存管道，197 checks PASS，固件 851,032 B 编译通过）；BLE 后端、真实 UI、proj.conf BLE 配置、烧录与双板验证仍未实现/未执行，不能写成联机可用。历史/计时 REQ-601~606 仍只有文档基线。"
   - "【2026-11-08 当前】当前板端证据来自历史构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；文档分支未改固件源码、未重编/烧录，不能把旧构建写成当前 HEAD 通过。"
   - "【2026-11-08 当前】REQ-407/410 参数生效只验证了启动自检，TC-406 板端段（SPAWN=3、size=5/7、缓冲 0/50、AI 层数 6）未执行。"
   - "【2026-11-08 当前】TC-303-05 单兵板端、REQ-316 的 500ms/单次提交/取消、串口 ai=PASS、倾斜正确率/真实延迟、390×450 帧率、AI 板端耗时/栈、24h soak 仍缺。"
@@ -270,7 +282,13 @@ self_review: |
   未完成/不确定：联机与历史/计时代码未写、未烧录、未双板验证；ADR-0010 待学生确认；
   参数生效/TC-303-05/串口 ai=PASS/倾斜正确率/帧率/AI 板端耗时/栈/24h soak 仍缺；
   当前板端证据是历史构建；CI 结果以远端 run 为准；会话日志仍是 10-28 快照。
-  关键决策仍由学生拍板；本轮未改固件源码，未把文档基线写成实现。
+  关键决策仍由学生拍板；文档分支未改固件源码，未把文档基线写成实现。
+
+  2026-11-08 联机主机实现：新建 feat/req-5xx-net-core，新增 src/geyi_net_proto.c/.h、
+  src/geyi_net_room.c/.h、src/geyi_net_link.c/.h（内存管道），tests/test_net.c 197 checks；
+  main.c 启动自检增加 net=PASS（仅协议/房间逻辑）。python tools/run_host.py 全部通过；
+  PowerShell export.ps1 + scons 编译成功，main.bin 851,032 B。未改 proj.conf、未烧录、
+  未做 BLE/UI/双板验证；P-02 容量、快照吞吐、真实断线重连仍未测。不得写成联机可用。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
@@ -303,4 +321,6 @@ human_checkpoints:
   - decision_point: "历史/计时是否持久化"
     student_confirmation: "尚未拍板；ADR-0010 暂记为“RAM-only 提议”，需学生确认重启清空是否可接受。"
   - decision_point: "联机范围与双板止损"
-    student_confirmation: "尚未拍板；当前只立文档基线，代码/双板验证未开始，需学生决定联机是否必达及止损日期。"
+    student_confirmation: "学生 2026-11-08 要求先写测试再实现；agent 已实现主机纯逻辑（197 checks PASS、固件 851,032 B），BLE 后端/UI/双板仍未完成。联机是否必达、双板排期与止损日期仍需学生拍板。"
+  - decision_point: "联机主机实现边界"
+    student_confirmation: "学生要求“写相关测试，写完测试后规划具体实现方案并实现”；agent 按纯逻辑优先实现 net_proto/net_room/net_link 内存管道，未擅自改 proj.conf 或伪造 BLE/双板结果。是否继续 BLE 绑定与 UI 由学生决定。"
