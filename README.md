@@ -1,3 +1,94 @@
+# 格弈（geyi）—— 黄山派体感棋类游戏
+
+> 在黄山派 SF32LB52 上，用“倾斜 + 按键”玩 6×6 数字合并战棋：倾斜选方向和士兵数量，
+> 确认前看到高亮预览，手指不遮挡棋盘。支持同板双人、人机对战、参数自定义；
+> 联机/BLE 与历史/计时目前只有设计基线，未实现。
+
+## 功能状态
+
+| 功能 | 状态 | 说明 |
+|---|---|---|
+| 单机同板双人 | 已实现 | 6×6 棋盘、数字合并、士兵移动/攻击、金币放兵、胜负/平局 |
+| 人机对战 | 已实现 | negamax + Alpha-Beta，独立线程，先后手准备页，AI 先预览 500 ms 再落子 |
+| 参数自定义 | 已实现 | 10 项参数、单机/人机/联机三套配置、重置、新开一局生效 |
+| 板端交互 | 已实现 | 倾斜 + KEY1/KEY2 + 触摸菜单；IMU 20 ms 采样；简体中文子集 |
+| RGB 反馈 | 已实现 | 有效行动短闪绿；终局按胜方红/蓝、平局黄各 3 闪 |
+| 历史/计时 | 设计基线，未实现 | RAM 最近 10 局 + 单局计时（ADR-0010 提议） |
+| 联机/BLE | 设计基线，未实现 | 房主权威/全量快照/多房间/旁观/断线重连（REQ-501~513） |
+
+## 硬件与软件
+
+- 开发板：立创·黄山派 SF32LB52-ULP（SF32LB525UC6），板型 `sf32lb52-lchspi-ulp`
+- SDK：SiFli SDK **v2.5.1**，RT-Thread，LVGL v9
+- 屏幕：约 390×450，触摸；板载六轴 IMU、按键、RGB；无 WiFi、无马达、无电池、无 TF 卡
+- 联机只走 BLE；两块板同时在线才能做真实联机验证
+
+## 构建与烧录
+
+```bash
+# 1. 安装/激活 SiFli SDK v2.5.1（见课程指导手册附录 F）
+#    在已 export 的终端里：
+python scripts/build_firmware.py
+# 产物：project/build_sf32lb52-lchspi-ulp_hcpu/main.bin
+
+# 2. 烧录（二选一）
+#    - VS Code + SiFli-SDK-CodeKit：状态栏“烧录”
+#    - 命令行：python tools/flash_and_capture.py --check   # 只读预检
+#              python tools/flash_and_capture.py           # 输入 FLASH 后烧录并采集 120 s
+```
+
+烧录前请确认板型、串口和线缆；烧录会替换板内固件。物理验证必须由本人在真机上完成，
+日志/照片存入 `evidence/`。
+
+## 玩法
+
+- 首页：开始游戏 / 自定义参数 / 历史记录（历史未实现时为禁用/空状态）。
+- 模式页：单机（同板双人）、人机、联机（联机未实现）。
+- 对局：回中 → 倾斜选方向 → 继续倾斜选数量 → 预览 → **KEY1** 确认；**KEY2** 取消 /
+  空闲时进入放兵；触摸用于菜单与辅助。
+- 人机：准备页选择执红/执蓝；AI 回合显示思考与预览，人类输入屏蔽。
+- 参数：进入参数页调整棋盘大小、生成间隔、血量、攻击、金币、AI 深度、缓冲阈值；
+  新开一局生效，局中不改；参数存 RAM，重启回默认。
+
+## 测试与检查
+
+```bash
+python tools/run_host.py              # 6 组主机断言（规则/输入/参数/参数页/AI/平衡）
+python tools/coverage.py --min 70     # 核心模块行覆盖率
+python tools/verify_all.py            # 文档检查 + 主机测试（可加 --coverage/--desktop/--board）
+python scripts/check_all.py           # 提交规范/开发日志/需求追踪/manifest
+python scripts/build_firmware.py      # 固件编译（需 SDK export）
+```
+
+主机/桌面通过不等于板端通过；板端项必须留串口/照片/录屏证据。详见
+`docs/guides/testing.md` 与 `docs/08-验收矩阵.md`。
+
+## 文档
+
+- 需求：`docs/01-需求规格说明.md`（L1–L4、用户交互、REQ-xxx）
+- 设计：`docs/02-方案设计说明.md`（三张图、联机/历史设计）
+- 测试：`docs/03-测试计划.md`、`docs/04-测试报告.md`
+- 验收矩阵：`docs/08-验收矩阵.md`
+- 量化测量：`docs/07-量化测量报告.md`
+- 索引：`docs/README.md`
+
+## 已知限制
+
+- 联机/BLE、历史/计时未实现；首页“历史记录”在实现前不应被宣称为可用。
+- 参数/历史 v1 存 RAM，重启回默认/清空；不做 Flash 持久化。
+- 无音频/震动；反馈只用 RGB；无 WiFi，互联网联机不在范围。
+- 倾斜正确率、真实板端延迟、帧率、AI 板端耗时/栈、24 h soak 仍待补测。
+- 当前板端证据是历史构建（847,344/847,944 B）；当前文档分支未改固件源码，未重新烧录。
+
+## 第三方资源
+
+见 `docs/refs/third-party.md`。固件使用 SiFli SDK（Apache-2.0）、LVGL v9（MIT）、
+思源黑体子集（OFL-1.1）；设计图使用 Noto Sans SC（OFL-1.1）。未使用第三方图片/音频/模型。
+
+---
+
+# 以下为课程脚手架说明（原始 README）
+
 # course_starter —— 黄山派嵌入式产品开发课程脚手架
 
 本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。当前成员已加入，产品名为格弈；M2 人机对战已合入本地集成分支 `integration/local-merge`（尚未 push），M3 进行中。具体状态见 `docs/00-项目计划与里程碑.md`。
