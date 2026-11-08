@@ -123,6 +123,11 @@ physical_verification:
     executed_at: "2026-10-28 21:30（学生本人操作并回传照片）"
     evidence_path: "evidence/param/20261028/README.md"
     agent_conclusion: "学生照片显示首页参数入口可用、参数页（修复前英文名）、单机 size=7 的 7×7 棋盘；学生报告进入/返回 10 次无崩溃，并发现人机 SPAWN 只能加不能减、英文参数名不清楚。照片保留为修复前证据；学生随后回传最终中文第 1 页照片，并确认 SPAWN 减一、AI 搜索层数末行、单机第二页无中间空洞。"
+  - item: "REQ-317 准备页视觉细化板端确认（2026-11-07）"
+    required_action: "烧录 847,944 B 固件，查看准备页默认/互换布局、居中、图标对齐与裁切"
+    executed_at: "2026-11-07（学生本人烧录并回传 board_prep_1/2.jpg；精确时刻未单列）"
+    evidence_path: "evidence/ui-prep/README.md"
+    agent_conclusion: "学生照片显示默认红 AI/蓝玩家、互换后红玩家/蓝 AI；标题/先手后手/图标/文字居中，方框和按钮无裁切。agent 未独立解码点击动作，未测串口/耗时；照片不覆盖 10-28 参数集成与其他页面。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -191,6 +196,12 @@ test_results:
     actual: "未执行：最终中文界面与 SPAWN 减一/末行布局已确认，但生成间隔、缓冲阈值、AI 层数的实际效果尚未逐项验证"
     pass: false
     evidence_path: "docs/04-测试报告.md"
+  - test_id: "TC-317-BOARD-20261107"
+    description: "准备页视觉细化板端确认（REQ-317）"
+    expected: "默认/互换布局、标题与标签居中、图标中线一致、方框按钮无裁切"
+    actual: "学生烧录 847,944 B 固件并回传 evidence/ui-prep/board_prep_1.jpg、board_prep_2.jpg；照片显示默认/互换布局与居中符合；点击动作未录屏，串口/耗时未测"
+    pass: true
+    evidence_path: "evidence/ui-prep/README.md"
   - test_id: "TC-501~TC-513"
     description: "联机模块主机内存管道/桌面 LVGL/双板物理测试（REQ-501~REQ-513）"
     expected: "net_proto 编解码/版本/seq；net_room 准备/开局/落子/拒绝/断线/重连/旁观路由；双板 BLE 发现、同步、预览私密、断线重连与容量"
@@ -206,15 +217,15 @@ test_results:
   - test_id: "HOST-6GROUPS-20261108"
     description: "主机 6 组断言（本机 gcc 14.2.0）"
     expected: "规则/输入/参数/参数页/AI/平衡全部 PASS"
-    actual: "26920/60/2517/85/62/10 六组 PASS；命令 python tools/run_host.py；日志 build/host/host_test.log"
+    actual: "26920/60/2517/85/62/10 六组 PASS；命令 python tools/run_host.py；日志 evidence/host/20261108/host_test.log"
     pass: true
-    evidence_path: "build/host/host_test.log"
+    evidence_path: "evidence/host/20261108/host_test.log"
   - test_id: "COVERAGE-20261108"
     description: "核心模块行覆盖率（gcc/gcov）"
     expected: "各模块行覆盖率 ≥70%"
     actual: "game 99.5%、input 87.0%、config 98.5%、param_ui 100%、ai 89.2%、balance 76.2%；命令 python tools/coverage.py --min 70"
     pass: true
-    evidence_path: "build/coverage/coverage.txt"
+    evidence_path: "evidence/coverage/20261108/coverage.txt"
   - test_id: "CI-HOST-20261108"
     description: "CI 接入主机测试与覆盖率"
     expected: "course-check 在 Ubuntu 跑 check_all.py + run_host.py + coverage.py --min 70"
