@@ -6,9 +6,9 @@
 | 文件 | 内容 | 覆盖 | 不覆盖 |
 |---|---|---|---|
 | `host_test_final.log` | `python tools/run_host.py` | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 307、app 202、平衡 10 断言 | 真实 BLE、桌面 LVGL |
-| `firmware_build_final.log` | `scons --board=sf32lb52-lchspi-ulp` | `main.bin` 1,077,420 B + LCPU `lcpu.bin` 6,384 B | 编译通过不等于联机可用 |
-| `evidence/ui/20261109/board_suite_rules.log` | 第四轮双板套件 stdout | 10 段全部 PASS（新增 rules/safe area）；A/B final 均 active=0、rooms=0 | 不是逐像素/触摸证据 |
-| `board/suite_A_COM7_*.log`、`suite_B_COM8_*.log` | 双板串口原始日志 | 各轮套件；`140907` 为最终 PASS 轮（含规则 4 页/corner=0/rbottom<370 与完整联机流程） | 失败轮保留，不能只引用 PASS 轮 |
+| `firmware_build_final.log` | `scons --board=sf32lb52-lchspi-ulp` | `main.bin` 1,078,356 B + LCPU `lcpu.bin` 6,384 B | 编译通过不等于联机可用 |
+| `evidence/ui/20261109/board_suite_key2.log` | 第五轮双板套件 stdout | 10 段全部 PASS（新增 rules/safe area）；A/B final 均 active=0、rooms=0 | 不是逐像素/触摸证据 |
+| `board/suite_A_COM7_*.log`、`suite_B_COM8_*.log` | 双板串口原始日志 | 各轮套件；`152835` 为最终 PASS 轮（含规则 4 页/corner=0/rbottom<370 与完整联机流程） | 失败轮保留，不能只引用 PASS 轮 |
 | `latency/latency_before_fix.log` | 延迟复现（修复前） | join 4.07s、close 3.66s FAIL | 不能写成通过 |
 | `latency/latency_after_fix.log` | 延迟复测（修复后） | join 0.98s、close 0.18s、leave 0.43s PASS | 只证明本次双板环境 |
 | `latency/latency_A_*.log`、`latency_B_*.log` | 延迟测试串口原始日志 | 各轮耗时与状态 | 失败/过渡轮保留 |
@@ -28,8 +28,11 @@
 9. 强制旁观 `role=2 local=255`，不占玩家位、不发操作；退出后观战数归零，最终关房后大厅清空。
 10. 延迟：join 0.98s、close 0.18s、leave 0.43s（`latency_after_fix.log`）。
 11. 游戏规则/安全区（REQ-318/NFR-UX-06）：`gy_net rules` 实际进入 4 页；逐页
-    `corner=0`、`rbottom=357/337/297/197`（<370）；首页/规则页四角安全；返回首页成功。
-    桌面截图与字体日志在 `evidence/ui/20261109/`。
+    `corner=0`、`rbottom=317/337/297/197`（<370）；首页/规则页四角安全；返回首页成功。
+    规则正文逐字采用学生原文（含全角标点、10°~60°、KEY2）。桌面截图与字体日志在
+    `evidence/ui/20261109/`。
+12. 按键：板端只读 PA43/KEY2，PA34/KEY1（电源/下载）不再配置或读取；`gy_ui_key2()`
+    的预览确认/放兵进入退出语义由桌面 `--test` 覆盖，真实 KEY2 手感待学生确认。
 
 ## 未验证
 
@@ -39,5 +42,5 @@
 - 第三块板/手机的双方预览叠加；
 - P-02 最大并发连接数、连接态广播、快照包长/吞吐、BLE 分片 ACK/重传。
 
-对应需求：REQ-501/502/505/506/507/512/513；测试计划：`docs/03` 的
+对应需求：REQ-311/318/501/502/505/506/507/512/513、NFR-UX-06；测试计划：`docs/03` 的
 TC-501-04、TC-502-05、TC-505-06~08、TC-506-07、TC-507-06。

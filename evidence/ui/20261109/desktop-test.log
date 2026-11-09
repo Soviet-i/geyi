@@ -1,5 +1,6 @@
 PASS: placement through earned game coins
 PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board
+PASS: KEY2-only confirm/placing state machine (KEY1 untested as game key)
 PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)
 PASS: TC-313 home/modes/disabled entries/input guard/single re-entry
 PASS: TC-315 AI modes, AI turn, input guard, stale result discard
