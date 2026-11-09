@@ -67,6 +67,7 @@ static struct {
     uint32_t drop_at;
     uint32_t reconnect_at;
     uint8_t  rejoin_sent;
+    uint32_t rejoin_at;
     ConnMap  conns[APP_MAX_CONN];
     GyNetAppRoom rooms[GY_NET_APP_MAX_ROOMS];
     int      room_count;
@@ -84,6 +85,7 @@ static struct {
     uint8_t  link_down;      /* 客户端 BLE 链路是否断开；接管必须以此为前提 */
     uint8_t  client_gen;     /* 客户端当前链路代际 */
     uint32_t unknown_link_at[APP_MAX_CONN]; /* 房主：已连接但尚未 JOIN 的链路起始时刻 */
+    uint8_t  unknown_gen[APP_MAX_CONN];     /* 该 conn_idx 的未知链路代际 */
     uint32_t join_ready_at;
     uint16_t local_player_id;
     uint8_t  pending_move;
@@ -254,7 +256,9 @@ static ConnMap *conn_alloc(uint8_t conn, uint8_t gen, uint8_t role, uint8_t colo
     int i, slot = -1, stale = -1;
     for (i = 0; i < APP_MAX_CONN; ++i) {
         if (!g.conns[i].used && slot < 0) slot = i;
-        else if (g.conns[i].used && g.conns[i].conn == 0xff && stale < 0) stale = i;
+        else if (g.conns[i].used && g.conns[i].conn == 0xff &&
+                 !token_alive(g.conns[i].token) && stale < 0)
+            stale = i;   /* 只驱逐 token 已不在席位/旁观位的旧映射 */
     }
     if (slot < 0) slot = stale;
     if (slot < 0) return NULL;
@@ -302,10 +306,11 @@ static int host_sync_conns(void)
             continue;
         }
         if ((uint32_t)(g.now - g.conns[i].last_rx) >= 10000u) {
-            if (gy_net_room_disconnect_token(&g.room, g.conns[i].token, g.now) == GY_NET_OK)
-                changed = 1;
-            /* 链路还在但 10s 没有任何消息：主动断开，释放连接槽位。 */
-            gy_net_ble_disconnect(g.conns[i].conn);
+            uint8_t dead = g.conns[i].conn;
+            /* 链路还在但 10s 没有任何消息：先标记会话断链（PLAYING 保留
+             * token 供 REJOIN），再主动断开，避免每 tick 重复断开/广播。 */
+            host_link_down(dead, g.conns[i].gen);
+            gy_net_ble_disconnect(dead);
             changed = 1;
         }
     }
@@ -535,12 +540,33 @@ static void host_process(uint8_t conn, uint8_t gen, const GyNetMsg *msg)
         GyNetRejoin r;
         uint8_t color = GY_NET_COLOR_NONE;
         ConnMap *c;
+        int rr;
         if (gy_net_unpack_rejoin(msg, &r) != GY_NET_OK) return;
-        if (gy_net_room_rejoin(&g.room, r.token, r.last_seq, g.now, &color) != GY_NET_OK) {
+        c = conn_find(conn);
+        rr = gy_net_room_rejoin(&g.room, r.token, r.last_seq, g.now, &color);
+        if (rr != GY_NET_OK) {
+            if (c && c->token == r.token) {
+                /* REJOIN 的 ACK 丢了，客方在同一链路上重发：幂等回 ACK，
+                 * 不要回 TOKEN 拒绝（否则客方会走 fresh JOIN 丢掉席位）。 */
+                color = conn_color(c);
+                send_join_ack(conn, color, c->token,
+                              gy_net_room_seat_id(&g.room, color));
+                send_state_to(conn);
+                if (g.room.view.game_valid) send_snapshot_to(conn);
+                return;
+            }
             send_reject(conn, (uint8_t)(-GY_NET_ERR_TOKEN));
             return;
         }
-        c = conn_find(conn);
+        if (c && c->token != r.token) {
+            /* 同一 conn_idx 上已有别的 live 会话：不能抢占它的 token。 */
+            if (token_alive(c->token)) {
+                send_reject(conn, (uint8_t)(-GY_NET_ERR_TOKEN));
+                return;
+            }
+            c->used = 0;
+            c = NULL;
+        }
         if (!c) c = conn_find_token(r.token);
         if (!c) c = conn_alloc(conn, gen,
                                color == GY_NET_COLOR_NONE ? GY_NET_ROLE_SPECTATOR : GY_NET_ROLE_PLAYER,
@@ -615,8 +641,9 @@ static void promote_self_to_host(uint8_t new_host_color, uint32_t now_ms)
     g.last_preview_valid = 0;
 #ifdef GEYI_WITH_RTTHREAD
     gy_net_ble_scan_stop();
-    if (gy_net_ble_client_conn() != 0xff)
-        gy_net_ble_disconnect(gy_net_ble_client_conn());
+    /* 先彻底结束 client 会话（取消在途连接/断开/清 remote svc/TX），
+     * 再切 host；否则旧 client 消息会被当成 host 广播发给新客人。 */
+    gy_net_ble_client_abort();
     gy_net_ble_host_start(g.room_id, 1, GY_NET_PHASE_WAIT, 0, 2);
 #endif
     APP_LOG("promote self to host color=%d id=%04X", new_host_color,
@@ -676,6 +703,7 @@ static void client_process(const GyNetMsg *msg)
         g.starting_seq = 0;
         g.dropped = 0;
         g.rejoin_sent = 0;
+        g.rejoin_at = 0;
         g.drop_at = 0;
         gy_net_room_client_reconnect(&g.room, g.now);
         g.last_rx = g.now;
@@ -764,6 +792,7 @@ static void client_process(const GyNetMsg *msg)
             /* WAIT 已立即释放旧席位，REJOIN 必然失败；链路还在时用
              * auto 重新 JOIN，绝不能靠接管（否则会与仍活着的房主双主）。 */
             g.rejoin_sent = 0;
+            g.rejoin_at = 0;
             g.need_fresh_join = 1;
             if (g.role == GY_NET_ROLE_PLAYER &&
                 g.room.view.phase == GY_NET_PHASE_WAIT) {
@@ -935,13 +964,22 @@ void gy_net_app_tick(uint32_t now_ms)
             uint8_t i, n = gy_net_ble_conn_count();
             for (i = 0; i < n; ++i) {
                 uint8_t conn = gy_net_ble_conn_at(i);
-                ConnMap *c = conn_find(conn);
+                uint8_t gen;
+                ConnMap *c;
                 if (conn >= APP_MAX_CONN) continue;
+                c = conn_find(conn);
                 if (c) {
                     g.unknown_link_at[conn] = 0;
+                    g.unknown_gen[conn] = 0;
                     continue;
                 }
-                if (!g.unknown_link_at[conn]) {
+                gen = gy_net_ble_conn_gen(conn);
+                if (gen != g.unknown_gen[conn]) {
+                    /* 同一 conn_idx 被新链路复用：重新计时，不能沿用旧链路
+                     * 的 5s 计时窗口。 */
+                    g.unknown_gen[conn] = gen;
+                    g.unknown_link_at[conn] = now_ms;
+                } else if (!g.unknown_link_at[conn]) {
                     g.unknown_link_at[conn] = now_ms;
                 } else if ((uint32_t)(now_ms - g.unknown_link_at[conn]) >= 5000u) {
                     APP_LOG("drop idle link conn=%d (no join)", conn);
@@ -993,7 +1031,18 @@ void gy_net_app_tick(uint32_t now_ms)
     } else if (g.active == 2) {
 #ifdef GEYI_WITH_RTTHREAD
         uint8_t conn = gy_net_ble_client_conn();
+        uint8_t cur_gen = gy_net_ble_client_gen();
         g.link_down = (conn == 0xff) ? 1 : 0;
+        if (cur_gen && g.client_gen && cur_gen != g.client_gen) {
+            /* 新链路：上一次 REJOIN 的“已发”状态不能沿用。 */
+            g.rejoin_sent = 0;
+            g.rejoin_at = 0;
+        }
+        if (cur_gen) g.client_gen = cur_gen;
+        if (conn == 0xff) {
+            g.rejoin_sent = 0;
+            g.rejoin_at = 0;
+        }
         if (g.need_fresh_join && g.room.view.phase == GY_NET_PHASE_WAIT)
             start_fresh_join(now_ms);
         if (g.pending_join && conn == 0xff &&
@@ -1068,7 +1117,9 @@ void gy_net_app_tick(uint32_t now_ms)
                 g.reconnect_at = now_ms;
                 gy_net_ble_connect(g.join_addr, g.join_addr_type);
             }
-            if (conn != 0xff && gy_net_ble_ready() && !g.rejoin_sent && g.token) {
+            if (conn != 0xff && gy_net_ble_ready() && g.token &&
+                (!g.rejoin_sent ||
+                 (uint32_t)(now_ms - g.rejoin_at) >= 500u)) {
                 GyNetRejoin r;
                 GyNetMsg m;
                 r.token = g.token;
@@ -1076,6 +1127,7 @@ void gy_net_app_tick(uint32_t now_ms)
                 if (gy_net_pack_rejoin(&m, &r) == GY_NET_OK) {
                     send_msg(conn, &m);
                     g.rejoin_sent = 1;
+                    g.rejoin_at = now_ms;
                 }
             }
         }
@@ -1109,6 +1161,12 @@ void gy_net_app_tick(uint32_t now_ms)
             g.role == GY_NET_ROLE_SPECTATOR) {
             g.spectator_lost = 1;
             g.active = 0;
+#ifdef GEYI_WITH_RTTHREAD
+            gy_net_ble_client_abort();
+#endif
+            g.client_gen = 0;
+            g.rejoin_sent = 0;
+            g.rejoin_at = 0;
         }
     }
 }
@@ -1344,6 +1402,12 @@ int gy_net_app_join_index_role(int index, int role)
         return -1;
     }
     gy_net_app_leave();
+#ifdef GEYI_WITH_RTTHREAD
+    /* 刚离房时旧链路可能还在异步关闭；进新房间前强制结束旧会话，
+     * 否则 JOIN 会被发到旧房主（room_id 不符被拒），表现为“房间不存在”。 */
+    gy_net_ble_client_abort();
+    g.leaving = 0;
+#endif
     g.room_id = r->room_id;
     g.join_role = (uint8_t)join_role;
     /* 协议里 0=玩家、1=旁观、2=自动；本地 role 用 GY_NET_ROLE_*。 */
@@ -1454,8 +1518,9 @@ void gy_net_app_leave(void)
             /* 还在连接/服务发现：取消在途连接，避免离开后才连上。 */
             gy_net_ble_client_abort();
         }
-    } else {
-        /* 没有活动会话但可能残留上一次的 client 链路：一并清掉。 */
+    } else if (!g.leaving) {
+        /* 没有活动会话但可能残留上一次的 client 链路：一并清掉。
+         * 刚发过 LEAVE 时不要截断 TX 线程的收尾。 */
         gy_net_ble_client_abort();
     }
     gy_net_ble_scan_stop();
@@ -1484,9 +1549,11 @@ void gy_net_app_leave(void)
     g.drop_at = 0;
     g.reconnect_at = 0;
     g.rejoin_sent = 0;
+    g.rejoin_at = 0;
     g.client_gen = 0;
     g.preview_valid[0] = g.preview_valid[1] = 0;
     memset(g.unknown_link_at, 0, sizeof(g.unknown_link_at));
+    memset(g.unknown_gen, 0, sizeof(g.unknown_gen));
     memset(&g.room, 0, sizeof(g.room));
     memset(g.conns, 0, sizeof(g.conns));
 }

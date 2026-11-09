@@ -101,6 +101,7 @@ static uint8_t g_adv_head, g_adv_tail, g_adv_count;
 typedef struct {
     uint8_t  conn;
     uint8_t  close_after;   /* 客户端 LEAVE：发送完成后断开该连接 */
+    uint8_t  gen;           /* 入队时的客户端代际；0=房主/广播消息 */
     GyNetMsg msg;
 } GyBleTx;
 static GyBleTx g_txq[GY_BLE_TXQ_CAP];
@@ -121,6 +122,7 @@ static uint8_t g_client_conn = 0xff;
 static uint8_t g_client_gen;
 static uint8_t g_gen_counter;
 static uint8_t g_client_connecting; /* ble_gap_create_connection 在途 */
+static uint8_t g_client_leaving;    /* 已发 LEAVE，当前链路不再可发新消息 */
 static uint8_t g_host_allow_conn = 1; /* 房主还能接受新连接 */
 static uint32_t g_adv_restart_at;
 static uint32_t g_cccd_retry_at;
@@ -155,6 +157,7 @@ static uint32_t g_adv_start_at;
 SIBLES_ADVERTISING_CONTEXT_DECLAR(g_geyi_adv_ctx);
 static uint8_t geyi_adv_event(uint8_t event, void *context, void *data);
 static int geyi_gattc_event(uint16_t event_id, uint8_t *data, uint16_t len);
+static void disconnect_if_gen(uint8_t conn, uint8_t gen);
 
 static void q_init(void)
 {
@@ -409,7 +412,7 @@ static void tx_thread_entry(void *parameter)
         n = gy_net_proto_encode(&item.msg, buf, (int)sizeof(buf));
         if (n <= 0) {
             if (item.close_after && item.conn != GY_NET_BLE_BROADCAST_CONN)
-                gy_net_ble_disconnect(item.conn);
+                disconnect_if_gen(item.conn, item.gen);
             continue;
         }
         if (g_mode == 1) {
@@ -417,7 +420,7 @@ static void tx_thread_entry(void *parameter)
             int count = 0;
             if (item.conn != GY_NET_BLE_BROADCAST_CONN) {
                 send_bytes(item.conn, buf, (uint16_t)n);
-                if (item.close_after) gy_net_ble_disconnect(item.conn);
+                if (item.close_after) disconnect_if_gen(item.conn, item.gen);
                 continue;
             }
             c_lock();
@@ -427,11 +430,14 @@ static void tx_thread_entry(void *parameter)
             c_unlock();
             for (i = 0; i < count; ++i) ok |= send_bytes(conns[i], buf, (uint16_t)n);
             (void)ok;
-        } else if (g_client_conn != 0xff && g_remote_svc_ok) {
+        } else if (g_client_conn != 0xff && g_remote_svc_ok &&
+                   (!item.gen || item.gen == g_client_gen)) {
             send_bytes(g_client_conn, buf, (uint16_t)n);
-            if (item.close_after) gy_net_ble_disconnect(g_client_conn);
+            if (item.close_after) disconnect_if_gen(g_client_conn, item.gen);
         } else if (item.close_after && item.conn != GY_NET_BLE_BROADCAST_CONN) {
-            gy_net_ble_disconnect(item.conn);
+            /* 旧代际的 LEAVE 或发送条件已失效：只断开仍属于该代际的链路，
+             * 绝不能按 conn_idx 拆掉复用同一序号的新会话。 */
+            disconnect_if_gen(item.conn, item.gen);
         }
     }
 }
@@ -453,13 +459,14 @@ static void tx_flush(void)
     q_unlock();
 }
 
-static int send_queue(uint8_t conn, const GyNetMsg *msg, uint8_t close_after)
+static int send_queue(uint8_t conn, const GyNetMsg *msg, uint8_t close_after, uint8_t gen)
 {
     if (!msg || !g_tx_ready) return 0;
     q_lock();
     if (g_tx_count >= GY_BLE_TXQ_CAP) { q_unlock(); return 0; }
     g_txq[g_tx_tail].conn = conn;
     g_txq[g_tx_tail].close_after = close_after;
+    g_txq[g_tx_tail].gen = gen;
     g_txq[g_tx_tail].msg = *msg;
     g_tx_tail = (uint8_t)((g_tx_tail + 1) % GY_BLE_TXQ_CAP);
     g_tx_count++;
@@ -470,17 +477,25 @@ static int send_queue(uint8_t conn, const GyNetMsg *msg, uint8_t close_after)
 
 int gy_net_ble_send(uint8_t conn, const GyNetMsg *msg)
 {
-    return send_queue(conn, msg, 0);
+    uint8_t gen;
+    if (g_client_leaving) return 0;   /* 正在离房，不能再发新会话消息 */
+    gen = (g_mode == 2) ? g_client_gen : 0;
+    return send_queue(conn, msg, 0, gen);
 }
 
 void gy_net_ble_client_leave(uint8_t conn, const GyNetMsg *msg)
 {
     /* 先退出 client 模式：迟到的 BLE 事件会被丢弃，也不会再发起连接。
-     * LEAVE 由 TX 线程按序发出后再断开，UI 不再等 500ms。 */
+     * LEAVE 由 TX 线程按序发出后再断开，UI 不再等 500ms。
+     * 先清掉旧会话还没发出的 READY/MOVE/PREVIEW，避免它们被发到下一个
+     * 房间；LEAVE 带上旧代际，如果新连接已建立则丢弃。 */
+    uint8_t gen = g_client_gen;
     g_mode = 0;
+    g_client_leaving = 1;
     g_client_connecting = 0;
     g_pending_search_conn = 0xff;
-    if (conn == 0xff || !msg || !send_queue(conn, msg, 1)) {
+    tx_flush();
+    if (conn == 0xff || !msg || !send_queue(conn, msg, 1, gen)) {
         if (conn != 0xff) gy_net_ble_disconnect(conn);
     }
 }
@@ -492,6 +507,7 @@ void gy_net_ble_client_abort(void)
     uint16_t rmt_start = 0, rmt_end = 0;
     int unregister_rmt = 0;
     g_mode = 0;
+    g_client_leaving = 0;
     g_pending_search_conn = 0xff;
     g_search_retry_conn = 0xff;
     /* 中止会话时丢弃尚未发出的旧房间消息，避免切到 host 后被误发。 */
@@ -656,7 +672,7 @@ static uint8_t geyi_adv_event(uint8_t event, void *context, void *data)
         BLE_LOG("adv stopped");
         /* 连接建立后协议栈会停止可连接广播。is_auto_restart=0 时必须
          * 自己重启，否则第二个人/旁观者发现不了房间。 */
-        if (g_mode == 1 && g_host_allow_conn && g_adv_inited)
+        if (g_mode == 1 && g_adv_inited)
             g_adv_restart_at = rt_tick_get() + rt_tick_from_millisecond(50);
     }
     return 0;
@@ -765,8 +781,7 @@ int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
      * 新人数留在 g_adv_payload，ADV_STARTED 后由 poll 写回。 */
     if (!g_adv_active) {
         if (g_adv_inited) {
-            if (g_host_allow_conn)
-                g_adv_restart_at = rt_tick_get() + rt_tick_from_millisecond(50);
+            g_adv_restart_at = rt_tick_get() + rt_tick_from_millisecond(50);
             return 0;
         }
         return adv_start(connectable);
@@ -785,6 +800,7 @@ void gy_net_ble_host_stop(void)
     g_host_allow_conn = 0;
     g_adv_restart_at = 0;
     g_adv_stopping = 1;
+    tx_flush();   /* 关房后不再把旧房间消息发给下一个会话 */
     /* 不依赖 g_adv_active：update 失败/事件乱序时该标志可能与协议栈
      * 实际状态不一致，漏掉 stop 会让房间继续广播，其它板永远看到幽灵房。 */
     sibles_advertising_stop(g_geyi_adv_ctx);
@@ -855,6 +871,7 @@ int gy_net_ble_connect(const uint8_t addr[6], uint8_t addr_type)
     p.peer_addr.addr_type = addr_type;
     memcpy(p.peer_addr.addr.addr, addr, 6);
     g_mode = 2;
+    g_client_leaving = 0;
     g_client_connecting = 1;
     g_client_gen = 0;
     if (ble_gap_create_connection(&p) != HL_ERR_NO_ERROR) {
@@ -872,6 +889,14 @@ void gy_net_ble_disconnect(uint8_t conn)
     ble_gap_disconnect(&d);
 }
 
+static void disconnect_if_gen(uint8_t conn, uint8_t gen)
+{
+    uint8_t cur;
+    if (!gen) return;   /* gen=0 是房主/广播项，没有客户端代际语义 */
+    cur = gy_net_ble_conn_gen(conn);
+    if (cur && cur == gen) gy_net_ble_disconnect(conn);
+}
+
 int gy_net_ble_connected(void)
 {
     int i, found = 0;
@@ -883,12 +908,22 @@ int gy_net_ble_connected(void)
 }
 int gy_net_ble_ready(void)
 {
-    return (g_client_conn != 0xff && g_remote_svc_ok && g_rx_val_hdl &&
-            g_tx_val_hdl && g_tx_cccd_hdl && g_cccd_ok) ? 1 : 0;
+    int ok;
+    c_lock();
+    ok = (g_mode == 2 && !g_client_leaving && g_client_conn != 0xff &&
+          g_remote_svc_ok && g_rx_val_hdl && g_tx_val_hdl &&
+          g_tx_cccd_hdl && g_cccd_ok) ? 1 : 0;
+    c_unlock();
+    return ok;
 }
 int gy_net_ble_write_ready(void)
 {
-    return (g_client_conn != 0xff && g_remote_svc_ok && g_rx_val_hdl) ? 1 : 0;
+    int ok;
+    c_lock();
+    ok = (g_mode == 2 && !g_client_leaving && g_client_conn != 0xff &&
+          g_remote_svc_ok && g_rx_val_hdl) ? 1 : 0;
+    c_unlock();
+    return ok;
 }
 uint8_t gy_net_ble_conn_count(void)
 {
@@ -1124,7 +1159,8 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
                 g_client_conn = ind->conn_idx;
                 g_client_gen = c->gen;
                 g_client_connecting = 0;
-            } else if (g_mode == 1 && g_host_allow_conn && g_adv_inited) {
+                g_client_leaving = 0;
+            } else if (g_mode == 1 && g_adv_inited) {
                 /* 连接会停掉可连接广播；第一个客人连上后还要接受第二个
                  * 玩家/旁观者，50ms 后由 poll 重启广播。 */
                 g_adv_restart_at = rt_tick_get() + rt_tick_from_millisecond(50);
@@ -1133,6 +1169,14 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             BLE_LOG("connected idx=%d role=%d gen=%d", ind->conn_idx, ind->role, c->gen);
             if (g_mode == 2)
                 g_pending_search_conn = ind->conn_idx;
+        } else {
+            /* 本地连接表已满（4 条）：立即拒绝，不能让第 5 条链路变成
+             * 应用看不见、也释放不了的僵尸连接。 */
+            ble_gap_disconnect_t d;
+            BLE_LOG("reject conn idx=%d (conn table full)", ind->conn_idx);
+            d.conn_idx = ind->conn_idx;
+            d.reason = 0x13;
+            ble_gap_disconnect(&d);
         }
         break;
     }
@@ -1142,7 +1186,7 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         conn_free(ind->conn_idx);
         BLE_LOG("disconnected idx=%d reason=%d gen=%d", ind->conn_idx,
                 ind->reason, gen);
-        if (g_mode == 1 && g_host_allow_conn && g_adv_inited)
+        if (g_mode == 1 && g_adv_inited)
             g_adv_restart_at = rt_tick_get() + rt_tick_from_millisecond(50);
         break;
     }
@@ -1300,7 +1344,7 @@ void gy_net_ble_poll(void)
     }
     /* 多连接：连接建立后协议栈不会自动重启可连接广播。
      * 50ms 后主动重启；若返回忙，200ms 后再试。 */
-    if (g_mode == 1 && g_host_allow_conn && g_adv_inited && !g_adv_active &&
+    if (g_mode == 1 && g_adv_inited && !g_adv_active &&
         g_adv_restart_at && (int32_t)(rt_tick_get() - g_adv_restart_at) >= 0) {
         uint8_t ret;
         g_adv_restart_at = rt_tick_get() + rt_tick_from_millisecond(200);
@@ -1314,7 +1358,7 @@ void gy_net_ble_poll(void)
         adv_start(g_adv_connectable);
     }
     /* 重启命令一直没人回 ADV_STARTED：1.5s 后整实例重建兜底。 */
-    if (g_mode == 1 && g_host_allow_conn && g_adv_inited && !g_adv_active &&
+    if (g_mode == 1 && g_adv_inited && !g_adv_active &&
         g_adv_stopped_at &&
         (int32_t)(rt_tick_get() - g_adv_stopped_at) >= rt_tick_from_millisecond(1500)) {
         g_adv_stopped_at = 0;
