@@ -432,7 +432,7 @@ static int test_input_buffer_wired(void)
 
     /* 行为验证：纵轴 2000 已稳定后，用横轴 2100（强 5%）试探。
      * 阈值 0%  → 应当切换到横轴；阈值 50% → 应当保持原方向。
-     * 注意：输入模块要求先"回中"解除 latched（见 gy_input_selftest 的做法），
+     * 注意：输入模块要求先"回中"解除 locked（见 gy_input_selftest 的做法），
      * 所以每段都以水平样例开头，不能直接上倾斜。 */
     {
         int dir_switch, dir_hold;
@@ -441,7 +441,7 @@ static int test_input_buffer_wired(void)
         gy_input_reset(&s);
         gy_input_configure(&s, 0, 10);
         t = 0;
-        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a);        /* 回中，解除 latched */
+        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a);        /* 回中，解除 locked */
         for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a);    /* 稳定指向 UP */
         CHECK(s.direction == GY_UP);
         for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a); /* 指向 RIGHT，仅强 5% */

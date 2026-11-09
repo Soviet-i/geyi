@@ -108,6 +108,26 @@ static int pending_available_isolated(void)
     events=hold(&s,0,-2000,0,20);
     CHECK(!(events&GY_INPUT_CANCEL));
     CHECK(s.input.direction==GY_UP&&s.input.count==2);
+    /* 稳定 205ms 后切 RIGHT：可用 3 与 UP 的 2 不同，也不得因 available 误 CANCEL。 */
+    events=hold(&s,2400,-2100,0,45);
+    CHECK(events&GY_INPUT_UPDATE);
+    CHECK(!(events&GY_INPUT_CANCEL));
+    CHECK(s.input.direction==GY_RIGHT&&s.input.count==2);
+    return 0;
+}
+
+/* 明显指向一个没有可行动兵的方向：取消旧预览，不能确认旧方向。 */
+static int unavailable_direction_cancels(void)
+{
+    Simulation s=setup(2);
+    int events;
+    s.available[GY_RIGHT]=0;
+    hold(&s,0,0,0,8);
+    hold(&s,0,-2000,0,45);
+    CHECK(s.input.direction==GY_UP&&s.input.count==2);
+    events=hold(&s,2400,-2100,0,45);
+    CHECK(events&GY_INPUT_CANCEL);
+    CHECK(s.input.direction==-1);
     return 0;
 }
 
@@ -147,7 +167,15 @@ static int issue2_entry_exit_hysteresis(void)
     events=hold(&s,0,-450,0,45);
     CHECK(!(events&GY_INPUT_CANCEL));
     CHECK(s.input.direction==GY_UP);
-    events=hold(&s,0,-400,0,2);
+    /* 4°~6° 回差带：轻微横向倾斜不得改方向；恰好 4.00° 仍保持。 */
+    events=hold(&s,550,-500,0,45);
+    CHECK(!(events&GY_INPUT_CANCEL));
+    CHECK(!(events&GY_INPUT_UPDATE));
+    CHECK(s.input.direction==GY_UP&&s.input.count==1);
+    events=hold(&s,0,-400,0,45);
+    CHECK(!(events&GY_INPUT_CANCEL));
+    CHECK(s.input.direction==GY_UP);
+    events=hold(&s,0,-399,0,2);
     CHECK(events&GY_INPUT_CANCEL);
     CHECK(s.input.direction==-1);
     events=hold(&s,0,-1100,0,45);
@@ -184,6 +212,24 @@ static int issue4_already_tilted_at_turn_start(void)
     return 0;
 }
 
+/* 板端 KEY2 确认后会 reset_input；若板子仍倾斜，换回合应重新预览（不要求先回中）。 */
+static int board_reset_repreviews_when_tilted(void)
+{
+    Simulation s=setup(2);
+    int i,select_tick=-1,events;
+    hold(&s,0,0,0,8);
+    hold(&s,0,-2000,0,45);
+    events=hold(&s,0,-2000,1,6);
+    CHECK(events&GY_INPUT_CONFIRM);
+    gy_input_reset(&s.input); /* KEY2 后 gy_board_poll 的 reset_input() */
+    for(i=0;i<60;++i){
+        if(sample(&s,0,-2000,0).events&GY_INPUT_SELECT){select_tick=i;break;}
+    }
+    CHECK(select_tick>=0&&select_tick<50);
+    CHECK(s.input.direction==GY_UP&&s.input.count==2);
+    return 0;
+}
+
 /* 方向竞争轴回差：10% 内保持原方向。 */
 static int direction_buffer(void)
 {
@@ -215,11 +261,22 @@ static int issue3_place_column(void)
     CHECK(gy_input_place_column(&g,0,-300,0,3)==3);
     CHECK(gy_input_place_column(&g,0,500,0,2)==3);
     CHECK(gy_input_place_column(&g,0,-500,0,3)==2);
-    /* 目标列被占用：由近到远找空列。 */
+    /* 半列回差：7.5°/8.5° 之间不得来回切列；3→4 需到 12°。 */
+    CHECK(gy_input_place_column(&g,0,850,0,4)==4);
+    CHECK(gy_input_place_column(&g,0,750,0,4)==3);
+    CHECK(gy_input_place_column(&g,0,850,0,3)==3);
+    CHECK(gy_input_place_column(&g,0,1200,0,3)==4);
+    CHECK(gy_input_place_column(&g,0,400,0,4)==3);
+    /* 目标列被占用：由近到远找空列；距离相同优先倾斜方向一侧。 */
     g.cells[5][5].kind=GY_NUMBER;
     CHECK(gy_input_place_column(&g,0,2000,0,-1)==4);
     g.cells[5][4].kind=GY_NUMBER;
     CHECK(gy_input_place_column(&g,0,2000,0,-1)==3);
+    memset(g.cells[5],0,sizeof(g.cells[5]));
+    g.cells[5][3].kind=GY_NUMBER;
+    CHECK(gy_input_place_column(&g,0,600,0,-1)==4);
+    g.cells[5][2].kind=GY_NUMBER;
+    CHECK(gy_input_place_column(&g,0,-600,0,-1)==1);
     memset(g.cells[5],0,sizeof(g.cells[5]));
     {int x;for(x=0;x<6;++x)g.cells[5][x].kind=GY_NUMBER;}
     CHECK(gy_input_place_column(&g,0,2000,0,-1)==-1);
@@ -228,6 +285,19 @@ static int issue3_place_column(void)
     CHECK(gy_input_place_column(&g,1,2000,0,-1)==5);
     g.cells[0][5].kind=GY_NUMBER;
     CHECK(gy_input_place_column(&g,1,2000,0,-1)==4);
+    /* 4/5/7/8 与超大角度：映射不越界。 */
+    empty_board(&g,4);
+    CHECK(gy_input_place_column(&g,0,0,0,-1)==2);
+    CHECK(gy_input_place_column(&g,0,2000,0,-1)==3);
+    CHECK(gy_input_place_column(&g,0,-2000,0,-1)==0);
+    empty_board(&g,5);
+    CHECK(gy_input_place_column(&g,0,2000,0,-1)==4);
+    CHECK(gy_input_place_column(&g,0,-9000,0,-1)==0);
+    empty_board(&g,7);
+    CHECK(gy_input_place_column(&g,0,0,0,-1)==3);
+    CHECK(gy_input_place_column(&g,0,2000,0,-1)==6);
+    CHECK(gy_input_place_column(&g,0,9000,0,-1)==6);
+    CHECK(gy_input_place_column(&g,0,-9000,0,-1)==0);
     /* 8×8 棋盘：±20° 覆盖全宽，中心落在第 4 列。 */
     empty_board(&g,8);
     CHECK(gy_input_place_column(&g,0,0,0,-1)==4);
@@ -301,9 +371,11 @@ int main(void)
     CHECK(gy_input_selftest());
     CHECK(issue1_count_rebound()==0);
     CHECK(pending_available_isolated()==0);
+    CHECK(unavailable_direction_cancels()==0);
     CHECK(issue2_count_bands()==0);
     CHECK(issue2_entry_exit_hysteresis()==0);
     CHECK(issue4_already_tilted_at_turn_start()==0);
+    CHECK(board_reset_repreviews_when_tilted()==0);
     CHECK(direction_buffer()==0);
     CHECK(issue3_place_column()==0);
     CHECK(tremor_keeps_preview()==0);

@@ -28,6 +28,15 @@ static void clear_selection(GyInput *s, GyInputEvent *e)
     s->direction=s->pending_direction=-1;s->count=0;
     s->available=0;s->pending_available=0;
 }
+/* 确认一次：清空可见选择并锁定；直接喂 key 的调用者需要先回中，
+ * 板端 KEY2 在 UI 层，换回合 reset 后允许重新预览（见 docs/02）。 */
+static void apply_confirm(GyInput *s, GyInputEvent *e)
+{
+    e->events|=GY_INPUT_CONFIRM;
+    e->direction=s->direction;e->count=s->count;
+    s->locked=1;s->direction=-1;s->count=0;s->available=0;
+    s->pending_direction=-1;s->pending_count=0;s->pending_available=0;
+}
 /* 数量档位：从 6° 起每 10° 一档；N 档放不下（最后一档超过 60°）时按 N 等分。
  * ref_count 只用于档位边界回差，避免手抖跨档时来回跳。 */
 static int band_count(int magnitude, int n, int ref_count, int angle_pct)
@@ -50,7 +59,7 @@ static int band_count(int magnitude, int n, int ref_count, int angle_pct)
 GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const int available[4])
 {
     GyInputEvent e={0,-1,0};
-    int ax,ay,d,magnitude,n,count,press=0,i,ref_dir,ref_count,had_selection;
+    int ax,ay,d,magnitude,n,count,press=0,i,ref_dir,ref_count,had_selection,updated=0;
     if(!s) return e;
     key=!!key;
     if(!available || x < -9000 || x > 9000 || y < -9000 || y > 9000) {
@@ -76,15 +85,21 @@ GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const i
         }
     }
     ax=abs(x);ay=abs(y);magnitude=ax>ay?ax:ay;
-    if(magnitude<=GY_INPUT_EXIT_MAG) {
+    if(magnitude<GY_INPUT_EXIT_MAG) {
         /* 回中才取消；6°~4° 之间保持已有预览，避免手抖闪断。 */
         clear_selection(s,&e);s->locked=0;return e;
     }
     /* 确认后先回中：在 4° 以上不再自动重新预览，防止跨回合连发。 */
     if(s->locked) return e;
-    if(magnitude<GY_INPUT_ENTER_MAG&&s->direction<0) {
-        s->pending_direction=-1;s->pending_count=0;s->available=0;
-        s->pending_since=now;return e;
+    if(magnitude<GY_INPUT_ENTER_MAG) {
+        /* 4°~6° 回差带：保持已有方向/数量，不再换向；仍可直接确认。 */
+        if(s->direction<0) {
+            s->pending_direction=-1;s->pending_count=0;s->pending_available=0;
+            s->available=0;s->pending_since=now;return e;
+        }
+        if(available[s->direction]!=s->available) {clear_selection(s,&e);return e;}
+        if(press) {apply_confirm(s,&e);return e;}
+        e.direction=s->direction;e.count=s->count;return e;
     }
     d=ax>ay?(x>0?GY_RIGHT:GY_LEFT):(y>0?GY_DOWN:GY_UP);
     /* 保持原方向，直到竞争轴比它强出 dir_buffer_pct%（默认 10%，见 geyi_config）。 */
@@ -96,8 +111,8 @@ GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const i
     }
     n=available[d];
     if(n==0) {
-        /* 候选方向没有可行动兵：已有可见选择时先保留，等方向真正切过去再处理。 */
-        if(s->direction==d) clear_selection(s,&e);
+        /* 明显转向一个没有可行动兵的方向：取消旧预览，避免确认旧方向。 */
+        if(s->direction>=0) clear_selection(s,&e);
         return e;
     }
     if(s->direction==d&&n!=s->available) {
@@ -134,40 +149,54 @@ GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const i
         if((uint32_t)(now-s->pending_since)<GY_INPUT_STABLE_MS) return e;
         /* 新选择稳定：在旧预览上直接切换，不发 CANCEL。 */
         s->direction=d;s->count=count;s->available=n;
-        e.events|=GY_INPUT_UPDATE;
+        e.events|=GY_INPUT_UPDATE;updated=1;
     }
-    if(press&&s->direction>=0) {
-        e.events|=GY_INPUT_CONFIRM;
-        e.direction=s->direction;e.count=s->count;
-        /* 确认后清掉可见选择并锁定，直到回中（低于 4°）。 */
-        s->locked=1;s->direction=-1;s->count=0;s->available=0;
-        s->pending_direction=-1;s->pending_count=0;s->pending_available=0;
-        return e;
-    }
+    /* 同一帧刚发生 UPDATE 时不确认，避免用户按下的还是旧选择。 */
+    if(press&&s->direction>=0&&!updated) apply_confirm(s,&e);
     e.direction=s->direction;e.count=s->count;
     return e;
 }
 int gy_input_place_column(const GyGame *g,int owner,int x,int y,int current)
 {
-    int size,row,twice,target,d;
+    int size,row,twice,target,d,cur,prefer_right;
     (void)y;
     if(!g) return -1;
     size=g->config.size;
     if(size<4||size>GY_MAX) return -1;
     row=owner==0?size-1:0;
-    if(abs(x)<GY_INPUT_PLACE_DEAD&&current>=0&&current<size) {
-        target=current;
+    cur=(current>=0&&current<size)?current:-1;
+    if(abs(x)<GY_INPUT_PLACE_DEAD&&cur>=0) {
+        target=cur;
     }else{
         /* 双倍列坐标：列中心 0..size-1 映射到 ±(size-1)。 */
         twice=(size-1)+(int)((long)x*(size-1)/GY_INPUT_PLACE_FULL);
         target=twice>=0?(twice+1)/2:twice/2;
         if(target<0)target=0;
         if(target>=size)target=size-1;
+        /* 半列回差：越过相邻列中心才换列，避免列边界随噪声抖动。 */
+        if(cur>=0&&target!=cur) {
+            if(target>cur) {
+                if(twice<2*cur+2) target=cur;
+            }else{
+                if(twice>2*cur-2) target=cur;
+            }
+        }
     }
+    /* 距离相同的空列优先取倾斜方向一侧。 */
+    prefer_right=x>0;
     for(d=0;d<size;++d) {
         int a=target-d,b=target+d;
-        if(a>=0&&g->cells[row][a].kind==GY_EMPTY) return a;
-        if(d&&b<size&&g->cells[row][b].kind==GY_EMPTY) return b;
+        if(d==0) {
+            if(g->cells[row][target].kind==GY_EMPTY) return target;
+            continue;
+        }
+        if(prefer_right) {
+            if(b<size&&g->cells[row][b].kind==GY_EMPTY) return b;
+            if(a>=0&&g->cells[row][a].kind==GY_EMPTY) return a;
+        }else{
+            if(a>=0&&g->cells[row][a].kind==GY_EMPTY) return a;
+            if(b<size&&g->cells[row][b].kind==GY_EMPTY) return b;
+        }
     }
     return -1;
 }
