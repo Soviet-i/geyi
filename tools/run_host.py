@@ -9,6 +9,14 @@ root = Path(__file__).resolve().parents[1]
 out = root / 'build' / ('host-verify' if '--verify' in sys.argv else 'host')
 out.mkdir(parents=True, exist_ok=True)
 logs = []
+# --only=NAME：只编译/运行一个 target，用于输入/倾斜等局部回归，不连带联机套件。
+only = None
+_args = sys.argv[1:]
+for _i, _a in enumerate(_args):
+    if _a.startswith('--only='):
+        only = _a.split('=', 1)[1]
+    elif _a == '--only' and _i + 1 < len(_args):
+        only = _args[_i + 1]
 
 def run(args, **kw):
     result = subprocess.run(args, cwd=out, text=True, encoding='utf-8', errors='replace',
@@ -32,6 +40,8 @@ cc = os.environ.get('CC') or shutil.which('gcc') or shutil.which('clang')
 targets = [
     ('geyi-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_geyi.c']),
     ('geyi-input-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_input.c']),
+    ('geyi-tilt-ux-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'src/geyi_nav.c',
+                            'tests/test_tilt_ux.c']),
     ('geyi-config-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'src/geyi_config.c', 'tests/test_config.c']),
     ('geyi-param-ui-tests', ['src/geyi_game.c', 'src/geyi_config.c', 'src/geyi_param_ui.c', 'tests/test_param_ui.c']),
     ('geyi-ai-tests', ['src/geyi_game.c', 'src/geyi_ai.c', 'tests/test_ai.c']),
@@ -47,6 +57,8 @@ targets = [
     ('geyi-cli', ['src/geyi_game.c', 'src/geyi_input.c', 'tools/geyi_cli.c']),
 ]
 for name, relative_sources in targets:
+    if only and name != only:
+        continue
     exe = out/(name + ('.exe' if os.name=='nt' else ''))
     sources = [str(root/source) for source in relative_sources]
     if cc:
@@ -58,6 +70,13 @@ for name, relative_sources in targets:
         command = f'call "{scripts[0]}" >nul && cl /nologo /std:c11 /W4 /WX /utf-8 /I"{root / "src"}" /I"{root / "tools"}" ' + ' '.join(f'"{s}"' for s in sources) + f' /Fe:"{exe}"'
         run('cmd.exe /d /s /c "' + command + '"')
     if name.endswith('tests'): run([str(exe)],timeout=30)
+
+if only:
+    if only not in [n for n, _ in targets]:
+        raise SystemExit(f'unknown --only target: {only}')
+    (out/'host_test.log').write_text('\n'.join(logs), encoding='utf-8')
+    print(f'ONLY {only}: done')
+    raise SystemExit(0)
 
 smoke = run([str(out/'geyi-cli.exe' if os.name=='nt' else out/'geyi-cli')],
     input='w 1\ncancel\nw 1\nok\nresign\nrestart\nquit\n',timeout=10)

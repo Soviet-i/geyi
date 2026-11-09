@@ -29,6 +29,8 @@ TARGETS = [
     # name, sources, module-under-test
     ("geyi-tests", ["src/geyi_game.c", "src/geyi_input.c", "tests/test_geyi.c"], "src/geyi_game.c"),
     ("input-tests", ["src/geyi_game.c", "src/geyi_input.c", "tests/test_input.c"], "src/geyi_input.c"),
+    ("tilt-ux-tests", ["src/geyi_game.c", "src/geyi_input.c", "src/geyi_nav.c",
+                       "tests/test_tilt_ux.c"], "src/geyi_nav.c"),
     ("config-tests", ["src/geyi_game.c", "src/geyi_input.c", "src/geyi_config.c", "tests/test_config.c"], "src/geyi_config.c"),
     ("param-ui-tests", ["src/geyi_game.c", "src/geyi_config.c", "src/geyi_param_ui.c", "tests/test_param_ui.c"], "src/geyi_param_ui.c"),
     ("ai-tests", ["src/geyi_game.c", "src/geyi_ai.c", "tests/test_ai.c"], "src/geyi_ai.c"),
