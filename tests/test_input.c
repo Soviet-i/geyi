@@ -58,16 +58,6 @@ int main(void)
     s=setup();hold(&s,0,0,0,8);hold(&s,0,-2000,0,42);s.available[GY_UP]=1;
     CHECK(sample(&s,0,-2000,1).events&GY_INPUT_CANCEL);
     CHECK(!(hold(&s,0,-2000,1,45)&GY_INPUT_CONFIRM));
-    /* 幅度滞回（REQ-309 体感修正）：未选中时 8 度不足以起手（进入门限 10 度）； */
-    s=setup();hold(&s,0,0,0,8);
-    CHECK(!(hold(&s,0,-800,0,60)&GY_INPUT_SELECT));
-    /* 已选中后回摆到 8 度不应取消预览（退出门限 6 度），跌到 5 度才取消。 */
-    s=setup();hold(&s,0,0,0,8);hold(&s,0,-2000,0,42);
-    CHECK(s.input.direction==GY_UP);
-    CHECK(!(hold(&s,0,-800,0,45)&GY_INPUT_CANCEL));
-    CHECK(s.input.direction==GY_UP);
-    CHECK(hold(&s,0,-500,0,45)&GY_INPUT_CANCEL);
-    CHECK(s.input.direction==-1);
     /* Feed the real input events to the real preview/commit interfaces. */
     {
         GyGame g,before;GyPreview preview;int ready=0;

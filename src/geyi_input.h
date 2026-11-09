@@ -8,12 +8,6 @@
 #define GY_INPUT_BUFFER_MAX      50
 #define GY_INPUT_BUFFER_DEFAULT  10
 
-/* 倾斜幅度的进入 / 退出门限（单位 0.01 度，即 1000 = 10 度）。
- * 改造前进入与退出共用 1000，导致手一抖掉到 10 度以下预览就被清掉，
- * 表现为"棋子跳一下就回原位"。加 4 度滞回后，已选中时回摆到 6 度以上不会取消。 */
-#define GY_INPUT_TILT_ON        1000   /* 10 度：从静止开始需要达到的幅度 */
-#define GY_INPUT_TILT_OFF        600   /* 6 度：已选中时跌到此值以下才取消 */
-
 enum { GY_INPUT_SELECT=1, GY_INPUT_CANCEL=2, GY_INPUT_CONFIRM=4 };
 typedef struct {
     int direction, count, available, pending_direction, pending_count;
