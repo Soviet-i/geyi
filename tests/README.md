@@ -6,7 +6,7 @@
 ## 运行
 
 ```bash
-python tools/run_host.py                 # 构建并运行全部主机组（含联机 291 + app 159）
+python tools/run_host.py                 # 构建并运行全部主机组（含联机 306 + app 195）
 python tools/coverage.py --min 70        # 每模块行覆盖率
 python tools/verify_all.py               # 文档检查 + 主机测试
 python tools/net_board_test.py --port-a COM7 --port-b COM8  # 双板完整套件

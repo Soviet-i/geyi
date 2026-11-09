@@ -463,6 +463,23 @@ static int test_disconnect_rejoin(void)
     return 0;
 }
 
+static int test_result_disconnect_releases_guest(void)
+{
+    GyNetRoom host;
+    uint32_t token = 0;
+
+    gy_net_room_init_host(&host, 1018, 0, 2);
+    CHECK(start_game(&host, &token) == 0);
+    CHECK(gy_net_room_resign(&host, GY_NET_COLOR_RED, 100) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(gy_net_room_disconnect_token(&host, token, 200) == GY_NET_OK);
+    /* 结算期客人断线/退出应立即从 2/2 变 1/2，不能拖到下次 tick。 */
+    CHECK(host.view.player_count == 1);
+    CHECK(host.view.guest_id == 0);
+    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
+    return 0;
+}
+
 static int test_result_returns_to_room_and_replays(void)
 {
     GyNetRoom host;
@@ -618,6 +635,7 @@ int main(void)
     if (test_room_config_and_promote()) return 12;
     if (test_host_leave_result_closes()) return 14;
     if (test_result_returns_to_room_and_replays()) return 16;
+    if (test_result_disconnect_releases_guest()) return 17;
     if (test_starting_disconnect_and_spectator_slot()) return 13;
     if (test_client_host_lost()) return 14;
     if (test_memory_link()) return 14;

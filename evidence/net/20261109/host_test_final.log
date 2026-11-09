@@ -17,7 +17,7 @@ PASS: 85 assertions; TC-407 parameter page state host tests
 PASS: 62 AI assertions (legal win, self-damage, RNG independence, pruning, cancel)
 
 
-geyi-net-tests: 291 checks PASS
+geyi-net-tests: 306 checks PASS
 
 
 geyi-net-app-tests: 195 checks PASS
