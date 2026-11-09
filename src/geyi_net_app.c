@@ -14,7 +14,7 @@
 #ifdef GEYI_WITH_RTTHREAD
 #include "geyi_net_ble.h"
 #include "rtthread.h"
-#define APP_LOG(fmt, ...) rt_kprintf("[geyi:net] " fmt "\n", ##__VA_ARGS__)
+#define APP_LOG(fmt, ...) rt_kprintf("[%u][geyi:net] " fmt "\n", (unsigned)rt_tick_get(), ##__VA_ARGS__)
 #else
 #define APP_LOG(fmt, ...) do { } while (0)
 #endif
@@ -23,7 +23,7 @@
 #endif
 
 #define APP_MAX_CONN 4
-#define APP_ROOM_TTL_MS 3000u
+#define APP_ROOM_TTL_MS 1500u
 /* 房主 1s 一包；两次丢包仍允许点击，交给连接/ACK 超时裁决。 */
 #define APP_ROOM_FRESH_MS 2500u
 #define APP_HEARTBEAT_MS 1000u
@@ -356,6 +356,7 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
             host_update_adv();
             return;
         }
+        APP_LOG("join accepted color=%d", color);
         send_join_ack(conn, color, token, gy_net_room_seat_id(&g.room, color));
         send_state_to(conn);
         if (g.room.view.game_valid) send_snapshot_to(conn);
@@ -546,6 +547,7 @@ static void client_process(const GyNetMsg *msg)
                         !g.pending_join);
             if (!same) g.local_ready = 0;   /* 换座/首次 ACK 才清本地 ready */
         }
+        APP_LOG("join ack color=%d", a.color);
         g.token = a.token;
         g.local_color = a.color;
         g.local_player_id = a.player_id ? a.player_id : g.local_player_id;
@@ -593,6 +595,11 @@ static void client_process(const GyNetMsg *msg)
             return;
         }
         gy_net_room_apply_room_state(&g.room, &s);
+        if (color_valid(g.local_color)) {
+            /* 房主每局开始时清零 ready；客户端本地乐观值必须跟着权威
+             * 状态走，否则下一局会把“准备”发成“取消准备”。 */
+            g.local_ready = (g.local_color == s.host_color) ? s.host_ready : s.guest_ready;
+        }
         if (g.local_color == GY_NET_COLOR_NONE && s.player_count >= 2 && g.role != GY_NET_ROLE_SPECTATOR)
             g.role = GY_NET_ROLE_SPECTATOR;
         break;
@@ -700,6 +707,11 @@ static void lobby_drain(void)
     GyNetBleAdv adv;
     int i, slot;
     while (gy_net_ble_adv_recv(&adv)) {
+        if (adv.adv.phase == GY_NET_PHASE_CLOSED || adv.adv.players == 0) {
+            /* 房主关房广播：立即移除，不等 TTL。 */
+            lobby_remove_room(adv.adv.room_id);
+            continue;
+        }
         slot = -1;
         for (i = 0; i < g.room_count; ++i)
             if (g.rooms[i].room_id == adv.adv.room_id) { slot = i; break; }
@@ -819,7 +831,7 @@ void gy_net_app_tick(uint32_t now_ms)
             g.join_ready_at = 0;
             g.join_at = now_ms;
         }
-        if (g.pending_join && !g.join_sent && gy_net_ble_ready()) {
+        if (g.pending_join && !g.join_sent && gy_net_ble_write_ready()) {
             GyNetJoinReq j;
             GyNetMsg m;
             j.role = g.join_req_role;
@@ -829,23 +841,24 @@ void gy_net_app_tick(uint32_t now_ms)
                 send_msg(conn, &m);
                 g.join_sent = 1;
                 g.join_sent_at = now_ms;
+                if (!g.join_ready_at) {
+                    g.join_ready_at = now_ms;
+                    APP_LOG("join req sent");
+                }
                 g.last_rx = now_ms;
             }
         }
-        /* JOIN_ACK 可能因 CCCD 尚未生效而丢失；1s 未收到 ACK 就重发。 */
+        /* JOIN_ACK 可能因 CCCD 尚未生效而丢失；400ms 未收到 ACK 就重发。 */
         if (g.pending_join && g.join_sent &&
-            (uint32_t)(now_ms - g.join_sent_at) >= 1000u) {
+            (uint32_t)(now_ms - g.join_sent_at) >= 400u) {
             g.join_sent = 0;
         }
-        if (g.pending_join && gy_net_ble_ready()) {
-            if (!g.join_ready_at) g.join_ready_at = now_ms;
-            if ((uint32_t)(now_ms - g.join_ready_at) >= APP_JOIN_ACK_TIMEOUT_MS) {
-                join_fail(GY_NET_JOIN_REASON_NOT_FOUND);
-                return;
-            }
-        } else if (!g.pending_join) {
-            g.join_ready_at = 0;
+        if (g.pending_join && g.join_ready_at &&
+            (uint32_t)(now_ms - g.join_ready_at) >= APP_JOIN_ACK_TIMEOUT_MS) {
+            join_fail(GY_NET_JOIN_REASON_NOT_FOUND);
+            return;
         }
+        if (!g.pending_join) g.join_ready_at = 0;
         /* 连不上通常意味着房主已关房（大厅摘要还没过期）。 */
         if (g.pending_join && !g.join_connected &&
             (uint32_t)(now_ms - g.join_at) >= APP_CONNECT_TIMEOUT_MS) {
@@ -923,6 +936,19 @@ int gy_net_app_local_ready(void)
     if (g.role != GY_NET_ROLE_HOST && g.role != GY_NET_ROLE_PLAYER) return 0;
     s = &g.room.seats[g.local_color];
     return s->ready;
+}
+int gy_net_app_countdown_seconds(void)
+{
+    uint32_t elapsed, remain;
+    int s;
+    if (g.room.view.phase != GY_NET_PHASE_STARTING) return 0;
+    elapsed = (uint32_t)(g.now - g.room.view.phase_since_ms);
+    if (elapsed >= GY_NET_START_MS) return 1;
+    remain = GY_NET_START_MS - elapsed;
+    s = (int)((remain + 999u) / 1000u);
+    if (s < 1) s = 1;
+    if (s > 3) s = 3;
+    return s;
 }
 int gy_net_app_host_ready(void) { return g.room.view.host_ready; }
 int gy_net_app_guest_ready(void) { return g.room.view.guest_ready; }
@@ -1142,16 +1168,19 @@ void gy_net_app_leave(void)
 {
 #ifdef GEYI_WITH_RTTHREAD
     if (g.active == 1) {
+        int closed = 0;
         if (g.room.view.phase == GY_NET_PHASE_WAIT) {
             /* 等待期退出：有对手则把房主转给他；没有对手则关房。
              * 先把新状态发给当前连接，再断开并停止广播。 */
-            if (gy_net_room_leave(&g.room, g.room.view.host_color, g.now) != GY_NET_ERR_ARG) {
+            int rc = gy_net_room_leave(&g.room, g.room.view.host_color, g.now);
+            if (rc != GY_NET_ERR_ARG) {
                 g.room.view.host_ready = 0;
                 g.room.view.guest_ready = 0;
                 APP_LOG("leave host phase=%d players=%d hostc=%d seq=%u",
                         g.room.view.phase, g.room.view.player_count,
                         g.room.view.host_color, (unsigned)g.room.view.seq);
                 broadcast_state();
+                if (rc == GY_NET_LEAVE_CLOSED) closed = 1;
             }
         } else if (g.room.view.phase == GY_NET_PHASE_PLAYING) {
             /* 对局中主动退出 = 认输；先广播权威结果再断开。 */
@@ -1159,18 +1188,33 @@ void gy_net_app_leave(void)
                 broadcast_result();
                 broadcast_state();
             }
+            g.room.view.phase = GY_NET_PHASE_CLOSED;
+            g.room.view.player_count = 0;
+            g.room.view.spectator_count = 0;
+            g.room.view.seq++;
+            broadcast_state();
+            closed = 1;
         } else if (g.room.view.phase == GY_NET_PHASE_RESULT ||
                    g.room.view.phase == GY_NET_PHASE_STARTING) {
             /* 结算/倒计时阶段房主回大厅 = 解散，不转移房主。 */
-            if (gy_net_room_leave(&g.room, g.room.view.host_color, g.now) != GY_NET_ERR_ARG)
+            int rc = gy_net_room_leave(&g.room, g.room.view.host_color, g.now);
+            if (rc != GY_NET_ERR_ARG) {
                 broadcast_state();
+                if (rc == GY_NET_LEAVE_CLOSED) closed = 1;
+            }
+        }
+        if (closed) {
+            /* 让还在大厅扫描的板子立刻收到 players=0/CLOSED 摘要，
+             * 不用等 1.5s TTL，也避免“关房后房间还挂几秒”。 */
+            host_update_adv();
+            rt_thread_mdelay(200);
         }
         {
             uint8_t conns[GY_NET_BLE_MAX_CONN];
             uint8_t i, n = gy_net_ble_conn_count();
             for (i = 0; i < n; ++i) conns[i] = gy_net_ble_conn_at(i);
-            gy_net_ble_flush(500);
-            rt_thread_mdelay(300);
+            gy_net_ble_flush(300);
+            rt_thread_mdelay(150);
             for (i = 0; i < n; ++i) gy_net_ble_disconnect(conns[i]);
         }
         gy_net_ble_host_stop();

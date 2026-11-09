@@ -40,6 +40,7 @@ int gy_net_app_local_color(void);
 int gy_net_app_host_color(void);
 int gy_net_app_guest_color(void);
 int gy_net_app_local_ready(void);
+int gy_net_app_countdown_seconds(void); /* STARTING 时返回 3/2/1，否则 0 */
 int gy_net_app_host_ready(void);
 int gy_net_app_guest_ready(void);
 int gy_net_app_spectator_count(void);

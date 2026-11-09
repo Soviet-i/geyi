@@ -26,10 +26,12 @@ static lv_obj_t *net_room_rows[5];
 static lv_obj_t *net_red_name,*net_red_state,*net_blue_name,*net_blue_state;
 static lv_obj_t *net_spectator_label;
 static lv_obj_t *net_red_box,*net_blue_box,*net_room_hint;
-static lv_obj_t *net_ready_button,*restart_button,*place_button,*resign_button;
+static lv_obj_t *net_ready_button,*net_leave_button,*restart_button,*place_button,*resign_button;
+static lv_obj_t *net_result_overlay,*net_result_title,*net_result_sub;
+static lv_obj_t *net_confirm_overlay,*net_confirm_label;
 static int net_lobby_active,net_room_active,net_game_active;
 static uint32_t net_last_rev;static int net_last_phase=-1;
-static int net_exit_confirm;static uint32_t net_exit_at;
+static int net_confirm_action;
 static lv_obj_t *prep_red_label,*prep_blue_label;
 static lv_obj_t *prep_player_icon[2],*prep_ai_icon[2];
 static lv_obj_t *param_mode_buttons[GY_MODE_COUNT];
@@ -83,6 +85,11 @@ static void show_page(lv_obj_t *page)
     net_lobby_active=page==net_lobby_page;
     net_room_active=page==net_room_page;
     net_game_active=page==game_page&&gy_net_app_active();
+    if(page!=game_page){
+        if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
+        if(net_confirm_overlay)lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
+        net_confirm_action=0;
+    }
     ready=0;placing=0;direction=-1;place_column=-1;
 }
 static void update_prep_labels(void)
@@ -191,7 +198,7 @@ static void net_room_refresh(void)
                     gy_net_app_phase()==GY_NET_PHASE_CLOSED?"房间已关闭":
                     gy_net_app_spectator_lost()?"已离开旁观":
                     gy_net_app_join_rejected()||!gy_net_app_active()?fail:
-                    net_phase_text(),
+                    phase==GY_NET_PHASE_STARTING?"即将开始":net_phase_text(),
                     gy_net_app_local_terminal()?"对方断线":
                     gy_net_app_connected()?"已连接":
                     role==GY_NET_ROLE_HOST?"等待对手":"连接中",
@@ -208,10 +215,10 @@ static void net_room_refresh(void)
          * 决定，绝不因为对方准备/自己不是房主而整块变白。 */
         if(net_red_box)
             lv_obj_set_style_bg_color(net_red_box,
-                lv_color_hex(!red_occ?0x4b5563:red_ready?0xffffff:0xff6b7c),0);
+                lv_color_hex(!red_occ?0x4b5563:red_ready?0x35d07f:0xff6b7c),0);
         if(net_blue_box)
             lv_obj_set_style_bg_color(net_blue_box,
-                lv_color_hex(!blue_occ?0x4b5563:blue_ready?0xffffff:0x5ba8ff),0);
+                lv_color_hex(!blue_occ?0x4b5563:blue_ready?0x35d07f:0x5ba8ff),0);
         if(net_red_name){
             if(!red_occ){
                 lv_label_set_text(net_red_name,"点击交换");
@@ -261,23 +268,89 @@ static void net_room_refresh(void)
     if(net_ready_button){
         lv_obj_t *l=lv_obj_get_child(net_ready_button,0);
         if(l)lv_label_set_text(l,gy_net_app_local_ready()?"取消准备":"准备");
+        if(role==GY_NET_ROLE_SPECTATOR||!gy_net_app_active())
+            lv_obj_add_flag(net_ready_button,LV_OBJ_FLAG_HIDDEN);
+        else lv_obj_remove_flag(net_ready_button,LV_OBJ_FLAG_HIDDEN);
         if(!gy_net_app_active()||role==GY_NET_ROLE_SPECTATOR||
            gy_net_app_player_count()<2||
            (phase!=GY_NET_PHASE_WAIT&&phase!=GY_NET_PHASE_STARTING))
             lv_obj_add_state(net_ready_button,LV_STATE_DISABLED);
         else lv_obj_remove_state(net_ready_button,LV_STATE_DISABLED);
     }
-    {
+    if(net_leave_button){
+        lv_obj_t *l=lv_obj_get_child(net_leave_button,0);
+        if(l)lv_label_set_text(l,role==GY_NET_ROLE_SPECTATOR?"退出旁观":"退出房间");
+        lv_obj_set_width(net_leave_button,
+                         role==GY_NET_ROLE_SPECTATOR?358:170);
+    }
+    if(phase==GY_NET_PHASE_STARTING&&gy_net_app_active()){
+        int sec=gy_net_app_countdown_seconds();
+        if(net_spectator_label)lv_obj_add_flag(net_spectator_label,LV_OBJ_FLAG_HIDDEN);
+        if(net_room_hint){
+            /* 321 实时倒计时：黄底大字，比原来的小字明显。 */
+            lv_snprintf(text,sizeof(text),"%d s",sec);
+            lv_label_set_text(net_room_hint,text);
+            lv_obj_set_style_text_font(net_room_hint,&lv_font_montserrat_24,0);
+            lv_obj_set_style_text_color(net_room_hint,lv_color_hex(0x142238),0);
+            lv_obj_set_style_bg_color(net_room_hint,lv_color_hex(0xffdc79),0);
+            lv_obj_set_style_bg_opa(net_room_hint,LV_OPA_COVER,0);
+            lv_obj_set_style_radius(net_room_hint,8,0);
+            lv_obj_set_style_pad_all(net_room_hint,6,0);
+            lv_obj_set_pos(net_room_hint,16,292);
+        }
+    }else{
         int can=gy_net_app_active()&&role==GY_NET_ROLE_HOST&&phase==GY_NET_PHASE_WAIT&&
                 !gy_net_app_host_ready()&&!gy_net_app_guest_ready();
+        if(net_spectator_label)lv_obj_remove_flag(net_spectator_label,LV_OBJ_FLAG_HIDDEN);
         /* 不再用 LV_STATE_DISABLED 修饰座位框：按钮主题会把禁用态画成
-         * 灰白色，导致“只有自己准备，双方框都变白”。点击是否有效由
+         * 灰白色，导致“只有自己准备，双方框都变色”。点击是否有效由
          * gy_net_app_swap() 自己判断。 */
-        if(net_room_hint)
+        if(net_room_hint){
             lv_label_set_text(net_room_hint,can?"点击方框交换先后手（准备前）":
-                              role==GY_NET_ROLE_SPECTATOR?"旁观中":
+                              role==GY_NET_ROLE_SPECTATOR?"旁观中 只读":
                               "房主可在准备前交换先后手");
+            lv_obj_set_style_text_font(net_room_hint,&geyi_font_cn16,0);
+            lv_obj_set_style_text_color(net_room_hint,lv_color_hex(0xe7edf8),0);
+            lv_obj_set_style_bg_opa(net_room_hint,LV_OPA_TRANSP,0);
+            lv_obj_set_style_radius(net_room_hint,0,0);
+            lv_obj_set_style_pad_all(net_room_hint,0,0);
+            lv_obj_set_pos(net_room_hint,16,304);
+        }
     }
+}
+static void net_result_show(int result)
+{
+    const char *title=(result==GY_RED_WIN)?"RED WIN":
+                       (result==GY_BLUE_WIN)?"BLUE WIN":
+                       (result==GY_DRAW)?"DRAW":"GAME OVER";
+    const char *sub=(result==GY_RED_WIN)?"红方获胜，即将返回房间":
+                     (result==GY_BLUE_WIN)?"蓝方获胜，即将返回房间":
+                     (result==GY_DRAW)?"平局，即将返回房间":"即将返回房间";
+    if(!net_result_overlay)return;
+    lv_label_set_text(net_result_title,title);
+    lv_label_set_text(net_result_sub,sub);
+    lv_obj_remove_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(net_result_overlay);
+}
+static void net_result_hide(void)
+{
+    if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
+}
+static void net_confirm_show(int action)
+{
+    if(!net_confirm_overlay)return;
+    net_confirm_action=action;
+    lv_label_set_text(net_confirm_label,
+        action==1?"认输会让对手获胜，确定？":
+        action==2?"退出房间并返回大厅（对局中判负）？":
+        "退出并返回首页（对局中判负）？");
+    lv_obj_remove_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(net_confirm_overlay);
+}
+static void net_confirm_hide(void)
+{
+    if(net_confirm_overlay)lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
+    net_confirm_action=0;
 }
 static void render(void)
 {
@@ -343,7 +416,7 @@ static void render(void)
                 }
         }
     }
-    if(game.outcome)status("本局结束 请返回大厅");
+    if(game.outcome)status("本局结束，即将返回房间");
     else if(gy_net_app_active()){
         if(gy_net_app_local_terminal())status("对方断线（本地提示，不是权威结算）");
         else if(gy_net_app_phase()==GY_NET_PHASE_STARTING)status("双方已准备 3 秒后开始");
@@ -501,6 +574,20 @@ void gy_ui_action(int a)
 {
     uint32_t old_revision=game.revision;
     int old_outcome=game.outcome;
+    if(a==GY_UI_NET_CONFIRM_NO){
+        net_confirm_hide();return;
+    }
+    if(a==GY_UI_NET_CONFIRM_YES){
+        int act=net_confirm_action;
+        net_confirm_hide();
+        if(act==1){gy_net_app_resign();render();}
+        else if(act==2){
+            gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);
+        }else if(act==3){
+            gy_net_app_leave();gy_net_app_lobby_stop();show_page(home_page);
+        }
+        return;
+    }
     if(a==GY_UI_NET){
         ai_side=-1;feedback=GY_FX_CLEAR;
         gy_net_app_lobby_start();show_page(net_lobby_page);net_lobby_refresh();return;
@@ -540,12 +627,9 @@ void gy_ui_action(int a)
         param_refresh();return;
     }
     if(a==GY_UI_HOME){
-        if(gy_net_app_active()&&net_game_active&&!gy_net_app_is_spectator()){
-            if(!(net_exit_confirm&&(uint32_t)(lv_tick_get()-net_exit_at)<3000u)){
-                net_exit_confirm=1;net_exit_at=lv_tick_get();
-                status("再按一次“首页”确认退出（判负）");render();return;
-            }
-            net_exit_confirm=0;
+        if(gy_net_app_active()&&net_game_active&&!gy_net_app_is_spectator()&&
+           gy_net_app_phase()==GY_NET_PHASE_PLAYING){
+            net_confirm_show(3);return;
         }
         if(gy_net_app_active())gy_net_app_leave();
         gy_net_app_lobby_stop();
@@ -581,21 +665,12 @@ void gy_ui_action(int a)
             if(gy_net_app_is_spectator()){
                 gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);return;
             }
-            if(net_exit_confirm&&(uint32_t)(lv_tick_get()-net_exit_at)<3000u){
-                net_exit_confirm=0;
-                gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);return;
-            }
-            net_exit_confirm=1;net_exit_at=lv_tick_get();
-            status("再按一次“大厅”确认退出（判负）");render();return;
+            net_confirm_show(2);return;
         }
         if(a==GY_UI_RESIGN){
-            if(net_exit_confirm&&(uint32_t)(lv_tick_get()-net_exit_at)<3000u){
-                net_exit_confirm=0;gy_net_app_resign();render();return;
-            }
-            net_exit_confirm=1;net_exit_at=lv_tick_get();
-            status("再按一次“认输”确认");render();return;
+            if(gy_net_app_phase()==GY_NET_PHASE_PLAYING)net_confirm_show(1);
+            return;
         }
-        net_exit_confirm=0;
         if(!human_turn()||gy_net_app_is_spectator()){render();return;}
         if(a==GY_UI_CANCEL){
             ready=0;placing=0;gy_net_app_cancel();status("已取消");render();return;
@@ -870,14 +945,14 @@ void gy_ui_create(void)
                                &net_blue_name,&net_blue_state);
      net_spectator_label=text(net_room_page,"观战 0 人",16,282);
      net_room_hint=text_center(net_room_page,"房主可在准备前交换先后手",16,304,358);
-     button(net_room_page,"退出房间",16,350,170,44,GY_UI_NET_LEAVE);
+     net_leave_button=button(net_room_page,"退出房间",16,350,170,44,GY_UI_NET_LEAVE);
      net_ready_button=button(net_room_page,"准备",204,350,170,44,GY_UI_NET_READY);
     }
     root=game_page;
-    lv_obj_t *title=text(root,"GEYI",16,8);lv_obj_set_style_text_font(title,&lv_font_montserrat_24,0);
-    button(root,"首页",138,8,59,28,GY_UI_HOME);
-    restart_button=button(root,"重开",205,8,78,28,GY_UI_RESTART);
-    resign_button=button(root,"认输",291,8,82,28,GY_UI_RESIGN);
+    lv_obj_t *title=text(root,"GEYI",14,8);lv_obj_set_style_text_font(title,&lv_font_montserrat_24,0);
+    button(root,"首页",136,8,66,32,GY_UI_HOME);
+    restart_button=button(root,"重开",207,8,78,32,GY_UI_RESTART);
+    resign_button=button(root,"认输",290,8,84,32,GY_UI_RESIGN);
     turn_label=text(root,"RED TURN",16,40);money_label=text(root,"",16,61);
     for(y=0;y<GY_MAX;++y)for(x=0;x<GY_MAX;++x) {
         lv_obj_t *tile=lv_obj_create(root);tiles[y][x]=tile;
@@ -898,7 +973,61 @@ void gy_ui_create(void)
     lv_obj_set_style_opa(confirm_button,LV_OPA_40,LV_STATE_DISABLED);
     button(root,"取消",139,378,110,32,GY_UI_CANCEL);
     place_button=button(root,"放置",257,378,118,32,GY_UI_PLACE);
-    hint=text(root,"",16,422);lv_obj_set_width(hint,360);
+    hint=text(root,"",16,414);lv_obj_set_size(hint,358,30);
+    lv_obj_set_style_bg_color(hint,lv_color_hex(0x102033),0);
+    lv_obj_set_style_bg_opa(hint,LV_OPA_COVER,0);
+    lv_obj_set_style_radius(hint,6,0);
+    lv_obj_set_style_pad_all(hint,5,0);
+    lv_obj_set_style_text_align(hint,LV_TEXT_ALIGN_CENTER,0);
+
+    /* 结算弹窗：比左下角小字更醒目，4s 后房间自动回到 WAIT。 */
+    net_result_overlay=lv_obj_create(root);
+    lv_obj_set_size(net_result_overlay,340,210);
+    lv_obj_align(net_result_overlay,LV_ALIGN_CENTER,0,0);
+    lv_obj_set_style_bg_color(net_result_overlay,lv_color_hex(0x101a2b),0);
+    lv_obj_set_style_bg_opa(net_result_overlay,LV_OPA_COVER,0);
+    lv_obj_set_style_radius(net_result_overlay,16,0);
+    lv_obj_set_style_border_width(net_result_overlay,3,0);
+    lv_obj_set_style_border_color(net_result_overlay,lv_color_hex(0xffdc79),0);
+    lv_obj_set_style_shadow_width(net_result_overlay,30,0);
+    lv_obj_set_style_pad_all(net_result_overlay,0,0);
+    lv_obj_remove_flag(net_result_overlay,LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_CLICKABLE);
+    net_result_title=lv_label_create(net_result_overlay);
+    lv_obj_set_width(net_result_title,300);
+    lv_obj_align(net_result_title,LV_ALIGN_TOP_MID,0,42);
+    lv_obj_set_style_text_font(net_result_title,&lv_font_montserrat_24,0);
+    lv_obj_set_style_text_color(net_result_title,lv_color_hex(0xffdc79),0);
+    lv_obj_set_style_text_align(net_result_title,LV_TEXT_ALIGN_CENTER,0);
+    net_result_sub=lv_label_create(net_result_overlay);
+    lv_obj_set_width(net_result_sub,300);
+    lv_obj_align(net_result_sub,LV_ALIGN_TOP_MID,0,100);
+    lv_obj_set_style_text_color(net_result_sub,lv_color_hex(0xe7edf8),0);
+    lv_obj_set_style_text_align(net_result_sub,LV_TEXT_ALIGN_CENTER,0);
+    lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
+
+    /* 退出/认输确认弹窗：一次点击打开，一次确认，不再靠连按。 */
+    net_confirm_overlay=lv_obj_create(root);
+    lv_obj_set_size(net_confirm_overlay,330,190);
+    lv_obj_align(net_confirm_overlay,LV_ALIGN_CENTER,0,0);
+    lv_obj_set_style_bg_color(net_confirm_overlay,lv_color_hex(0x101a2b),0);
+    lv_obj_set_style_bg_opa(net_confirm_overlay,LV_OPA_COVER,0);
+    lv_obj_set_style_radius(net_confirm_overlay,14,0);
+    lv_obj_set_style_border_width(net_confirm_overlay,2,0);
+    lv_obj_set_style_border_color(net_confirm_overlay,lv_color_hex(0xff6b7c),0);
+    lv_obj_set_style_shadow_width(net_confirm_overlay,24,0);
+    lv_obj_set_style_pad_all(net_confirm_overlay,0,0);
+    lv_obj_remove_flag(net_confirm_overlay,LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_CLICKABLE);
+    net_confirm_label=lv_label_create(net_confirm_overlay);
+    lv_obj_set_width(net_confirm_label,290);
+    lv_obj_align(net_confirm_label,LV_ALIGN_TOP_MID,0,28);
+    lv_obj_set_style_text_color(net_confirm_label,lv_color_hex(0xe7edf8),0);
+    lv_obj_set_style_text_align(net_confirm_label,LV_TEXT_ALIGN_CENTER,0);
+    button(net_confirm_overlay,"取消",30,124,120,40,GY_UI_NET_CONFIRM_NO);
+    button(net_confirm_overlay,"确认",180,124,120,40,GY_UI_NET_CONFIRM_YES);
+    lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
+
     gy_param_ui_init();
     param_refresh();
     gy_ui_action(GY_UI_SINGLE);gy_ui_action(GY_UI_HOME);
@@ -1006,6 +1135,10 @@ static void run_test_command(void)
                    net_blue_name?lv_label_get_text(net_blue_name):"",bs?bs:"");
         GY_TEST_LOG("[gy_test] view status=%s\n",
                    net_room_status?lv_label_get_text(net_room_status):"");
+        GY_TEST_LOG("[gy_test] view hint=%s\n",
+                   net_room_hint?lv_label_get_text(net_room_hint):"");
+        GY_TEST_LOG("[gy_test] view readybtn=%d\n",
+                   net_ready_button&&!lv_obj_has_flag(net_ready_button,LV_OBJ_FLAG_HIDDEN));
         GY_TEST_LOG("[gy_test] end\n");
         return;
     }
@@ -1025,12 +1158,13 @@ static void run_test_command(void)
                    (unsigned)gy_net_app_seat_id(GY_NET_COLOR_RED),
                    (unsigned)gy_net_app_seat_id(GY_NET_COLOR_BLUE));
         GY_TEST_LOG("[gy_test] ready hready=%d gready=%d rready=%d bready=%d "
-                   "outcome=%d result=%d joinrej=%d joinreason=%d\n",
+                   "outcome=%d result=%d joinrej=%d joinreason=%d cd=%d\n",
                    gy_net_app_host_ready(),gy_net_app_guest_ready(),
                    gy_net_app_seat_ready(GY_NET_COLOR_RED),
                    gy_net_app_seat_ready(GY_NET_COLOR_BLUE),
                    ng->outcome,gy_net_app_result(),
-                   gy_net_app_join_rejected(),gy_net_app_join_reason());
+                   gy_net_app_join_rejected(),gy_net_app_join_reason(),
+                   gy_net_app_countdown_seconds());
         GY_TEST_LOG("[gy_test] end\n");
         return;
     }
@@ -1060,7 +1194,6 @@ void gy_ui_tick(void)
     GyAiResult r;
     uint32_t now=lv_tick_get();
     run_test_command();
-    if(net_exit_confirm&&(uint32_t)(now-net_exit_at)>=3000u)net_exit_confirm=0;
     gy_net_app_tick(now);
     if(net_lobby_active)net_lobby_refresh();
     if(net_room_active){
@@ -1079,6 +1212,18 @@ void gy_ui_tick(void)
     if(net_game_active&&gy_net_app_active()){
         const GyGame *ng=gy_net_app_game();
         int phase=gy_net_app_phase();
+        if(phase==GY_NET_PHASE_RESULT){
+            int res=gy_net_app_result();
+            if(!res&&ng)res=ng->outcome;
+            net_result_show(res);
+        }else net_result_hide();
+        if(phase==GY_NET_PHASE_WAIT){
+            /* 结算停留结束：回同一房间，重新准备即可开下一局。 */
+            net_result_hide();
+            show_page(net_room_page);
+            net_room_refresh();
+            return;
+        }
         if(ng&&ng->config.size>=GY_SIZE_MIN&&
            (ng->revision!=net_last_rev||phase!=net_last_phase)){
             if(ng->revision!=net_last_rev){ready=0;placing=0;direction=-1;place_column=-1;}

@@ -13,7 +13,8 @@ enum { GY_UI_UP, GY_UI_RIGHT, GY_UI_DOWN, GY_UI_LEFT, GY_UI_LESS,
        GY_UI_PARAM_MODE_PVP,
        GY_UI_NET, GY_UI_NET_CREATE, GY_UI_NET_BACK,
        GY_UI_NET_JOIN0, GY_UI_NET_JOIN1, GY_UI_NET_JOIN2, GY_UI_NET_JOIN3,
-       GY_UI_NET_JOIN4, GY_UI_NET_READY, GY_UI_NET_SWAP, GY_UI_NET_LEAVE };
+       GY_UI_NET_JOIN4, GY_UI_NET_READY, GY_UI_NET_SWAP, GY_UI_NET_LEAVE,
+       GY_UI_NET_CONFIRM_YES, GY_UI_NET_CONFIRM_NO };
 void gy_ui_create(void);
 void gy_ui_action(int action);
 void gy_ui_cell(int column,int row);

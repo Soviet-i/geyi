@@ -18,7 +18,8 @@
 #define GY_NET_MAX_ROOMS      8
 #define GY_NET_START_MS       3000u
 #define GY_NET_RECONNECT_MS   10000u
-#define GY_NET_RESULT_KEEP_MS 10000u
+/* 结算弹窗停留时间；之后房间回到 WAIT，可再次准备开下一局。 */
+#define GY_NET_RESULT_KEEP_MS 4000u
 #define GY_NET_HEARTBEAT_MS   1000u
 
 enum { GY_NET_ROLE_HOST = 0, GY_NET_ROLE_PLAYER = 1, GY_NET_ROLE_SPECTATOR = 2 };

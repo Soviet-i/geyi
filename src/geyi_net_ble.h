@@ -51,7 +51,8 @@ void gy_net_ble_disconnect(uint8_t conn);
 
 /* 连接状态。 */
 int      gy_net_ble_connected(void);
-int      gy_net_ble_ready(void);       /* 客户端：服务发现/CCCD 就绪，可发 JOIN_REQ */
+int      gy_net_ble_ready(void);       /* 客户端：服务发现/CCCD 就绪，可收 ACK */
+int      gy_net_ble_write_ready(void); /* 客户端：RX 可写即可发 JOIN，ACK 由重发兜底 */
 uint8_t  gy_net_ble_conn_count(void);
 uint8_t  gy_net_ble_conn_at(uint8_t index);
 uint8_t  gy_net_ble_client_conn(void);

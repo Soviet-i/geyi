@@ -92,6 +92,9 @@ static void set_result(GyNetRoom *host, uint8_t outcome, uint8_t reason, uint32_
     host->view.result = outcome;
     host->view.result_reason = reason;
     host->view.phase_since_ms = now_ms;
+    host->seats[host->view.host_color].ready = 0;
+    host->seats[host->view.guest_color].ready = 0;
+    sync_ready(host);
     host->view.seq++;
 }
 
@@ -325,6 +328,10 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
             room->view.phase = GY_NET_PHASE_PLAYING;
             room->view.phase_since_ms = now_ms;
             room->view.game_valid = 1;
+            /* 开局后清 ready；结算回房间时双方必须重新准备。 */
+            room->seats[room->view.host_color].ready = 0;
+            room->seats[room->view.guest_color].ready = 0;
+            sync_ready(room);
             room->view.seq++;
             changed = 1;
         }
@@ -351,7 +358,15 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
         }
     } else if (room->view.phase == GY_NET_PHASE_RESULT) {
         if ((uint32_t)(now_ms - room->view.phase_since_ms) >= GY_NET_RESULT_KEEP_MS) {
-            room->view.phase = GY_NET_PHASE_CLOSED;
+            /* 结算结束回房间，不关房：双方重新准备即可开下一局。 */
+            room->view.phase = GY_NET_PHASE_WAIT;
+            room->view.phase_since_ms = now_ms;
+            room->view.result = GY_PLAYING;
+            room->view.result_reason = GY_NET_REASON_NORMAL;
+            room->view.game_valid = 0;
+            room->seats[room->view.host_color].ready = 0;
+            room->seats[room->view.guest_color].ready = 0;
+            sync_ready(room);
             room->view.seq++;
             changed = 1;
         }
@@ -615,6 +630,15 @@ int gy_net_room_leave(GyNetRoom *host, uint8_t color, uint32_t now_ms)
     host->now_ms = now_ms;
     if (color == host->view.guest_color) {
         release_guest(host);
+        if (host->view.phase == GY_NET_PHASE_RESULT) {
+            /* 结算期客人离开：房主回房间等待新客人，而不是停在 RESULT。 */
+            host->view.phase = GY_NET_PHASE_WAIT;
+            host->view.phase_since_ms = now_ms;
+            host->view.result = GY_PLAYING;
+            host->view.result_reason = GY_NET_REASON_NORMAL;
+            host->view.game_valid = 0;
+            sync_ready(host);
+        }
         host->view.seq++;
         return GY_NET_LEAVE_RELEASED;
     }

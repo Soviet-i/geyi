@@ -22,7 +22,7 @@
 #include "bf0_sibles_advertising.h"
 #include "ble_connection_manager.h"
 
-#define BLE_LOG(fmt, ...) rt_kprintf("[geyi:ble] " fmt "\n", ##__VA_ARGS__)
+#define BLE_LOG(fmt, ...) rt_kprintf("[%u][geyi:ble] " fmt "\n", (unsigned)rt_tick_get(), ##__VA_ARGS__)
 
 #define GY_BLE_RXQ_CAP  16
 #define GY_BLE_ADVQ_CAP 8
@@ -677,8 +677,10 @@ int gy_net_ble_connect(const uint8_t addr[6], uint8_t addr_type)
     p.type = GAPM_INIT_TYPE_DIRECT_CONN_EST;
     p.conn_param_1m.scan_intv = 0x30;
     p.conn_param_1m.scan_wd = 0x30;
-    p.conn_param_1m.conn_intv_min = 0x60;
-    p.conn_param_1m.conn_intv_max = 0x80;
+    /* 7.5–10ms 连接间隔：GATT 服务发现要多次往返，120–160ms 会让
+     * 加入房间卡 3s。BLE 允许的最小间隔，代价是功耗略高（插电板可接受）。 */
+    p.conn_param_1m.conn_intv_min = 0x06;
+    p.conn_param_1m.conn_intv_max = 0x08;
     p.conn_param_1m.conn_latency = 0;
     p.conn_param_1m.supervision_to = 500;
     p.conn_param_1m.ce_len_min = 0;
@@ -711,6 +713,10 @@ int gy_net_ble_ready(void)
 {
     return (g_client_conn != 0xff && g_remote_svc_ok && g_rx_val_hdl &&
             g_tx_val_hdl && g_tx_cccd_hdl && g_cccd_ok) ? 1 : 0;
+}
+int gy_net_ble_write_ready(void)
+{
+    return (g_client_conn != 0xff && g_remote_svc_ok && g_rx_val_hdl) ? 1 : 0;
 }
 uint8_t gy_net_ble_conn_count(void)
 {
