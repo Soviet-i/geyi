@@ -16,8 +16,8 @@ int main(void)
     Simulation s;GyInputEvent event;int d,i,confirms;
     CHECK(gy_input_selftest());
     for(d=0;d<4;++d){
-        int x=d==GY_RIGHT?2000:d==GY_LEFT?-2000:0;
-        int y=d==GY_DOWN?2000:d==GY_UP?-2000:0;
+        int x=d==GY_RIGHT?1000:d==GY_LEFT?-1000:0;
+        int y=d==GY_DOWN?1000:d==GY_UP?-1000:0;
         s=setup();hold(&s,0,0,0,8);
         CHECK(!(hold(&s,x,y,0,39)&GY_INPUT_SELECT));
         CHECK(hold(&s,x,y,0,3)&GY_INPUT_SELECT);
@@ -37,12 +37,12 @@ int main(void)
     s=setup();hold(&s,0,0,0,8);hold(&s,0,-2000,1,45);
     CHECK(s.input.direction==GY_UP);CHECK(!(hold(&s,0,-2000,1,40)&GY_INPUT_CONFIRM));
     hold(&s,0,-2000,0,8);CHECK(hold(&s,0,-2000,1,8)&GY_INPUT_CONFIRM);
-    /* 2 soldiers: 35 degree boundary, 2.5 degree hysteresis. */
-    s=setup();hold(&s,0,0,0,8);hold(&s,0,-2000,0,42);
-    CHECK(!(hold(&s,0,-3600,0,45)&GY_INPUT_CANCEL));CHECK(s.input.count==1);
-    CHECK(hold(&s,0,-3800,0,45)&GY_INPUT_SELECT);CHECK(s.input.count==2);
-    hold(&s,0,-3400,0,45);CHECK(s.input.count==2);
-    hold(&s,0,-3200,0,45);CHECK(s.input.count==1);
+    /* 2 soldiers: 10-degree bands; 6° entry, 4° exit, 1° band hysteresis. */
+    s=setup();hold(&s,0,0,0,8);hold(&s,0,-1000,0,42);
+    CHECK(!(hold(&s,0,-1500,0,45)&GY_INPUT_CANCEL));CHECK(s.input.count==1);
+    CHECK(hold(&s,0,-1700,0,45)&GY_INPUT_UPDATE);CHECK(s.input.count==2);
+    hold(&s,0,-1500,0,45);CHECK(s.input.count==2);
+    CHECK(hold(&s,0,-1400,0,45)&GY_INPUT_UPDATE);CHECK(s.input.count==1);
     hold(&s,2000,-2100,0,45);CHECK(s.input.direction==GY_UP);
     hold(&s,2150,-2100,0,45);CHECK(s.input.direction==GY_UP);
     hold(&s,2400,-2100,0,45);CHECK(s.input.direction==GY_RIGHT);
