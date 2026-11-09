@@ -1,0 +1,6748 @@
+# 板端串口记录
+# 端口 COM3 @ 1000000 8N1（只读，不发送任何命令）
+# 开始 2026-11-07T14:40:02
+[    82077ms] [
+[    82077ms] geyi:light] event=1
+[    85155ms] [
+[    85155ms] geyi:light] event=1
+[    86312ms] [
+[    86312ms] geyi:light] event=1
+[    87327ms] [
+[    87327ms] geyi:light] event=1
+[    90983ms] [
+[    90983ms] geyi:light] event=1
+[   143375ms] [
+[   143375ms] geyi:light] event=1
+[   147343ms] [
+[   147343ms] geyi:light] event=1
+[   147343ms] [
+[   147343ms] geyi:motion] x=-1673 y=209 key1
+[   147343ms] =
+[   147343ms] 0 revision=0
+[   148343ms] [
+[   148343ms] geyi:motion] x=-1747 y=199 key1
+[   148343ms] =
+[   148343ms] 0 revision=0
+[   149358ms] [
+[   149358ms] geyi:motion] x=-1012 y=339 key1
+[   149358ms] =0 revision=0
+[   149968ms] [
+[   149968ms] geyi:tilt] x=-492 y=3067 dir=2 
+[   149968ms] c
+[   149968ms] ount=0 preview=1
+[   150358ms] [
+[   150358ms] geyi:motion] x=-1226 y=278 key1
+[   150358ms] =
+[   150358ms] 0 revision=0
+[   151358ms] [
+[   151358ms] geyi:motion] x=-406 y=102 key1=
+[   151358ms] 0
+[   151358ms]  revision=0
+[   152358ms] [
+[   152358ms] geyi:motion] x=-1651 y=-1789 ke
+[   152358ms] y
+[   152358ms] 1=0 revision=0
+[   153358ms] [
+[   153358ms] geyi:motion] x=-1417 y=204 key1
+[   153358ms] =
+[   153358ms] 0 revision=0
+[   154358ms] [
+[   154358ms] geyi:motion] x=-718 y=600 key1=
+[   154358ms] 0
+[   154358ms]  revision=0
+[   155375ms] [
+[   155375ms] geyi:motion] x=-3673 y=-398 key
+[   155375ms] 1
+[   155375ms] =0 revision=0
+[   156358ms] [
+[   156375ms] geyi:motion] x=-3247 y=3962 key
+[   156375ms] 1
+[   156375ms] =0 revision=0
+[   157358ms] [
+[   157358ms] geyi:motion] x=193 y=4271 key1=
+[   157375ms] 0
+[   157375ms]  revision=0
+[   158358ms] [
+[   158358ms] geyi:motion] x=-1654 y=2437 key
+[   158358ms] 1
+[   158358ms] =0 revision=0
+[   159358ms] [
+[   159358ms] geyi:motion] x=-5953 y=1265 key
+[   159358ms] 1
+[   159358ms] =0 revision=0
+[   160358ms] [
+[   160358ms] geyi:motion] x=-5995 y=776 key1
+[   160358ms] =
+[   160358ms] 0 revision=0
+[   161358ms] [
+[   161358ms] geyi:motion] x=-548 y=1886 key1
+[   161358ms] =
+[   161358ms] 0 revision=0
+[   162358ms] [
+[   162358ms] geyi:motion] x=3308 y=780 key1=
+[   162358ms] 0
+[   162358ms]  revision=0
+[   163358ms] [
+[   163358ms] geyi:motion] x=-202 y=2472 key1
+[   163358ms] =
+[   163358ms] 0 revision=0
+[   164358ms] [
+[   164358ms] geyi:motion] x=-741 y=2700 key1
+[   164358ms] =
+[   164358ms] 0 revision=0
+[   165358ms] [
+[   165358ms] geyi:motion] x=-726 y=3943 key1
+[   165358ms] =
+[   165358ms] 0 revision=0
+[   166358ms] [
+[   166358ms] geyi:motion] x=-664 y=2949 key1
+[   166358ms] =
+[   166358ms] 0 revision=0
+[   167358ms] [
+[   167358ms] geyi:motion] x=-1182 y=3240 key
+[   167358ms] 1
+[   167358ms] =0 revision=0
+[   168358ms] [
+[   168358ms] geyi:motion] x=-501 y=3007 key1
+[   168358ms] =
+[   168358ms] 0 revision=0
+[   169358ms] [
+[   169358ms] geyi:motion] x=145 y=1287 key1=
+[   169358ms] 0
+[   169358ms]  revision=0
+[   170047ms] [
+[   170047ms] geyi:tilt] x=-734 y=2129 dir=2 
+[   170047ms] c
+[   170047ms] ount=0 preview=1
+[   170358ms] [
+[   170358ms] geyi:motion] x=-1505 y=2850 key
+[   170358ms] 1
+[   170358ms] =0 revision=0
+[   171390ms] [
+[   171390ms] geyi:motion] x=-1182 y=333 key1
+[   171390ms] =
+[   171390ms] 0 revision=0
+[   172390ms] [
+[   172390ms] geyi:motion] x=-1076 y=3531 key
+[   172390ms] 1
+[   172390ms] =0 revision=0
+[   173390ms] [
+[   173390ms] geyi:motion] x=-1610 y=5060 key
+[   173390ms] 1
+[   173390ms] =0 revision=0
+[   174358ms] [
+[   174358ms] geyi:tilt] x=-1848 y=2223 dir=2
+[   174358ms] count=0 preview=1
+[   174422ms] [
+[   174422ms] geyi:motion] x=-1846 y=2275 key
+[   174422ms] 1
+[   174422ms] =0 revision=0
+[   175422ms] [
+[   175422ms] geyi:motion] x=-2192 y=2938 key
+[   175422ms] 1
+[   175422ms] =0 revision=0
+[   176405ms] [
+[   176405ms] geyi:motion] x=1560 y=1519 key1
+[   176422ms] =
+[   176422ms] 0 revision=0
+[   176672ms] [
+[   176672ms] geyi:tilt] x=2916 y=610 dir=1 c
+[   176672ms] o
+[   176672ms] unt=1 preview=1
+[   177358ms] [
+[   177358ms] geyi:tilt] x=-178 y=2357 dir=2 
+[   177358ms] c
+[   177358ms] ount=0 preview=1
+[   177422ms] [
+[   177422ms] geyi:motion] x=-613 y=2590 key1
+[   177422ms] =
+[   177422ms] 0 revision=0
+[   178422ms] [
+[   178422ms] geyi:motion] x=2527 y=1160 key1
+[   178422ms] =
+[   178422ms] 0 revision=0
+[   178515ms] [
+[   178515ms] geyi:tilt] x=2897 y=924 dir=1 c
+[   178515ms] o
+[   178515ms] unt=1 preview=1
+[   179422ms] [
+[   179422ms] geyi:motion] x=1962 y=944 key1=
+[   179422ms] 0
+[   179422ms]  revision=0
+[   180265ms] [
+[   180280ms] geyi:tilt] x=1459 y=806 dir=1 c
+[   180280ms] o
+[   180280ms] unt=1 preview=1
+[   180422ms] [
+[   180422ms] geyi:motion] x=1202 y=650 key1=
+[   180422ms] 0
+[   180422ms]  revision=0
+[   181422ms] [
+[   181422ms] geyi:motion] x=-349 y=-1153 key
+[   181422ms] 1
+[   181422ms] =0 revision=0
+[   181765ms] [
+[   181765ms] geyi:tilt] x=-1194 y=-1772 dir=
+[   181765ms] 0
+[   181765ms]  count=1 preview=1
+[   182437ms] [
+[   182437ms] geyi:motion] x=-125 y=2219 key1
+[   182437ms] =
+[   182437ms] 0 revision=0
+[   183437ms] [
+[   183437ms] geyi:motion] x=-3597 y=3173 key
+[   183437ms] 1
+[   183437ms] =0 revision=0
+[   184327ms] [
+[   184327ms] geyi:tilt] x=669 y=2068 dir=2 c
+[   184327ms] o
+[   184327ms] unt=0 preview=1
+[   184437ms] [
+[   184437ms] geyi:motion] x=637 y=2155 key1=
+[   184437ms] 0
+[   184437ms]  revision=0
+[   185437ms] [
+[   185437ms] geyi:motion] x=315 y=2080 key1=
+[   185437ms] 0
+[   185437ms]  revision=0
+[   186437ms] [
+[   186437ms] geyi:motion] x=-805 y=2734 key1
+[   186437ms] =
+[   186437ms] 0 revision=0
+[   186875ms] [
+[   186875ms] geyi:key] confirm revision=1 tu
+[   186875ms] r
+[   186875ms] n=1
+[   186922ms] [
+[   186922ms] geyi:light] event=2
+[   187437ms] [
+[   187437ms] geyi:motion] x=-592 y=2017 key1
+[   187437ms] =
+[   187437ms] 0 revision=1
+[   188437ms] [
+[   188437ms] geyi:motion] x=-280 y=2230 key1
+[   188437ms] =
+[   188437ms] 0 revision=1
+[   189437ms] [
+[   189437ms] geyi:motion] x=195 y=2107 key1=
+[   189437ms] 0
+[   189437ms]  revision=1
+[   190437ms] [
+[   190437ms] geyi:motion] x=225 y=1827 key1=
+[   190437ms] 0
+[   190437ms]  revision=1
+[   191437ms] [
+[   191437ms] geyi:motion] x=175 y=1759 key1=
+[   191437ms] 0
+[   191437ms]  revision=1
+[   192437ms] [
+[   192437ms] geyi:motion] x=910 y=-384 key1=
+[   192437ms] 0
+[   192437ms]  revision=1
+[   192765ms] [
+[   192765ms] geyi:tilt] x=722 y=-1819 dir=0 
+[   192765ms] c
+[   192765ms] ount=0 preview=1
+[   193437ms] [
+[   193437ms] geyi:motion] x=-320 y=-1620 key
+[   193437ms] 1
+[   193437ms] =0 revision=1
+[   193843ms] [
+[   193843ms] geyi:key] confirm revision=2 tu
+[   193843ms] r
+[   193843ms] n=0
+[   193890ms] [
+[   193890ms] geyi:light] event=2
+[   194437ms] [
+[   194437ms] geyi:motion] x=-322 y=-1201 key
+[   194437ms] 1
+[   194437ms] =0 revision=2
+[   195265ms] [
+[   195265ms] geyi:tilt] x=3018 y=610 dir=1 c
+[   195265ms] o
+[   195265ms] unt=1 preview=1
+[   195437ms] [
+[   195437ms] geyi:motion] x=3491 y=577 key1=
+[   195437ms] 0
+[   195437ms]  revision=2
+[   196327ms] [
+[   196327ms] geyi:key] confirm revision=3 tu
+[   196327ms] r
+[   196327ms] n=1
+[   196375ms] [
+[   196375ms] geyi:light] event=2
+[   196437ms] [
+[   196437ms] geyi:motion] x=2827 y=476 key1=
+[   196437ms] 1
+[   196437ms]  revision=3
+[   197437ms] [
+[   197437ms] geyi:motion] x=2076 y=1643 key1
+[   197437ms] =
+[   197437ms] 0 revision=3
+[   198437ms] [
+[   198437ms] geyi:motion] x=1594 y=4666 key1
+[   198437ms] =
+[   198437ms] 0 revision=3
+[   199437ms] [
+[   199437ms] geyi:motion] x=-78 y=6771 key1=
+[   199437ms] 0
+[   199437ms]  revision=3
+[   200437ms] [
+[   200437ms] geyi:motion] x=102 y=4367 key1=
+[   200437ms] 0
+[   200437ms]  revision=3
+[   201437ms] [
+[   201437ms] geyi:motion] x=208 y=4210 key1=
+[   201437ms] 0
+[   201437ms]  revision=3
+[   202437ms] [
+[   202437ms] geyi:motion] x=144 y=4033 key1=
+[   202437ms] 0
+[   202437ms]  revision=3
+[   203437ms] [
+[   203437ms] geyi:motion] x=58 y=3979 key1=0
+[   203437ms] revision=3
+[   204437ms] [
+[   204437ms] geyi:motion] x=-140 y=3808 key1
+[   204437ms] =
+[   204437ms] 0 revision=3
+[   205422ms] [
+[   205422ms] geyi:motion] x=-841 y=3544 key1
+[   205437ms] =
+[   205437ms] 0 revision=3
+[   206422ms] [
+[   206422ms] geyi:motion] x=-1766 y=2291 key
+[   206422ms] 1
+[   206422ms] =0 revision=3
+[   207422ms] [
+[   207422ms] geyi:motion] x=-3677 y=2116 key
+[   207422ms] 1
+[   207422ms] =0 revision=3
+[   208422ms] [
+[   208422ms] geyi:motion] x=-5830 y=1626 key
+[   208422ms] 1
+[   208422ms] =0 revision=3
+[   209422ms] [
+[   209422ms] geyi:motion] x=-5027 y=1812 key
+[   209422ms] 1
+[   209422ms] =0 revision=3
+[   210422ms] [
+[   210422ms] geyi:motion] x=-3900 y=1676 key
+[   210422ms] 1
+[   210422ms] =0 revision=3
+[   211422ms] [
+[   211422ms] geyi:motion] x=-2677 y=2659 key
+[   211422ms] 1
+[   211422ms] =0 revision=3
+[   212422ms] [
+[   212422ms] geyi:motion] x=-2775 y=2422 key
+[   212422ms] 1
+[   212422ms] =0 revision=3
+[   213422ms] [
+[   213422ms] geyi:motion] x=-2293 y=2528 key
+[   213422ms] 1
+[   213422ms] =0 revision=3
+[   214405ms] [
+[   214422ms] geyi:motion] x=-1114 y=2253 key
+[   214422ms] 1
+[   214422ms] =0 revision=3
+[   215405ms] [
+[   215405ms] geyi:motion] x=-1555 y=2114 key
+[   215422ms] 1
+[   215422ms] =0 revision=3
+[   216405ms] [
+[   216405ms] geyi:motion] x=-4627 y=1239 key
+[   216405ms] 1
+[   216405ms] =0 revision=3
+[   217405ms] [
+[   217405ms] geyi:motion] x=-4559 y=1154 key
+[   217405ms] 1
+[   217405ms] =0 revision=3
+[   218405ms] [
+[   218405ms] geyi:motion] x=-4729 y=456 key1
+[   218405ms] =
+[   218405ms] 0 revision=3
+[   219405ms] [
+[   219405ms] geyi:motion] x=-4691 y=508 key1
+[   219405ms] =
+[   219405ms] 0 revision=3
+[   220405ms] [
+[   220405ms] geyi:motion] x=-4687 y=509 key1
+[   220405ms] =
+[   220405ms] 0 revision=3
+[   221405ms] [
+[   221405ms] geyi:motion] x=-4678 y=507 key1
+[   221405ms] =
+[   221405ms] 0 revision=3
+[   222405ms] [
+[   222405ms] geyi:motion] x=-4663 y=512 key1
+[   222405ms] =
+[   222405ms] 0 revision=3
+[   223405ms] [
+[   223405ms] geyi:motion] x=-4668 y=508 key1
+[   223405ms] =
+[   223405ms] 0 revision=3
+[   224405ms] [
+[   224405ms] geyi:motion] x=-4653 y=511 key1
+[   224405ms] =
+[   224405ms] 0 revision=3
+[   225405ms] [
+[   225405ms] geyi:motion] x=-4657 y=468 key1
+[   225405ms] =
+[   225405ms] 0 revision=3
+[   226405ms] [
+[   226405ms] geyi:motion] x=-4657 y=496 key1
+[   226405ms] =
+[   226405ms] 0 revision=3
+[   227390ms] [
+[   227390ms] geyi:motion] x=-4626 y=509 key1
+[   227405ms] =
+[   227405ms] 0 revision=3
+[   228390ms] [
+[   228390ms] geyi:motion] x=-4621 y=504 key1
+[   228405ms] =
+[   228405ms] 0 revision=3
+[   229390ms] [
+[   229390ms] geyi:motion] x=-4606 y=510 key1
+[   229390ms] =
+[   229390ms] 0 revision=3
+[   230390ms] [
+[   230390ms] geyi:motion] x=-4603 y=515 key1
+[   230390ms] =
+[   230390ms] 0 revision=3
+[   231390ms] [
+[   231390ms] geyi:motion] x=-4597 y=511 key1
+[   231390ms] =
+[   231390ms] 0 revision=3
+[   232390ms] [
+[   232390ms] geyi:motion] x=-4590 y=514 key1
+[   232390ms] =
+[   232390ms] 0 revision=3
+[   233390ms] [
+[   233390ms] geyi:motion] x=-4582 y=511 key1
+[   233390ms] =
+[   233390ms] 0 revision=3
+[   234390ms] [
+[   234390ms] geyi:motion] x=-4573 y=514 key1
+[   234390ms] =
+[   234390ms] 0 revision=3
+[   235390ms] [
+[   235390ms] geyi:motion] x=-4566 y=517 key1
+[   235390ms] =
+[   235390ms] 0 revision=3
+[   236390ms] [
+[   236390ms] geyi:motion] x=-4558 y=517 key1
+[   236390ms] =
+[   236390ms] 0 revision=3
+[   237390ms] [
+[   237390ms] geyi:motion] x=-4545 y=513 key1
+[   237390ms] =
+[   237390ms] 0 revision=3
+[   238390ms] [
+[   238390ms] geyi:motion] x=-4537 y=513 key1
+[   238390ms] =
+[   238390ms] 0 revision=3
+[   239390ms] [
+[   239390ms] geyi:motion] x=-4531 y=512 key1
+[   239390ms] =
+[   239390ms] 0 revision=3
+[   240390ms] [
+[   240390ms] geyi:motion] x=-4529 y=521 key1
+[   240390ms] =
+[   240390ms] 0 revision=3
+[   241390ms] [
+[   241390ms] geyi:motion] x=-4520 y=516 key1
+[   241390ms] =
+[   241390ms] 0 revision=3
+[   242390ms] [
+[   242390ms] geyi:motion] x=-4513 y=517 key1
+[   242390ms] =
+[   242390ms] 0 revision=3
+[   243375ms] [
+[   243375ms] geyi:motion] x=-4509 y=522 key1
+[   243375ms] =
+[   243390ms] 0 revision=3
+[   244375ms] [
+[   244375ms] geyi:motion] x=-4506 y=522 key1
+[   244375ms] =
+[   244375ms] 0 revision=3
+[   245375ms] [
+[   245375ms] geyi:motion] x=-4498 y=522 key1
+[   245375ms] =
+[   245375ms] 0 revision=3
+[   246375ms] [
+[   246375ms] geyi:motion] x=-4492 y=521 key1
+[   246375ms] =
+[   246375ms] 0 revision=3
+[   247375ms] [
+[   247375ms] geyi:motion] x=-4492 y=525 key1
+[   247375ms] =
+[   247375ms] 0 revision=3
+[   248375ms] [
+[   248375ms] geyi:motion] x=-4496 y=530 key1
+[   248375ms] =
+[   248375ms] 0 revision=3
+[   249375ms] [
+[   249375ms] geyi:motion] x=-4490 y=527 key1
+[   249375ms] =
+[   249375ms] 0 revision=3
+[   250375ms] [
+[   250375ms] geyi:motion] x=-4368 y=719 key1
+[   250375ms] =
+[   250375ms] 0 revision=3
+[   251390ms] [
+[   251390ms] geyi:motion] x=-1311 y=1277 key
+[   251390ms] 1
+[   251390ms] =0 revision=3
+[   252390ms] [
+[   252390ms] geyi:motion] x=-785 y=4106 key1
+[   252390ms] =
+[   252390ms] 0 revision=3
+[   253390ms] [
+[   253390ms] geyi:motion] x=-1056 y=4095 key
+[   253390ms] 1
+[   253390ms] =0 revision=3
+[   254390ms] [
+[   254390ms] geyi:motion] x=-1275 y=3353 key
+[   254390ms] 1
+[   254390ms] =0 revision=3
+[   255390ms] [
+[   255390ms] geyi:motion] x=-1606 y=4482 key
+[   255390ms] 1
+[   255390ms] =0 revision=3
+[   256390ms] [
+[   256390ms] geyi:motion] x=-978 y=4361 key1
+[   256390ms] =
+[   256390ms] 0 revision=3
+[   256968ms] [
+[   256968ms] geyi:light] event=1
+[   259343ms] [
+[   259343ms] geyi:light] event=1
+[   280155ms] [
+[   280155ms] geyi:light] event=1
+[   281890ms] [
+[   281890ms] geyi:light] event=1
+[   281905ms] [
+[   281905ms] geyi:motion] x=0 y=1048 key1=0 
+[   281905ms] r
+[   281905ms] evision=0
+[   282905ms] [
+[   282905ms] geyi:motion] x=35 y=1147 key1=0
+[   282905ms] revision=0
+[   283530ms] [
+[   283530ms] geyi:tilt] x=-459 y=1324 dir=2 
+[   283530ms] c
+[   283530ms] ount=0 preview=1
+[   283905ms] [
+[   283905ms] geyi:motion] x=-2865 y=2554 key
+[   283905ms] 1
+[   283905ms] =0 revision=0
+[   284890ms] [
+[   284890ms] geyi:motion] x=-1225 y=882 key1
+[   284905ms] =
+[   284905ms] 0 revision=0
+[   285890ms] [
+[   285890ms] geyi:motion] x=849 y=2193 key1=
+[   285890ms] 0
+[   285890ms]  revision=0
+[   286890ms] [
+[   286890ms] geyi:motion] x=-1353 y=2598 key
+[   286890ms] 1
+[   286890ms] =0 revision=0
+[   287890ms] [
+[   287890ms] geyi:motion] x=-4116 y=4123 key
+[   287890ms] 1
+[   287890ms] =0 revision=0
+[   288890ms] [
+[   288890ms] geyi:motion] x=-1222 y=3522 key
+[   288890ms] 1
+[   288890ms] =0 revision=0
+[   289890ms] [
+[   289890ms] geyi:motion] x=-866 y=3870 key1
+[   289890ms] =
+[   289890ms] 0 revision=0
+[   290890ms] [
+[   290890ms] geyi:motion] x=-797 y=3735 key1
+[   290890ms] =
+[   290890ms] 0 revision=0
+[   291890ms] [
+[   291890ms] geyi:motion] x=-867 y=4239 key1
+[   291890ms] =
+[   291890ms] 0 revision=0
+[   292890ms] [
+[   292890ms] geyi:motion] x=-686 y=4243 key1
+[   292890ms] =
+[   292890ms] 0 revision=0
+[   293890ms] [
+[   293890ms] geyi:motion] x=-841 y=4448 key1
+[   293890ms] =
+[   293890ms] 0 revision=0
+[   294890ms] [
+[   294890ms] geyi:motion] x=735 y=4041 key1=
+[   294890ms] 0
+[   294890ms]  revision=0
+[   295890ms] [
+[   295890ms] geyi:motion] x=-3465 y=6929 key
+[   295890ms] 1
+[   295890ms] =0 revision=0
+[   296890ms] [
+[   296890ms] geyi:motion] x=1015 y=4320 key1
+[   296890ms] =
+[   296890ms] 0 revision=0
+[   297890ms] [
+[   297890ms] geyi:motion] x=-152 y=4103 key1
+[   297890ms] =
+[   297890ms] 0 revision=0
+[   298890ms] [
+[   298890ms] geyi:motion] x=-687 y=4428 key1
+[   298890ms] =
+[   298890ms] 0 revision=0
+[   299890ms] [
+[   299890ms] geyi:motion] x=-70 y=1823 key1=
+[   299890ms] 0
+[   299890ms]  revision=0
+[   300343ms] [
+[   300343ms] geyi:tilt] x=2906 y=1591 dir=1 
+[   300343ms] c
+[   300343ms] ount=1 preview=1
+[   300890ms] [
+[   300890ms] geyi:motion] x=2680 y=1648 key1
+[   300890ms] =
+[   300890ms] 0 revision=0
+[   301890ms] [
+[   301890ms] geyi:motion] x=2138 y=1602 key1
+[   301890ms] =
+[   301890ms] 0 revision=0
+[   302890ms] [
+[   302890ms] geyi:motion] x=252 y=6474 key1=
+[   302890ms] 0
+[   302890ms]  revision=0
+[   303890ms] [
+[   303890ms] geyi:motion] x=541 y=3161 key1=
+[   303890ms] 0
+[   303890ms]  revision=0
+[   304483ms] [
+[   304483ms] geyi:tilt] x=-160 y=-2594 dir=0
+[   304483ms] count=1 preview=1
+[   304890ms] [
+[   304890ms] geyi:motion] x=-507 y=-3554 key
+[   304890ms] 1
+[   304890ms] =0 revision=0
+[   305890ms] [
+[   305890ms] geyi:motion] x=-557 y=-416 key1
+[   305890ms] =
+[   305890ms] 0 revision=0
+[   306875ms] [
+[   306890ms] geyi:motion] x=-4622 y=115 key1
+[   306890ms] =
+[   306890ms] 0 revision=0
+[   307875ms] [
+[   307875ms] geyi:motion] x=-4796 y=2441 key
+[   307890ms] 1
+[   307890ms] =0 revision=0
+[   308875ms] [
+[   308875ms] geyi:motion] x=-134 y=1750 key1
+[   308875ms] =
+[   308875ms] 0 revision=0
+[   309875ms] [
+[   309875ms] geyi:motion] x=-1036 y=2305 key
+[   309875ms] 1
+[   309875ms] =0 revision=0
+[   310875ms] [
+[   310875ms] geyi:motion] x=-1545 y=4112 key
+[   310875ms] 1
+[   310875ms] =0 revision=0
+[   311875ms] [
+[   311875ms] geyi:motion] x=-1415 y=2204 key
+[   311875ms] 1
+[   311875ms] =0 revision=0
+[   312593ms] [
+[   312593ms] geyi:tilt] x=-1008 y=1627 dir=2
+[   312593ms] count=0 preview=1
+[   312875ms] [
+[   312875ms] geyi:motion] x=-1106 y=1953 key
+[   312875ms] 1
+[   312875ms] =0 revision=0
+[   313890ms] [
+[   313890ms] geyi:motion] x=-526 y=1547 key1
+[   313890ms] =
+[   313890ms] 0 revision=0
+[   314875ms] [
+[   314890ms] geyi:motion] x=-302 y=1528 key1
+[   314890ms] =
+[   314890ms] 0 revision=0
+[   315875ms] [
+[   315875ms] geyi:motion] x=-150 y=1732 key1
+[   315875ms] =
+[   315875ms] 0 revision=0
+[   316875ms] [
+[   316875ms] geyi:motion] x=-250 y=1708 key1
+[   316875ms] =
+[   316875ms] 0 revision=0
+[   317875ms] [
+[   317875ms] geyi:motion] x=-2195 y=2339 key
+[   317875ms] 1
+[   317875ms] =0 revision=0
+[   318875ms] [
+[   318875ms] geyi:motion] x=-6591 y=1692 key
+[   318875ms] 1
+[   318875ms] =0 revision=0
+[   319875ms] [
+[   319875ms] geyi:motion] x=-1613 y=299 key1
+[   319875ms] =
+[   319875ms] 0 revision=0
+[   320280ms] [
+[   320280ms] geyi:tilt] x=798 y=-3328 dir=0 
+[   320280ms] c
+[   320280ms] ount=1 preview=1
+[   320875ms] [
+[   320875ms] geyi:motion] x=552 y=-4285 key1
+[   320875ms] =
+[   320875ms] 0 revision=0
+[   321875ms] [
+[   321875ms] geyi:motion] x=-220 y=-863 key1
+[   321875ms] =
+[   321875ms] 0 revision=0
+[   322202ms] [
+[   322202ms] geyi:tilt] x=2760 y=2070 dir=1 
+[   322202ms] c
+[   322202ms] ount=1 preview=1
+[   322875ms] [
+[   322875ms] geyi:motion] x=2759 y=2391 key1
+[   322875ms] =
+[   322875ms] 0 revision=0
+[   323875ms] [
+[   323875ms] geyi:motion] x=5158 y=1783 key1
+[   323875ms] =
+[   323875ms] 0 revision=0
+[   324875ms] [
+[   324875ms] geyi:motion] x=7091 y=1454 key1
+[   324875ms] =
+[   324875ms] 0 revision=0
+[   325875ms] [
+[   325875ms] geyi:motion] x=1992 y=1555 key1
+[   325875ms] =
+[   325875ms] 0 revision=0
+[   326875ms] [
+[   326875ms] geyi:motion] x=3279 y=-3626 key
+[   326875ms] 1
+[   326875ms] =0 revision=0
+[   327875ms] [
+[   327875ms] geyi:motion] x=1239 y=2991 key1
+[   327875ms] =
+[   327875ms] 0 revision=0
+[   328875ms] [
+[   328875ms] geyi:motion] x=-1036 y=5195 key
+[   328875ms] 1
+[   328875ms] =0 revision=0
+[   329875ms] [
+[   329875ms] geyi:motion] x=-803 y=4889 key1
+[   329875ms] =
+[   329875ms] 0 revision=0
+[   330875ms] [
+[   330875ms] geyi:motion] x=-1306 y=6671 key
+[   330875ms] 1
+[   330875ms] =0 revision=0
+[   331875ms] [
+[   331875ms] geyi:motion] x=-326 y=3872 key1
+[   331875ms] =
+[   331875ms] 0 revision=0
+[   332875ms] [
+[   332875ms] geyi:motion] x=-2865 y=392 key1
+[   332875ms] =
+[   332875ms] 0 revision=0
+[   333875ms] [
+[   333875ms] geyi:motion] x=-995 y=23 key1=0
+[   333875ms] revision=0
+[   334875ms] [
+[   334875ms] geyi:motion] x=-3556 y=995 key1
+[   334875ms] =
+[   334875ms] 0 revision=0
+[   335875ms] [
+[   335875ms] geyi:motion] x=-3108 y=679 key1
+[   335875ms] =
+[   335875ms] 0 revision=0
+[   336858ms] [
+[   336858ms] geyi:motion] x=-2942 y=625 key1
+[   336858ms] =
+[   336858ms] 0 revision=0
+[   337858ms] [
+[   337858ms] geyi:motion] x=-2848 y=595 key1
+[   337858ms] =
+[   337858ms] 0 revision=0
+[   338858ms] [
+[   338858ms] geyi:motion] x=-2783 y=574 key1
+[   338858ms] =
+[   338858ms] 0 revision=0
+[   339858ms] [
+[   339858ms] geyi:motion] x=-2732 y=559 key1
+[   339858ms] =
+[   339858ms] 0 revision=0
+[   340858ms] [
+[   340858ms] geyi:motion] x=-2688 y=544 key1
+[   340858ms] =
+[   340858ms] 0 revision=0
+[   341858ms] [
+[   341858ms] geyi:motion] x=-2654 y=533 key1
+[   341858ms] =
+[   341858ms] 0 revision=0
+[   342858ms] [
+[   342858ms] geyi:motion] x=-2621 y=525 key1
+[   342858ms] =
+[   342858ms] 0 revision=0
+[   343858ms] [
+[   343858ms] geyi:motion] x=-2595 y=517 key1
+[   343858ms] =
+[   343858ms] 0 revision=0
+[   344858ms] [
+[   344858ms] geyi:motion] x=-2572 y=512 key1
+[   344858ms] =
+[   344858ms] 0 revision=0
+[   345858ms] [
+[   345858ms] geyi:motion] x=-2548 y=502 key1
+[   345858ms] =
+[   345858ms] 0 revision=0
+[   346858ms] [
+[   346858ms] geyi:motion] x=-2529 y=497 key1
+[   346858ms] =
+[   346858ms] 0 revision=0
+[   347843ms] [
+[   347858ms] geyi:motion] x=-2511 y=491 key1
+[   347858ms] =
+[   347858ms] 0 revision=0
+[   348843ms] [
+[   348843ms] geyi:motion] x=-2492 y=487 key1
+[   348843ms] =
+[   348858ms] 0 revision=0
+[   349843ms] [
+[   349843ms] geyi:motion] x=-2481 y=484 key1
+[   349843ms] =
+[   349843ms] 0 revision=0
+[   350843ms] [
+[   350843ms] geyi:motion] x=-2429 y=476 key1
+[   350843ms] =
+[   350843ms] 0 revision=0
+[   351843ms] [
+[   351843ms] geyi:motion] x=-2451 y=474 key1
+[   351843ms] =
+[   351843ms] 0 revision=0
+[   352843ms] [
+[   352843ms] geyi:motion] x=-2440 y=470 key1
+[   352843ms] =
+[   352843ms] 0 revision=0
+[   353843ms] [
+[   353843ms] geyi:motion] x=-2430 y=464 key1
+[   353843ms] =
+[   353843ms] 0 revision=0
+[   354843ms] [
+[   354843ms] geyi:motion] x=-2416 y=461 key1
+[   354843ms] =
+[   354843ms] 0 revision=0
+[   355843ms] [
+[   355843ms] geyi:motion] x=-2409 y=462 key1
+[   355843ms] =
+[   355843ms] 0 revision=0
+[   356843ms] [
+[   356843ms] geyi:motion] x=-2398 y=456 key1
+[   356843ms] =
+[   356843ms] 0 revision=0
+[   357843ms] [
+[   357843ms] geyi:motion] x=-2387 y=455 key1
+[   357843ms] =
+[   357843ms] 0 revision=0
+[   358827ms] [
+[   358827ms] geyi:motion] x=-2379 y=451 key1
+[   358843ms] =
+[   358843ms] 0 revision=0
+[   359827ms] [
+[   359827ms] geyi:motion] x=-2370 y=450 key1
+[   359827ms] =
+[   359827ms] 0 revision=0
+[   360827ms] [
+[   360827ms] geyi:motion] x=-2365 y=446 key1
+[   360827ms] =
+[   360827ms] 0 revision=0
+[   361827ms] [
+[   361827ms] geyi:motion] x=-2354 y=446 key1
+[   361827ms] =
+[   361827ms] 0 revision=0
+[   362827ms] [
+[   362827ms] geyi:motion] x=-2350 y=444 key1
+[   362827ms] =
+[   362827ms] 0 revision=0
+[   363827ms] [
+[   363827ms] geyi:motion] x=-2345 y=441 key1
+[   363827ms] =
+[   363827ms] 0 revision=0
+[   364827ms] [
+[   364827ms] geyi:motion] x=-2334 y=438 key1
+[   364827ms] =
+[   364827ms] 0 revision=0
+[   365827ms] [
+[   365827ms] geyi:motion] x=-2329 y=436 key1
+[   365827ms] =
+[   365827ms] 0 revision=0
+[   366827ms] [
+[   366827ms] geyi:motion] x=-2322 y=435 key1
+[   366827ms] =
+[   366827ms] 0 revision=0
+[   367827ms] [
+[   367827ms] geyi:motion] x=-2316 y=434 key1
+[   367827ms] =
+[   367827ms] 0 revision=0
+[   368827ms] [
+[   368827ms] geyi:motion] x=-2311 y=433 key1
+[   368827ms] =
+[   368827ms] 0 revision=0
+[   369812ms] [
+[   369812ms] geyi:motion] x=-2303 y=431 key1
+[   369827ms] =
+[   369827ms] 0 revision=0
+[   370812ms] [
+[   370812ms] geyi:motion] x=-2299 y=431 key1
+[   370812ms] =
+[   370812ms] 0 revision=0
+[   371812ms] [
+[   371812ms] geyi:motion] x=-2298 y=427 key1
+[   371812ms] =
+[   371812ms] 0 revision=0
+[   372812ms] [
+[   372812ms] geyi:motion] x=-2292 y=426 key1
+[   372812ms] =
+[   372812ms] 0 revision=0
+[   373812ms] [
+[   373812ms] geyi:motion] x=-2288 y=425 key1
+[   373812ms] =
+[   373812ms] 0 revision=0
+[   374812ms] [
+[   374812ms] geyi:motion] x=-2286 y=423 key1
+[   374812ms] =
+[   374812ms] 0 revision=0
+[   375812ms] [
+[   375812ms] geyi:motion] x=-2277 y=421 key1
+[   375812ms] =
+[   375812ms] 0 revision=0
+[   376812ms] [
+[   376812ms] geyi:motion] x=-2275 y=422 key1
+[   376812ms] =
+[   376812ms] 0 revision=0
+[   377812ms] [
+[   377812ms] geyi:motion] x=-2270 y=420 key1
+[   377812ms] =
+[   377812ms] 0 revision=0
+[   378812ms] [
+[   378812ms] geyi:motion] x=-2265 y=419 key1
+[   378812ms] =
+[   378812ms] 0 revision=0
+[   379812ms] [
+[   379812ms] geyi:motion] x=-2261 y=417 key1
+[   379812ms] =
+[   379812ms] 0 revision=0
+[   380812ms] [
+[   380812ms] geyi:motion] x=-2258 y=414 key1
+[   380812ms] =
+[   380812ms] 0 revision=0
+[   381797ms] [
+[   381797ms] geyi:motion] x=-2254 y=413 key1
+[   381812ms] =
+[   381812ms] 0 revision=0
+[   382797ms] [
+[   382797ms] geyi:motion] x=-1492 y=-57 key1
+[   382797ms] =
+[   382797ms] 0 revision=0
+[   383797ms] [
+[   383797ms] geyi:motion] x=-534 y=2732 key1
+[   383797ms] =
+[   383797ms] 0 revision=0
+[   384797ms] [
+[   384797ms] geyi:motion] x=-1282 y=1962 key
+[   384797ms] 1
+[   384797ms] =0 revision=0
+[   385797ms] [
+[   385797ms] geyi:motion] x=-1153 y=2429 key
+[   385797ms] 1
+[   385797ms] =0 revision=0
+[   386797ms] [
+[   386797ms] geyi:motion] x=-445 y=3105 key1
+[   386797ms] =
+[   386797ms] 0 revision=0
+[   387265ms] [
+[   387265ms] geyi:light] event=1
+[   388280ms] [
+[   388280ms] geyi:light] event=1
+[   393172ms] [
+[   393172ms] geyi:light] event=1
+[   394062ms] [
+[   394077ms] geyi:light] event=1
+[   394077ms] [
+[   394077ms] geyi:motion] x=-396 y=2609 key1
+[   394077ms] =
+[   394077ms] 0 revision=0
+[   395077ms] [
+[   395077ms] geyi:motion] x=-645 y=2734 key1
+[   395077ms] =
+[   395077ms] 0 revision=0
+[   396077ms] [
+[   396077ms] geyi:motion] x=-117 y=2303 key1
+[   396077ms] =
+[   396077ms] 0 revision=0
+[   396483ms] [
+[   396483ms] geyi:light] event=1
+[   412405ms] [
+[   412405ms] geyi:light] event=1
+[   427608ms] [
+[   427608ms] geyi:light] event=1
+[   428640ms] [
+[   428640ms] geyi:light] event=1
+[   428640ms] [
+[   428640ms] geyi:motion] x=-5 y=1439 key1=0
+[   428640ms] revision=0
+[   429640ms] [
+[   429640ms] geyi:motion] x=-192 y=2286 key1
+[   429640ms] =
+[   429640ms] 0 revision=0
+[   430640ms] [
+[   430640ms] geyi:motion] x=-1259 y=4538 key
+[   430640ms] 1
+[   430640ms] =0 revision=0
+[   431640ms] [
+[   431640ms] geyi:motion] x=-1179 y=4780 key
+[   431640ms] 1
+[   431640ms] =0 revision=0
+[   432640ms] [
+[   432640ms] geyi:motion] x=3551 y=1273 key1
+[   432640ms] =
+[   432640ms] 0 revision=0
+[   433640ms] [
+[   433640ms] geyi:motion] x=-2455 y=5490 key
+[   433640ms] 1
+[   433640ms] =0 revision=0
+[   434640ms] [
+[   434640ms] geyi:motion] x=-1352 y=4317 key
+[   434640ms] 1
+[   434640ms] =0 revision=0
+[   435640ms] [
+[   435640ms] geyi:motion] x=-1877 y=7400 key
+[   435640ms] 1
+[   435640ms] =0 revision=0
+[   436640ms] [
+[   436640ms] geyi:motion] x=-5419 y=-171 key
+[   436640ms] 1
+[   436640ms] =0 revision=0
+[   437672ms] [
+[   437672ms] geyi:motion] x=-3833 y=1758 key
+[   437687ms] 1
+[   437687ms] =0 revision=0
+[   438672ms] [
+[   438672ms] geyi:motion] x=146 y=3870 key1=
+[   438672ms] 0
+[   438672ms]  revision=0
+[   439672ms] [
+[   439672ms] geyi:motion] x=-332 y=3900 key1
+[   439672ms] =
+[   439672ms] 0 revision=0
+[   440672ms] [
+[   440672ms] geyi:motion] x=-34 y=3767 key1=
+[   440672ms] 0
+[   440672ms]  revision=0
+[   441672ms] [
+[   441672ms] geyi:motion] x=307 y=3145 key1=
+[   441672ms] 0
+[   441672ms]  revision=0
+[   442672ms] [
+[   442672ms] geyi:motion] x=654 y=2690 key1=
+[   442672ms] 0
+[   442672ms]  revision=0
+[   443672ms] [
+[   443672ms] geyi:motion] x=1425 y=1362 key1
+[   443672ms] =
+[   443672ms] 0 revision=0
+[   444672ms] [
+[   444672ms] geyi:motion] x=200 y=2454 key1=
+[   444672ms] 0
+[   444672ms]  revision=0
+[   445672ms] [
+[   445672ms] geyi:motion] x=-66 y=2383 key1=
+[   445672ms] 0
+[   445672ms]  revision=0
+[   446672ms] [
+[   446672ms] geyi:motion] x=-378 y=2789 key1
+[   446672ms] =
+[   446672ms] 0 revision=0
+[   447672ms] [
+[   447672ms] geyi:motion] x=-286 y=3038 key1
+[   447672ms] =
+[   447672ms] 0 revision=0
+[   448672ms] [
+[   448672ms] geyi:motion] x=-1345 y=7391 key
+[   448672ms] 1
+[   448672ms] =0 revision=0
+[   449672ms] [
+[   449672ms] geyi:motion] x=-658 y=3691 key1
+[   449672ms] =
+[   449672ms] 0 revision=0
+[   450672ms] [
+[   450672ms] geyi:motion] x=593 y=-7132 key1
+[   450672ms] =
+[   450672ms] 0 revision=0
+[   451655ms] [
+[   451655ms] geyi:tilt] x=-440 y=1986 dir=2 
+[   451655ms] c
+[   451655ms] ount=0 preview=1
+[   451858ms] [
+[   451858ms] geyi:motion] x=-578 y=2136 key1
+[   451858ms] =
+[   451858ms] 0 revision=0
+[   452858ms] [
+[   452858ms] geyi:motion] x=-779 y=2483 key1
+[   452858ms] =
+[   452858ms] 0 revision=0
+[   453858ms] [
+[   453858ms] geyi:motion] x=-735 y=4400 key1
+[   453858ms] =
+[   453858ms] 0 revision=0
+[   454858ms] [
+[   454858ms] geyi:motion] x=-369 y=721 key1=
+[   454858ms] 0
+[   454858ms]  revision=0
+[   455858ms] [
+[   455858ms] geyi:motion] x=-970 y=342 key1=
+[   455858ms] 0
+[   455858ms]  revision=0
+[   456125ms] [
+[   456125ms] geyi:tilt] x=-2869 y=512 dir=3 
+[   456125ms] c
+[   456125ms] ount=1 preview=1
+[   456858ms] [
+[   456858ms] geyi:motion] x=-4654 y=198 key1
+[   456858ms] =
+[   456858ms] 0 revision=0
+[   457858ms] [
+[   457858ms] geyi:motion] x=-81 y=1453 key1=
+[   457858ms] 0
+[   457858ms]  revision=0
+[   458858ms] [
+[   458858ms] geyi:motion] x=3512 y=-110 key1
+[   458858ms] =
+[   458858ms] 0 revision=0
+[   459843ms] [
+[   459843ms] geyi:motion] x=-22 y=2162 key1=
+[   459858ms] 0
+[   459858ms]  revision=0
+[   459922ms] [
+[   459922ms] geyi:tilt] x=-272 y=3093 dir=2 
+[   459922ms] c
+[   459922ms] ount=0 preview=1
+[   460858ms] [
+[   460858ms] geyi:motion] x=106 y=1745 key1=
+[   460858ms] 0
+[   460858ms]  revision=0
+[   461843ms] [
+[   461843ms] geyi:motion] x=-916 y=5978 key1
+[   461858ms] =
+[   461858ms] 0 revision=0
+[   462843ms] [
+[   462843ms] geyi:motion] x=-284 y=3014 key1
+[   462858ms] =
+[   462858ms] 0 revision=0
+[   463843ms] [
+[   463843ms] geyi:motion] x=-326 y=2055 key1
+[   463843ms] =
+[   463843ms] 0 revision=0
+[   464702ms] [
+[   464702ms] geyi:tilt] x=-380 y=-3039 dir=0
+[   464718ms] count=1 preview=1
+[   464905ms] [
+[   464905ms] geyi:motion] x=-496 y=-3205 key
+[   464905ms] 1
+[   464905ms] =0 revision=0
+[   465905ms] [
+[   465905ms] geyi:motion] x=-847 y=240 key1=
+[   465905ms] 0
+[   465905ms]  revision=0
+[   466577ms] [
+[   466577ms] geyi:tilt] x=-572 y=-4988 dir=0
+[   466577ms] count=2 preview=1
+[   467000ms] [
+[   467000ms] geyi:motion] x=-731 y=-4042 key
+[   467000ms] 1
+[   467000ms] =0 revision=0
+[   467952ms] [
+[   467952ms] geyi:tilt] x=-1292 y=-6626 dir=
+[   467952ms] 0
+[   467952ms]  count=2 preview=1
+[   468140ms] [
+[   468140ms] geyi:motion] x=-2061 y=-7209 ke
+[   468155ms] y
+[   468155ms] 1=0 revision=0
+[   469140ms] [
+[   469140ms] geyi:motion] x=-3007 y=-6284 ke
+[   469155ms] y
+[   469155ms] 1=0 revision=0
+[   470140ms] [
+[   470140ms] geyi:motion] x=-86 y=-230 key1=
+[   470155ms] 0
+[   470155ms]  revision=0
+[   471140ms] [
+[   471140ms] geyi:motion] x=-1833 y=-6809 ke
+[   471140ms] y
+[   471140ms] 1=0 revision=0
+[   472140ms] [
+[   472140ms] geyi:motion] x=-2493 y=-7302 ke
+[   472140ms] y
+[   472140ms] 1=0 revision=0
+[   472765ms] [
+[   472765ms] geyi:tilt] x=-394 y=1146 dir=2 
+[   472765ms] c
+[   472765ms] ount=0 preview=1
+[   473172ms] [
+[   473172ms] geyi:motion] x=-3102 y=1802 key
+[   473172ms] 1
+[   473172ms] =0 revision=0
+[   474172ms] [
+[   474172ms] geyi:motion] x=-281 y=934 key1=
+[   474172ms] 0
+[   474172ms]  revision=0
+[   475172ms] [
+[   475172ms] geyi:motion] x=3723 y=-687 key1
+[   475172ms] =
+[   475172ms] 0 revision=0
+[   476155ms] [
+[   476155ms] geyi:tilt] x=-634 y=1200 dir=2 
+[   476155ms] c
+[   476155ms] ount=0 preview=1
+[   476358ms] [
+[   476358ms] geyi:motion] x=-390 y=1090 key1
+[   476358ms] =
+[   476358ms] 0 revision=0
+[   477358ms] [
+[   477358ms] geyi:motion] x=-402 y=1176 key1
+[   477358ms] =
+[   477358ms] 0 revision=0
+[   478172ms] [
+[   478172ms] geyi:tilt] x=-3485 y=-1026 dir=
+[   478172ms] 3
+[   478172ms]  count=1 preview=1
+[   478375ms] [
+[   478375ms] geyi:motion] x=-4747 y=-1668 ke
+[   478375ms] y
+[   478375ms] 1=0 revision=0
+[   479375ms] [
+[   479375ms] geyi:motion] x=-5290 y=900 key1
+[   479375ms] =
+[   479375ms] 0 revision=0
+[   480375ms] [
+[   480375ms] geyi:motion] x=-2040 y=-834 key
+[   480375ms] 1
+[   480375ms] =0 revision=0
+[   481375ms] [
+[   481375ms] geyi:motion] x=-1161 y=365 key1
+[   481375ms] =
+[   481375ms] 0 revision=0
+[   482375ms] [
+[   482375ms] geyi:motion] x=-1505 y=-6610 ke
+[   482375ms] y
+[   482375ms] 1=0 revision=0
+[   483375ms] [
+[   483375ms] geyi:motion] x=-759 y=2137 key1
+[   483375ms] =
+[   483375ms] 0 revision=0
+[   484358ms] [
+[   484375ms] geyi:motion] x=-1620 y=3522 key
+[   484375ms] 1
+[   484375ms] =0 revision=0
+[   485358ms] [
+[   485358ms] geyi:motion] x=55 y=4154 key1=0
+[   485375ms] revision=0
+[   486358ms] [
+[   486358ms] geyi:motion] x=57 y=4172 key1=0
+[   486358ms] revision=0
+[   487358ms] [
+[   487358ms] geyi:motion] x=62 y=4281 key1=0
+[   487358ms] revision=0
+[   488358ms] [
+[   488358ms] geyi:motion] x=44 y=4231 key1=0
+[   488358ms] revision=0
+[   489358ms] [
+[   489358ms] geyi:motion] x=57 y=4292 key1=0
+[   489358ms] revision=0
+[   490358ms] [
+[   490358ms] geyi:motion] x=46 y=4337 key1=0
+[   490358ms] revision=0
+[   491358ms] [
+[   491358ms] geyi:motion] x=50 y=4417 key1=0
+[   491358ms] revision=0
+[   492358ms] [
+[   492358ms] geyi:motion] x=49 y=4459 key1=0
+[   492358ms] revision=0
+[   493358ms] [
+[   493358ms] geyi:motion] x=41 y=4498 key1=0
+[   493358ms] revision=0
+[   494358ms] [
+[   494358ms] geyi:motion] x=39 y=4605 key1=0
+[   494358ms] revision=0
+[   495358ms] [
+[   495358ms] geyi:motion] x=17 y=4919 key1=0
+[   495358ms] revision=0
+[   496358ms] [
+[   496358ms] geyi:motion] x=-5818 y=7375 key
+[   496358ms] 1
+[   496358ms] =0 revision=0
+[   497358ms] [
+[   497358ms] geyi:motion] x=-437 y=7946 key1
+[   497358ms] =
+[   497358ms] 0 revision=0
+[   498358ms] [
+[   498358ms] geyi:motion] x=-417 y=7950 key1
+[   498358ms] =
+[   498358ms] 0 revision=0
+[   499358ms] [
+[   499358ms] geyi:motion] x=-425 y=7950 key1
+[   499358ms] =
+[   499358ms] 0 revision=0
+[   500358ms] [
+[   500358ms] geyi:motion] x=-420 y=7989 key1
+[   500358ms] =
+[   500358ms] 0 revision=0
+[   501358ms] [
+[   501358ms] geyi:motion] x=-928 y=134 key1=
+[   501358ms] 0
+[   501358ms]  revision=0
+[   502358ms] [
+[   502358ms] geyi:motion] x=-861 y=123 key1=
+[   502358ms] 0
+[   502358ms]  revision=0
+[   502937ms] [
+[   502937ms] geyi:light] event=1
+[   508858ms] [
+[   508858ms] geyi:light] event=1
+[  1879343ms] [
+[  1879343ms] geyi:light] event=1
+[  1880672ms] [
+[  1880672ms] geyi:light] event=1
+[  1880687ms] [
+[  1880687ms] geyi:motion] x=449 y=1017 key1=
+[  1880687ms] 0
+[  1880687ms]  revision=0
+[  1881687ms] [
+[  1881687ms] geyi:motion] x=228 y=657 key1=0
+[  1881687ms] revision=0
+[  1882672ms] [
+[  1882687ms] geyi:motion] x=525 y=299 key1=0
+[  1882687ms] revision=0
+[  1883140ms] [
+[  1883140ms] geyi:tilt] x=2722 y=157 dir=1 c
+[  1883140ms] o
+[  1883140ms] unt=1 preview=1
+[  1883687ms] [
+[  1883687ms] geyi:motion] x=4066 y=-378 key1
+[  1883687ms] =
+[  1883687ms] 0 revision=0
+[  1884672ms] [
+[  1884672ms] geyi:motion] x=2096 y=469 key1=
+[  1884687ms] 0
+[  1884687ms]  revision=0
+[  1885672ms] [
+[  1885687ms] geyi:motion] x=4960 y=-184 key1
+[  1885687ms] =
+[  1885687ms] 0 revision=0
+[  1886672ms] [
+[  1886672ms] geyi:motion] x=2541 y=493 key1=
+[  1886687ms] 0
+[  1886687ms]  revision=0
+[  1887202ms] [
+[  1887202ms] geyi:tilt] x=467 y=1105 dir=2 c
+[  1887202ms] o
+[  1887202ms] unt=0 preview=1
+[  1887687ms] [
+[  1887687ms] geyi:motion] x=617 y=623 key1=0
+[  1887687ms] revision=0
+[  1888672ms] [
+[  1888672ms] geyi:motion] x=579 y=1160 key1=
+[  1888687ms] 0
+[  1888687ms]  revision=0
+[  1888875ms] [
+[  1888875ms] geyi:tilt] x=533 y=1733 dir=2 c
+[  1888875ms] o
+[  1888875ms] unt=0 preview=1
+[  1889687ms] [
+[  1889687ms] geyi:motion] x=1138 y=978 key1=
+[  1889687ms] 0
+[  1889687ms]  revision=0
+[  1890672ms] [
+[  1890672ms] geyi:motion] x=384 y=69 key1=0 
+[  1890687ms] r
+[  1890687ms] evision=0
+[  1891672ms] [
+[  1891672ms] geyi:motion] x=-528 y=-1646 key
+[  1891687ms] 1
+[  1891687ms] =0 revision=0
+[  1891827ms] [
+[  1891827ms] geyi:tilt] x=-641 y=-2500 dir=0
+[  1891827ms] count=1 preview=1
+[  1892468ms] [
+[  1892468ms] geyi:tilt] x=-542 y=4392 dir=2 
+[  1892468ms] c
+[  1892468ms] ount=0 preview=1
+[  1892843ms] [
+[  1892843ms] geyi:motion] x=-405 y=3521 key1
+[  1892843ms] =
+[  1892843ms] 0 revision=0
+[  1893765ms] [
+[  1893765ms] geyi:tilt] x=-402 y=1869 dir=2 
+[  1893765ms] c
+[  1893765ms] ount=0 preview=1
+[  1893937ms] [
+[  1893937ms] geyi:motion] x=-479 y=1829 key1
+[  1893937ms] =
+[  1893937ms] 0 revision=0
+[  1894937ms] [
+[  1894937ms] geyi:motion] x=-201 y=2065 key1
+[  1894937ms] =
+[  1894937ms] 0 revision=0
+[  1895937ms] [
+[  1895937ms] geyi:motion] x=36 y=2638 key1=0
+[  1895937ms] revision=0
+[  1896937ms] [
+[  1896937ms] geyi:motion] x=511 y=6260 key1=
+[  1896937ms] 0
+[  1896937ms]  revision=0
+[  1897937ms] [
+[  1897937ms] geyi:motion] x=733 y=5113 key1=
+[  1897937ms] 0
+[  1897937ms]  revision=0
+[  1898937ms] [
+[  1898937ms] geyi:motion] x=-23 y=4857 key1=
+[  1898937ms] 0
+[  1898937ms]  revision=0
+[  1899937ms] [
+[  1899937ms] geyi:motion] x=249 y=5191 key1=
+[  1899937ms] 0
+[  1899937ms]  revision=0
+[  1900937ms] [
+[  1900937ms] geyi:motion] x=-4322 y=288 key1
+[  1900937ms] =
+[  1900937ms] 0 revision=0
+[  1901937ms] [
+[  1901937ms] geyi:motion] x=-2952 y=2303 key
+[  1901937ms] 1
+[  1901937ms] =0 revision=0
+[  1902937ms] [
+[  1902937ms] geyi:motion] x=5441 y=8795 key1
+[  1902937ms] =
+[  1902937ms] 0 revision=0
+[  1903937ms] [
+[  1903937ms] geyi:motion] x=-1115 y=3185 key
+[  1903937ms] 1
+[  1903937ms] =0 revision=0
+[  1904922ms] [
+[  1904922ms] geyi:motion] x=5926 y=131 key1=
+[  1904937ms] 0
+[  1904937ms]  revision=0
+[  1905922ms] [
+[  1905922ms] geyi:motion] x=1038 y=-373 key1
+[  1905922ms] =
+[  1905937ms] 0 revision=0
+[  1906922ms] [
+[  1906922ms] geyi:motion] x=199 y=1762 key1=
+[  1906922ms] 0
+[  1906922ms]  revision=0
+[  1907922ms] [
+[  1907922ms] geyi:motion] x=404 y=2507 key1=
+[  1907922ms] 0
+[  1907922ms]  revision=0
+[  1908922ms] [
+[  1908922ms] geyi:motion] x=332 y=2668 key1=
+[  1908922ms] 0
+[  1908922ms]  revision=0
+[  1909922ms] [
+[  1909922ms] geyi:motion] x=393 y=2788 key1=
+[  1909922ms] 0
+[  1909922ms]  revision=0
+[  1910922ms] [
+[  1910922ms] geyi:motion] x=202 y=2497 key1=
+[  1910922ms] 0
+[  1910922ms]  revision=0
+[  1911922ms] [
+[  1911922ms] geyi:motion] x=61 y=2244 key1=0
+[  1911922ms] revision=0
+[  1912922ms] [
+[  1912922ms] geyi:motion] x=-79 y=1767 key1=
+[  1912922ms] 0
+[  1912922ms]  revision=0
+[  1913922ms] [
+[  1913922ms] geyi:motion] x=440 y=1459 key1=
+[  1913922ms] 0
+[  1913922ms]  revision=0
+[  1914827ms] [
+[  1914827ms] geyi:tilt] x=1068 y=1484 dir=2 
+[  1914827ms] c
+[  1914827ms] ount=0 preview=1
+[  1915000ms] [
+[  1915000ms] geyi:motion] x=1011 y=1195 key1
+[  1915000ms] =
+[  1915000ms] 0 revision=0
+[  1916000ms] [
+[  1916000ms] geyi:motion] x=390 y=647 key1=0
+[  1916000ms] revision=0
+[  1916265ms] [
+[  1916265ms] geyi:tilt] x=202 y=3348 dir=2 c
+[  1916265ms] o
+[  1916265ms] unt=0 preview=1
+[  1917000ms] [
+[  1917000ms] geyi:motion] x=296 y=4413 key1=
+[  1917000ms] 0
+[  1917000ms]  revision=0
+[  1918000ms] [
+[  1918000ms] geyi:motion] x=850 y=2155 key1=
+[  1918000ms] 0
+[  1918000ms]  revision=0
+[  1919000ms] [
+[  1919000ms] geyi:motion] x=678 y=5379 key1=
+[  1919000ms] 0
+[  1919000ms]  revision=0
+[  1920000ms] [
+[  1920000ms] geyi:motion] x=33 y=372 key1=0 
+[  1920000ms] r
+[  1920000ms] evision=0
+[  1921000ms] [
+[  1921000ms] geyi:motion] x=600 y=106 key1=0
+[  1921000ms] revision=0
+[  1921343ms] [
+[  1921343ms] geyi:tilt] x=21 y=4767 dir=2 co
+[  1921343ms] u
+[  1921343ms] nt=0 preview=1
+[  1922000ms] [
+[  1922000ms] geyi:motion] x=459 y=5729 key1=
+[  1922000ms] 0
+[  1922000ms]  revision=0
+[  1923000ms] [
+[  1923000ms] geyi:motion] x=-487 y=-1130 key
+[  1923000ms] 1
+[  1923000ms] =0 revision=0
+[  1923843ms] [
+[  1923843ms] geyi:tilt] x=2037 y=2620 dir=2 
+[  1923843ms] c
+[  1923843ms] ount=0 preview=1
+[  1924030ms] [
+[  1924030ms] geyi:motion] x=1985 y=2912 key1
+[  1924030ms] =
+[  1924030ms] 0 revision=0
+[  1925030ms] [
+[  1925030ms] geyi:motion] x=628 y=85 key1=0 
+[  1925030ms] r
+[  1925030ms] evision=0
+[  1926030ms] [
+[  1926030ms] geyi:motion] x=972 y=3432 key1=
+[  1926030ms] 0
+[  1926030ms]  revision=0
+[  1926047ms] [
+[  1926047ms] geyi:tilt] x=1059 y=3638 dir=2 
+[  1926062ms] c
+[  1926062ms] ount=0 preview=1
+[  1927030ms] [
+[  1927030ms] geyi:motion] x=1222 y=3839 key1
+[  1927030ms] =
+[  1927030ms] 0 revision=0
+[  1928030ms] [
+[  1928030ms] geyi:motion] x=1235 y=3617 key1
+[  1928030ms] =
+[  1928030ms] 0 revision=0
+[  1929030ms] [
+[  1929030ms] geyi:motion] x=2711 y=7763 key1
+[  1929030ms] =
+[  1929030ms] 0 revision=0
+[  1930030ms] [
+[  1930030ms] geyi:motion] x=-1704 y=513 key1
+[  1930030ms] =
+[  1930030ms] 0 revision=0
+[  1931030ms] [
+[  1931030ms] geyi:motion] x=4917 y=-221 key1
+[  1931030ms] =
+[  1931030ms] 0 revision=0
+[  1932030ms] [
+[  1932030ms] geyi:motion] x=2547 y=1384 key1
+[  1932030ms] =
+[  1932030ms] 0 revision=0
+[  1933030ms] [
+[  1933030ms] geyi:motion] x=3175 y=1315 key1
+[  1933030ms] =
+[  1933030ms] 0 revision=0
+[  1934030ms] [
+[  1934030ms] geyi:motion] x=859 y=1197 key1=
+[  1934030ms] 0
+[  1934030ms]  revision=0
+[  1935030ms] [
+[  1935030ms] geyi:motion] x=716 y=1773 key1=
+[  1935030ms] 0
+[  1935030ms]  revision=0
+[  1936030ms] [
+[  1936030ms] geyi:motion] x=97 y=1284 key1=0
+[  1936030ms] revision=0
+[  1936765ms] [
+[  1936765ms] geyi:tilt] x=-205 y=1071 dir=2 
+[  1936765ms] c
+[  1936765ms] ount=0 preview=1
+[  1937125ms] [
+[  1937125ms] geyi:motion] x=-487 y=787 key1=
+[  1937125ms] 0
+[  1937125ms]  revision=0
+[  1937547ms] [
+[  1937547ms] geyi:tilt] x=-106 y=1049 dir=2 
+[  1937547ms] c
+[  1937547ms] ount=0 preview=1
+[  1938125ms] [
+[  1938125ms] geyi:motion] x=1459 y=693 key1=
+[  1938125ms] 0
+[  1938125ms]  revision=0
+[  1938312ms] [
+[  1938312ms] geyi:tilt] x=2068 y=622 dir=1 c
+[  1938312ms] o
+[  1938312ms] unt=1 preview=1
+[  1939125ms] [
+[  1939125ms] geyi:motion] x=2642 y=1438 key1
+[  1939125ms] =
+[  1939125ms] 0 revision=0
+[  1940125ms] [
+[  1940125ms] geyi:motion] x=2815 y=-763 key1
+[  1940125ms] =
+[  1940125ms] 0 revision=0
+[  1941125ms] [
+[  1941125ms] geyi:motion] x=-164 y=278 key1=
+[  1941125ms] 0
+[  1941125ms]  revision=0
+[  1941672ms] [
+[  1941672ms] geyi:tilt] x=-950 y=3795 dir=2 
+[  1941672ms] c
+[  1941672ms] ount=0 preview=1
+[  1942125ms] [
+[  1942125ms] geyi:motion] x=-784 y=4581 key1
+[  1942125ms] =
+[  1942125ms] 0 revision=0
+[  1943125ms] [
+[  1943125ms] geyi:motion] x=82 y=6087 key1=0
+[  1943125ms] revision=0
+[  1944125ms] [
+[  1944125ms] geyi:motion] x=748 y=349 key1=0
+[  1944125ms] revision=0
+[  1944937ms] [
+[  1944937ms] geyi:tilt] x=544 y=6901 dir=2 c
+[  1944937ms] o
+[  1944937ms] unt=0 preview=1
+[  1945312ms] [
+[  1945312ms] geyi:motion] x=450 y=5230 key1=
+[  1945312ms] 0
+[  1945312ms]  revision=0
+[  1946312ms] [
+[  1946312ms] geyi:motion] x=-37 y=7442 key1=
+[  1946312ms] 0
+[  1946312ms]  revision=0
+[  1947312ms] [
+[  1947312ms] geyi:motion] x=437 y=4107 key1=
+[  1947312ms] 0
+[  1947312ms]  revision=0
+[  1948312ms] [
+[  1948312ms] geyi:motion] x=176 y=5243 key1=
+[  1948312ms] 0
+[  1948312ms]  revision=0
+[  1949312ms] [
+[  1949312ms] geyi:motion] x=759 y=-206 key1=
+[  1949312ms] 0
+[  1949312ms]  revision=0
+[  1949702ms] [
+[  1949702ms] geyi:tilt] x=1116 y=-458 dir=1 
+[  1949702ms] c
+[  1949702ms] ount=1 preview=1
+[  1950312ms] [
+[  1950312ms] geyi:motion] x=1941 y=754 key1=
+[  1950312ms] 0
+[  1950312ms]  revision=0
+[  1951312ms] [
+[  1951312ms] geyi:motion] x=3682 y=31 key1=0
+[  1951312ms] revision=0
+[  1952312ms] [
+[  1952312ms] geyi:motion] x=2738 y=4865 key1
+[  1952312ms] =
+[  1952312ms] 0 revision=0
+[  1953312ms] [
+[  1953312ms] geyi:motion] x=3980 y=6025 key1
+[  1953312ms] =
+[  1953312ms] 0 revision=0
+[  1954312ms] [
+[  1954312ms] geyi:motion] x=996 y=-351 key1=
+[  1954312ms] 0
+[  1954312ms]  revision=0
+[  1955172ms] [
+[  1955172ms] geyi:tilt] x=2105 y=5090 dir=2 
+[  1955172ms] c
+[  1955172ms] ount=0 preview=1
+[  1955343ms] [
+[  1955343ms] geyi:motion] x=2611 y=5572 key1
+[  1955343ms] =
+[  1955343ms] 0 revision=0
+[  1956343ms] [
+[  1956343ms] geyi:motion] x=502 y=422 key1=0
+[  1956343ms] revision=0
+[  1957343ms] [
+[  1957343ms] geyi:motion] x=1680 y=2869 key1
+[  1957343ms] =
+[  1957343ms] 0 revision=0
+[  1957530ms] [
+[  1957530ms] geyi:tilt] x=1635 y=4636 dir=2 
+[  1957530ms] c
+[  1957530ms] ount=0 preview=1
+[  1958343ms] [
+[  1958358ms] geyi:motion] x=1227 y=4626 key1
+[  1958358ms] =
+[  1958358ms] 0 revision=0
+[  1959343ms] [
+[  1959343ms] geyi:motion] x=6016 y=7760 key1
+[  1959358ms] =
+[  1959358ms] 0 revision=0
+[  1960343ms] [
+[  1960343ms] geyi:motion] x=1192 y=2531 key1
+[  1960343ms] =
+[  1960343ms] 0 revision=0
+[  1961343ms] [
+[  1961343ms] geyi:motion] x=394 y=6076 key1=
+[  1961343ms] 0
+[  1961343ms]  revision=0
+[  1962343ms] [
+[  1962343ms] geyi:motion] x=-174 y=2805 key1
+[  1962343ms] =
+[  1962343ms] 0 revision=0
+[  1963343ms] [
+[  1963343ms] geyi:motion] x=173 y=4080 key1=
+[  1963343ms] 0
+[  1963343ms]  revision=0
+[  1964343ms] [
+[  1964343ms] geyi:motion] x=1536 y=4126 key1
+[  1964343ms] =
+[  1964343ms] 0 revision=0
+[  1965343ms] [
+[  1965343ms] geyi:motion] x=4033 y=5721 key1
+[  1965343ms] =
+[  1965343ms] 0 revision=0
+[  1966343ms] [
+[  1966343ms] geyi:motion] x=966 y=902 key1=0
+[  1966343ms] revision=0
+[  1966608ms] [
+[  1966608ms] geyi:tilt] x=101 y=4975 dir=2 c
+[  1966608ms] o
+[  1966608ms] unt=0 preview=1
+[  1967343ms] [
+[  1967343ms] geyi:motion] x=278 y=6466 key1=
+[  1967343ms] 0
+[  1967343ms]  revision=0
+[  1968343ms] [
+[  1968343ms] geyi:motion] x=-360 y=8643 key1
+[  1968343ms] =
+[  1968343ms] 0 revision=0
+[  1969343ms] [
+[  1969343ms] geyi:motion] x=136 y=-40 key1=0
+[  1969343ms] revision=0
+[  1969672ms] [
+[  1969672ms] geyi:tilt] x=-113 y=5314 dir=2 
+[  1969672ms] c
+[  1969672ms] ount=0 preview=1
+[  1970343ms] [
+[  1970343ms] geyi:motion] x=-107 y=6307 key1
+[  1970343ms] =
+[  1970343ms] 0 revision=0
+[  1971343ms] [
+[  1971343ms] geyi:motion] x=623 y=100 key1=0
+[  1971343ms] revision=0
+[  1971797ms] [
+[  1971797ms] geyi:tilt] x=-89 y=4303 dir=2 c
+[  1971797ms] o
+[  1971797ms] unt=0 preview=1
+[  1972343ms] [
+[  1972343ms] geyi:motion] x=-102 y=5421 key1
+[  1972343ms] =
+[  1972343ms] 0 revision=0
+[  1973343ms] [
+[  1973343ms] geyi:motion] x=-809 y=5968 key1
+[  1973343ms] =
+[  1973343ms] 0 revision=0
+[  1974343ms] [
+[  1974343ms] geyi:motion] x=372 y=-45 key1=0
+[  1974343ms] revision=0
+[  1974922ms] [
+[  1974922ms] geyi:tilt] x=-59 y=4239 dir=2 c
+[  1974922ms] o
+[  1974922ms] unt=0 preview=1
+[  1975343ms] [
+[  1975343ms] geyi:motion] x=-229 y=4872 key1
+[  1975343ms] =
+[  1975343ms] 0 revision=0
+[  1976343ms] [
+[  1976343ms] geyi:motion] x=395 y=762 key1=0
+[  1976343ms] revision=0
+[  1977015ms] [
+[  1977015ms] geyi:tilt] x=-153 y=4182 dir=2 
+[  1977015ms] c
+[  1977015ms] ount=0 preview=1
+[  1977375ms] [
+[  1977375ms] geyi:motion] x=-146 y=4719 key1
+[  1977375ms] =
+[  1977375ms] 0 revision=0
+[  1978375ms] [
+[  1978375ms] geyi:motion] x=407 y=227 key1=0
+[  1978375ms] revision=0
+[  1978812ms] [
+[  1978812ms] geyi:tilt] x=-110 y=4402 dir=2 
+[  1978812ms] c
+[  1978812ms] ount=0 preview=1
+[  1979375ms] [
+[  1979375ms] geyi:motion] x=-345 y=4873 key1
+[  1979375ms] =
+[  1979375ms] 0 revision=0
+[  1980375ms] [
+[  1980375ms] geyi:motion] x=15 y=4300 key1=0
+[  1980375ms] revision=0
+[  1981375ms] [
+[  1981375ms] geyi:motion] x=386 y=908 key1=0
+[  1981375ms] revision=0
+[  1981733ms] [
+[  1981733ms] geyi:tilt] x=232 y=-1433 dir=0 
+[  1981733ms] c
+[  1981733ms] ount=1 preview=1
+[  1982375ms] [
+[  1982375ms] geyi:motion] x=-248 y=4931 key1
+[  1982375ms] =
+[  1982375ms] 0 revision=0
+[  1983375ms] [
+[  1983375ms] geyi:motion] x=492 y=606 key1=0
+[  1983375ms] revision=0
+[  1984375ms] [
+[  1984375ms] geyi:motion] x=1008 y=1902 key1
+[  1984375ms] =
+[  1984375ms] 0 revision=0
+[  1985375ms] [
+[  1985375ms] geyi:motion] x=5585 y=480 key1=
+[  1985375ms] 0
+[  1985375ms]  revision=0
+[  1986047ms] [
+[  1986047ms] geyi:tilt] x=579 y=2175 dir=2 c
+[  1986047ms] o
+[  1986047ms] unt=0 preview=1
+[  1986422ms] [
+[  1986422ms] geyi:motion] x=3895 y=1090 key1
+[  1986422ms] =
+[  1986422ms] 0 revision=0
+[  1987422ms] [
+[  1987422ms] geyi:motion] x=5737 y=1030 key1
+[  1987422ms] =
+[  1987422ms] 0 revision=0
+[  1988422ms] [
+[  1988422ms] geyi:motion] x=6947 y=149 key1=
+[  1988422ms] 0
+[  1988422ms]  revision=0
+[  1989422ms] [
+[  1989422ms] geyi:motion] x=83 y=1938 key1=0
+[  1989422ms] revision=0
+[  1990375ms] [
+[  1990375ms] geyi:tilt] x=6882 y=340 dir=1 c
+[  1990375ms] o
+[  1990375ms] unt=2 preview=1
+[  1990562ms] [
+[  1990562ms] geyi:motion] x=6852 y=284 key1=
+[  1990562ms] 0
+[  1990562ms]  revision=0
+[  1991562ms] [
+[  1991562ms] geyi:tilt] x=6536 y=-150 dir=1 
+[  1991562ms] c
+[  1991562ms] ount=2 preview=1
+[  1991750ms] [
+[  1991750ms] geyi:motion] x=6644 y=-164 key1
+[  1991750ms] =
+[  1991750ms] 0 revision=0
+[  1992750ms] [
+[  1992750ms] geyi:motion] x=6078 y=-279 key1
+[  1992750ms] =
+[  1992750ms] 0 revision=0
+[  1993750ms] [
+[  1993750ms] geyi:motion] x=4820 y=-645 key1
+[  1993750ms] =
+[  1993750ms] 0 revision=0
+[  1994750ms] [
+[  1994750ms] geyi:motion] x=4047 y=-161 key1
+[  1994750ms] =
+[  1994750ms] 0 revision=0
+[  1995750ms] [
+[  1995750ms] geyi:motion] x=8603 y=-251 key1
+[  1995750ms] =
+[  1995750ms] 0 revision=0
+[  1996750ms] [
+[  1996750ms] geyi:motion] x=-865 y=-110 key1
+[  1996750ms] =
+[  1996750ms] 0 revision=0
+[  1997172ms] [
+[  1997172ms] geyi:tilt] x=8243 y=-1618 dir=1
+[  1997172ms] count=2 preview=1
+[  1997750ms] [
+[  1997750ms] geyi:motion] x=8201 y=-1410 key
+[  1997750ms] 1
+[  1997750ms] =0 revision=0
+[  1998750ms] [
+[  1998750ms] geyi:motion] x=-367 y=203 key1=
+[  1998750ms] 0
+[  1998750ms]  revision=0
+[  1999202ms] [
+[  1999202ms] geyi:tilt] x=8436 y=-877 dir=1 
+[  1999202ms] c
+[  1999202ms] ount=2 preview=1
+[  1999750ms] [
+[  1999750ms] geyi:motion] x=8159 y=-792 key1
+[  1999750ms] =
+[  1999750ms] 0 revision=0
+[  2000672ms] [
+[  2000672ms] geyi:tilt] x=824 y=1682 dir=2 c
+[  2000672ms] o
+[  2000672ms] unt=0 preview=1
+[  2000858ms] [
+[  2000858ms] geyi:motion] x=509 y=1687 key1=
+[  2000858ms] 0
+[  2000858ms]  revision=0
+[  2001968ms] [
+[  2001968ms] geyi:motion] x=521 y=1695 key1=
+[  2001968ms] 0
+[  2001968ms]  revision=0
+[  2002968ms] [
+[  2002968ms] geyi:motion] x=1395 y=2577 key1
+[  2002968ms] =
+[  2002968ms] 0 revision=0
+[  2003047ms] [
+[  2003047ms] geyi:light] event=1
+[  2004343ms] [
+[  2004343ms] geyi:light] event=1
+[  2036452ms] [
+[  2036452ms] geyi:light] event=1
+[  2037937ms] [
+[  2037937ms] geyi:light] event=1
+[  2037937ms] [
+[  2037937ms] geyi:motion] x=998 y=1254 key1=
+[  2037937ms] 0
+[  2037937ms]  revision=0
+[  2038937ms] [
+[  2038937ms] geyi:motion] x=886 y=1202 key1=
+[  2038937ms] 0
+[  2038937ms]  revision=0
+[  2039937ms] [
+[  2039937ms] geyi:motion] x=778 y=-746 key1=
+[  2039937ms] 0
+[  2039937ms]  revision=0
+[  2040390ms] [
+[  2040390ms] geyi:tilt] x=-39 y=-4445 dir=0 
+[  2040390ms] c
+[  2040390ms] ount=2 preview=1
+[  2040937ms] [
+[  2040937ms] geyi:motion] x=698 y=3734 key1=
+[  2040937ms] 0
+[  2040937ms]  revision=0
+[  2041937ms] [
+[  2041937ms] geyi:motion] x=375 y=2482 key1=
+[  2041937ms] 0
+[  2041937ms]  revision=0
+[  2042937ms] [
+[  2042937ms] geyi:motion] x=536 y=1515 key1=
+[  2042937ms] 0
+[  2042937ms]  revision=0
+[  2043937ms] [
+[  2043937ms] geyi:motion] x=1432 y=229 key1=
+[  2043937ms] 0
+[  2043937ms]  revision=0
+[  2044000ms] [
+[  2044000ms] geyi:tilt] x=1520 y=32 dir=1 co
+[  2044000ms] u
+[  2044000ms] nt=1 preview=1
+[  2044937ms] [
+[  2044937ms] geyi:motion] x=1829 y=339 key1=
+[  2044937ms] 0
+[  2044937ms]  revision=0
+[  2045937ms] [
+[  2045937ms] geyi:motion] x=93 y=693 key1=0 
+[  2045937ms] r
+[  2045937ms] evision=0
+[  2046672ms] [
+[  2046672ms] geyi:tilt] x=-1414 y=2371 dir=2
+[  2046672ms] count=0 preview=1
+[  2046968ms] [
+[  2046968ms] geyi:motion] x=-1390 y=3149 key
+[  2046968ms] 1
+[  2046968ms] =0 revision=0
+[  2047968ms] [
+[  2047968ms] geyi:motion] x=1085 y=2137 key1
+[  2047968ms] =
+[  2047968ms] 0 revision=0
+[  2048968ms] [
+[  2048968ms] geyi:motion] x=944 y=4028 key1=
+[  2048968ms] 0
+[  2048968ms]  revision=0
+[  2049968ms] [
+[  2049968ms] geyi:motion] x=1067 y=3752 key1
+[  2049968ms] =
+[  2049968ms] 0 revision=0
+[  2050952ms] [
+[  2050952ms] geyi:motion] x=1276 y=469 key1=
+[  2050968ms] 0
+[  2050968ms]  revision=0
+[  2051952ms] [
+[  2051952ms] geyi:motion] x=1251 y=4757 key1
+[  2051952ms] =
+[  2051952ms] 0 revision=0
+[  2052952ms] [
+[  2052952ms] geyi:motion] x=3863 y=-499 key1
+[  2052952ms] =
+[  2052952ms] 0 revision=0
+[  2053952ms] [
+[  2053952ms] geyi:motion] x=1746 y=-733 key1
+[  2053952ms] =
+[  2053952ms] 0 revision=0
+[  2054952ms] [
+[  2054952ms] geyi:motion] x=1903 y=-1655 key
+[  2054952ms] 1
+[  2054952ms] =0 revision=0
+[  2055952ms] [
+[  2055952ms] geyi:motion] x=316 y=3065 key1=
+[  2055952ms] 0
+[  2055952ms]  revision=0
+[  2056077ms] [
+[  2056077ms] geyi:tilt] x=47 y=4679 dir=2 co
+[  2056093ms] u
+[  2056093ms] nt=0 preview=1
+[  2056952ms] [
+[  2056952ms] geyi:motion] x=1136 y=1929 key1
+[  2056952ms] =
+[  2056952ms] 0 revision=0
+[  2057952ms] [
+[  2057952ms] geyi:motion] x=-3661 y=7811 key
+[  2057952ms] 1
+[  2057952ms] =0 revision=0
+[  2058625ms] [
+[  2058625ms] geyi:tilt] x=1745 y=-3011 dir=0
+[  2058625ms] count=1 preview=1
+[  2058952ms] [
+[  2058952ms] geyi:motion] x=1864 y=-2871 key
+[  2058952ms] 1
+[  2058952ms] =0 revision=0
+[  2059952ms] [
+[  2059952ms] geyi:motion] x=-261 y=6811 key1
+[  2059952ms] =
+[  2059952ms] 0 revision=0
+[  2060952ms] [
+[  2060952ms] geyi:motion] x=-1772 y=6089 key
+[  2060952ms] 1
+[  2060952ms] =0 revision=0
+[  2061952ms] [
+[  2061952ms] geyi:motion] x=-2059 y=2059 key
+[  2061952ms] 1
+[  2061952ms] =0 revision=0
+[  2062952ms] [
+[  2062952ms] geyi:motion] x=-2103 y=385 key1
+[  2062952ms] =
+[  2062952ms] 0 revision=0
+[  2063952ms] [
+[  2063952ms] geyi:motion] x=-2083 y=326 key1
+[  2063952ms] =
+[  2063952ms] 0 revision=0
+[  2064952ms] [
+[  2064952ms] geyi:motion] x=-2316 y=354 key1
+[  2064952ms] =
+[  2064952ms] 0 revision=0
+[  2065952ms] [
+[  2065952ms] geyi:motion] x=-2108 y=353 key1
+[  2065952ms] =
+[  2065952ms] 0 revision=0
+[  2066952ms] [
+[  2066952ms] geyi:motion] x=-1999 y=317 key1
+[  2066952ms] =
+[  2066952ms] 0 revision=0
+[  2067952ms] [
+[  2067952ms] geyi:motion] x=-1956 y=318 key1
+[  2067952ms] =
+[  2067952ms] 0 revision=0
+[  2068952ms] [
+[  2068952ms] geyi:motion] x=-1758 y=285 key1
+[  2068952ms] =
+[  2068952ms] 0 revision=0
+[  2069952ms] [
+[  2069952ms] geyi:motion] x=-1486 y=229 key1
+[  2069952ms] =
+[  2069952ms] 0 revision=0
+[  2070952ms] [
+[  2070952ms] geyi:motion] x=-1504 y=244 key1
+[  2070952ms] =
+[  2070952ms] 0 revision=0
+[  2071952ms] [
+[  2071952ms] geyi:motion] x=-1488 y=236 key1
+[  2071952ms] =
+[  2071952ms] 0 revision=0
+[  2072952ms] [
+[  2072952ms] geyi:motion] x=-1468 y=239 key1
+[  2072952ms] =
+[  2072952ms] 0 revision=0
+[  2073952ms] [
+[  2073952ms] geyi:motion] x=-1450 y=235 key1
+[  2073952ms] =
+[  2073952ms] 0 revision=0
+[  2074952ms] [
+[  2074952ms] geyi:motion] x=-1323 y=214 key1
+[  2074952ms] =
+[  2074952ms] 0 revision=0
+[  2075952ms] [
+[  2075952ms] geyi:motion] x=-1297 y=210 key1
+[  2075952ms] =
+[  2075952ms] 0 revision=0
+[  2076952ms] [
+[  2076952ms] geyi:motion] x=-1261 y=207 key1
+[  2076952ms] =
+[  2076952ms] 0 revision=0
+[  2077952ms] [
+[  2077952ms] geyi:motion] x=-1289 y=170 key1
+[  2077952ms] =
+[  2077952ms] 0 revision=0
+[  2078952ms] [
+[  2078952ms] geyi:motion] x=-1211 y=195 key1
+[  2078952ms] =
+[  2078952ms] 0 revision=0
+[  2079952ms] [
+[  2079952ms] geyi:motion] x=-1199 y=193 key1
+[  2079952ms] =
+[  2079952ms] 0 revision=0
+[  2080937ms] [
+[  2080937ms] geyi:motion] x=-1179 y=198 key1
+[  2080952ms] =
+[  2080952ms] 0 revision=0
+[  2081937ms] [
+[  2081937ms] geyi:motion] x=-1172 y=191 key1
+[  2081952ms] =
+[  2081952ms] 0 revision=0
+[  2082937ms] [
+[  2082937ms] geyi:motion] x=-1158 y=189 key1
+[  2082952ms] =
+[  2082952ms] 0 revision=0
+[  2083937ms] [
+[  2083937ms] geyi:motion] x=-1040 y=172 key1
+[  2083937ms] =
+[  2083937ms] 0 revision=0
+[  2084937ms] [
+[  2084937ms] geyi:motion] x=-981 y=162 key1=
+[  2084937ms] 0
+[  2084937ms]  revision=0
+[  2085937ms] [
+[  2085937ms] geyi:motion] x=-971 y=163 key1=
+[  2085937ms] 0
+[  2085937ms]  revision=0
+[  2086937ms] [
+[  2086937ms] geyi:motion] x=-964 y=161 key1=
+[  2086937ms] 0
+[  2086937ms]  revision=0
+[  2087937ms] [
+[  2087937ms] geyi:motion] x=-960 y=160 key1=
+[  2087937ms] 0
+[  2087937ms]  revision=0
+[  2088937ms] [
+[  2088937ms] geyi:motion] x=-961 y=161 key1=
+[  2088937ms] 0
+[  2088937ms]  revision=0
+[  2089937ms] [
+[  2089937ms] geyi:motion] x=-957 y=160 key1=
+[  2089937ms] 0
+[  2089937ms]  revision=0
+[  2090937ms] [
+[  2090937ms] geyi:motion] x=-955 y=161 key1=
+[  2090937ms] 0
+[  2090937ms]  revision=0
+[  2091937ms] [
+[  2091937ms] geyi:motion] x=-804 y=135 key1=
+[  2091937ms] 0
+[  2091937ms]  revision=0
+[  2092937ms] [
+[  2092937ms] geyi:motion] x=-866 y=130 key1=
+[  2092937ms] 0
+[  2092937ms]  revision=0
+[  2093937ms] [
+[  2093937ms] geyi:motion] x=-769 y=142 key1=
+[  2093937ms] 0
+[  2093937ms]  revision=0
+[  2094937ms] [
+[  2094937ms] geyi:motion] x=-433 y=217 key1=
+[  2094937ms] 0
+[  2094937ms]  revision=0
+[  2095937ms] [
+[  2095937ms] geyi:motion] x=-347 y=66 key1=0
+[  2095937ms] revision=0
+[  2096937ms] [
+[  2096937ms] geyi:motion] x=-288 y=61 key1=0
+[  2096937ms] revision=0
+[  2097937ms] [
+[  2097937ms] geyi:motion] x=-244 y=49 key1=0
+[  2097937ms] revision=0
+[  2098937ms] [
+[  2098937ms] geyi:motion] x=-202 y=47 key1=0
+[  2098937ms] revision=0
+[  2099937ms] [
+[  2099937ms] geyi:motion] x=-172 y=39 key1=0
+[  2099937ms] revision=0
+[  2100937ms] [
+[  2100937ms] geyi:motion] x=-148 y=35 key1=0
+[  2100937ms] revision=0
+[  2101937ms] [
+[  2101937ms] geyi:motion] x=-93 y=35 key1=0 
+[  2101937ms] r
+[  2101937ms] evision=0
+[  2102922ms] [
+[  2102922ms] geyi:motion] x=-55 y=27 key1=0 
+[  2102937ms] r
+[  2102937ms] evision=0
+[  2103922ms] [
+[  2103922ms] geyi:motion] x=-24 y=23 key1=0 
+[  2103922ms] r
+[  2103937ms] evision=0
+[  2104922ms] [
+[  2104922ms] geyi:motion] x=-12 y=22 key1=0 
+[  2104922ms] r
+[  2104922ms] evision=0
+[  2105922ms] [
+[  2105922ms] geyi:motion] x=3 y=22 key1=0 re
+[  2105922ms] v
+[  2105922ms] ision=0
+[  2106922ms] [
+[  2106922ms] geyi:motion] x=19 y=21 key1=0 r
+[  2106922ms] e
+[  2106922ms] vision=0
+[  2107922ms] [
+[  2107922ms] geyi:motion] x=39 y=19 key1=0 r
+[  2107922ms] e
+[  2107922ms] vision=0
+[  2108922ms] [
+[  2108922ms] geyi:motion] x=52 y=11 key1=0 r
+[  2108922ms] e
+[  2108922ms] vision=0
+[  2109922ms] [
+[  2109922ms] geyi:motion] x=65 y=12 key1=0 r
+[  2109922ms] e
+[  2109922ms] vision=0
+[  2110922ms] [
+[  2110922ms] geyi:motion] x=75 y=11 key1=0 r
+[  2110922ms] e
+[  2110922ms] vision=0
+[  2111922ms] [
+[  2111922ms] geyi:motion] x=92 y=8 key1=0 re
+[  2111922ms] v
+[  2111922ms] ision=0
+[  2112922ms] [
+[  2112922ms] geyi:motion] x=104 y=7 key1=0 r
+[  2112922ms] e
+[  2112922ms] vision=0
+[  2113922ms] [
+[  2113922ms] geyi:motion] x=118 y=5 key1=0 r
+[  2113922ms] e
+[  2113922ms] vision=0
+[  2114922ms] [
+[  2114922ms] geyi:motion] x=119 y=8 key1=0 r
+[  2114922ms] e
+[  2114922ms] vision=0
+[  2115922ms] [
+[  2115922ms] geyi:motion] x=123 y=10 key1=0 
+[  2115922ms] r
+[  2115922ms] evision=0
+[  2116922ms] [
+[  2116922ms] geyi:motion] x=118 y=9 key1=0 r
+[  2116922ms] e
+[  2116922ms] vision=0
+[  2117922ms] [
+[  2117922ms] geyi:motion] x=118 y=10 key1=0 
+[  2117922ms] r
+[  2117922ms] evision=0
+[  2118922ms] [
+[  2118922ms] geyi:motion] x=119 y=9 key1=0 r
+[  2118922ms] e
+[  2118922ms] vision=0
+[  2119905ms] [
+[  2119905ms] geyi:motion] x=112 y=7 key1=0 r
+[  2119922ms] e
+[  2119922ms] vision=0
+[  2120905ms] [
+[  2120905ms] geyi:motion] x=118 y=8 key1=0 r
+[  2120905ms] e
+[  2120905ms] vision=0
+[  2121905ms] [
+[  2121905ms] geyi:motion] x=118 y=9 key1=0 r
+[  2121905ms] e
+[  2121905ms] vision=0
+[  2122905ms] [
+[  2122905ms] geyi:motion] x=119 y=7 key1=0 r
+[  2122905ms] e
+[  2122905ms] vision=0
+[  2123905ms] [
+[  2123905ms] geyi:motion] x=119 y=6 key1=0 r
+[  2123905ms] e
+[  2123905ms] vision=0
+[  2124905ms] [
+[  2124905ms] geyi:motion] x=114 y=4 key1=0 r
+[  2124905ms] e
+[  2124905ms] vision=0
+[  2125905ms] [
+[  2125905ms] geyi:motion] x=119 y=7 key1=0 r
+[  2125905ms] e
+[  2125905ms] vision=0
+[  2126905ms] [
+[  2126905ms] geyi:motion] x=118 y=10 key1=0 
+[  2126905ms] r
+[  2126905ms] evision=0
+[  2127905ms] [
+[  2127905ms] geyi:motion] x=116 y=9 key1=0 r
+[  2127905ms] e
+[  2127905ms] vision=0
+[  2128905ms] [
+[  2128905ms] geyi:motion] x=118 y=7 key1=0 r
+[  2128905ms] e
+[  2128905ms] vision=0
+[  2129905ms] [
+[  2129905ms] geyi:motion] x=118 y=8 key1=0 r
+[  2129905ms] e
+[  2129905ms] vision=0
+[  2130905ms] [
+[  2130905ms] geyi:motion] x=118 y=7 key1=0 r
+[  2130905ms] e
+[  2130905ms] vision=0
+[  2131905ms] [
+[  2131905ms] geyi:motion] x=120 y=8 key1=0 r
+[  2131905ms] e
+[  2131905ms] vision=0
+[  2132890ms] [
+[  2132905ms] geyi:motion] x=121 y=9 key1=0 r
+[  2132905ms] e
+[  2132905ms] vision=0
+[  2133890ms] [
+[  2133905ms] geyi:motion] x=121 y=7 key1=0 r
+[  2133905ms] e
+[  2133905ms] vision=0
+[  2134890ms] [
+[  2134890ms] geyi:motion] x=124 y=16 key1=0 
+[  2134890ms] r
+[  2134890ms] evision=0
+[  2135890ms] [
+[  2135890ms] geyi:motion] x=119 y=9 key1=0 r
+[  2135890ms] e
+[  2135890ms] vision=0
+[  2136890ms] [
+[  2136890ms] geyi:motion] x=120 y=10 key1=0 
+[  2136890ms] r
+[  2136890ms] evision=0
+[  2137890ms] [
+[  2137890ms] geyi:motion] x=119 y=12 key1=0 
+[  2137890ms] r
+[  2137890ms] evision=0
+[  2138890ms] [
+[  2138890ms] geyi:motion] x=120 y=5 key1=0 r
+[  2138890ms] e
+[  2138890ms] vision=0
+[  2139890ms] [
+[  2139890ms] geyi:motion] x=120 y=8 key1=0 r
+[  2139890ms] e
+[  2139890ms] vision=0
+[  2140890ms] [
+[  2140890ms] geyi:motion] x=121 y=11 key1=0 
+[  2140890ms] r
+[  2140890ms] evision=0
+[  2141890ms] [
+[  2141890ms] geyi:motion] x=118 y=8 key1=0 r
+[  2141890ms] e
+[  2141890ms] vision=0
+[  2142890ms] [
+[  2142890ms] geyi:motion] x=121 y=11 key1=0 
+[  2142890ms] r
+[  2142890ms] evision=0
+[  2143890ms] [
+[  2143890ms] geyi:motion] x=118 y=10 key1=0 
+[  2143890ms] r
+[  2143890ms] evision=0
+[  2144890ms] [
+[  2144890ms] geyi:motion] x=120 y=9 key1=0 r
+[  2144890ms] e
+[  2144890ms] vision=0
+[  2145890ms] [
+[  2145890ms] geyi:motion] x=121 y=9 key1=0 r
+[  2145890ms] e
+[  2145890ms] vision=0
+[  2146890ms] [
+[  2146890ms] geyi:motion] x=118 y=8 key1=0 r
+[  2146890ms] e
+[  2146890ms] vision=0
+[  2147875ms] [
+[  2147875ms] geyi:motion] x=119 y=10 key1=0 
+[  2147890ms] r
+[  2147890ms] evision=0
+[  2148875ms] [
+[  2148875ms] geyi:motion] x=118 y=6 key1=0 r
+[  2148875ms] e
+[  2148890ms] vision=0
+[  2149875ms] [
+[  2149875ms] geyi:motion] x=117 y=9 key1=0 r
+[  2149875ms] e
+[  2149875ms] vision=0
+[  2150875ms] [
+[  2150875ms] geyi:motion] x=119 y=9 key1=0 r
+[  2150875ms] e
+[  2150875ms] vision=0
+[  2151875ms] [
+[  2151875ms] geyi:motion] x=119 y=9 key1=0 r
+[  2151875ms] e
+[  2151875ms] vision=0
+[  2152875ms] [
+[  2152875ms] geyi:motion] x=127 y=16 key1=0 
+[  2152875ms] r
+[  2152875ms] evision=0
+[  2153875ms] [
+[  2153875ms] geyi:motion] x=122 y=11 key1=0 
+[  2153875ms] r
+[  2153875ms] evision=0
+[  2154875ms] [
+[  2154875ms] geyi:motion] x=117 y=7 key1=0 r
+[  2154875ms] e
+[  2154875ms] vision=0
+[  2155875ms] [
+[  2155875ms] geyi:motion] x=119 y=8 key1=0 r
+[  2155875ms] e
+[  2155875ms] vision=0
+[  2156875ms] [
+[  2156875ms] geyi:motion] x=133 y=23 key1=0 
+[  2156875ms] r
+[  2156875ms] evision=0
+[  2157875ms] [
+[  2157875ms] geyi:motion] x=135 y=25 key1=0 
+[  2157875ms] r
+[  2157875ms] evision=0
+[  2158875ms] [
+[  2158875ms] geyi:motion] x=134 y=23 key1=0 
+[  2158875ms] r
+[  2158875ms] evision=0
+[  2159875ms] [
+[  2159875ms] geyi:motion] x=134 y=24 key1=0 
+[  2159875ms] r
+[  2159875ms] evision=0
+[  2160875ms] [
+[  2160875ms] geyi:motion] x=134 y=24 key1=0 
+[  2160875ms] r
+[  2160875ms] evision=0
+[  2161875ms] [
+[  2161875ms] geyi:motion] x=135 y=24 key1=0 
+[  2161875ms] r
+[  2161875ms] evision=0
+[  2162875ms] [
+[  2162875ms] geyi:motion] x=134 y=24 key1=0 
+[  2162875ms] r
+[  2162875ms] evision=0
+[  2163875ms] [
+[  2163875ms] geyi:motion] x=133 y=20 key1=0 
+[  2163875ms] r
+[  2163875ms] evision=0
+[  2164875ms] [
+[  2164875ms] geyi:motion] x=136 y=23 key1=0 
+[  2164875ms] r
+[  2164875ms] evision=0
+[  2165858ms] [
+[  2165858ms] geyi:motion] x=133 y=24 key1=0 
+[  2165875ms] r
+[  2165875ms] evision=0
+[  2166858ms] [
+[  2166858ms] geyi:motion] x=135 y=25 key1=0 
+[  2166858ms] r
+[  2166858ms] evision=0
+[  2167858ms] [
+[  2167858ms] geyi:motion] x=138 y=28 key1=0 
+[  2167858ms] r
+[  2167858ms] evision=0
+[  2168858ms] [
+[  2168858ms] geyi:motion] x=134 y=23 key1=0 
+[  2168858ms] r
+[  2168858ms] evision=0
+[  2169858ms] [
+[  2169858ms] geyi:motion] x=134 y=23 key1=0 
+[  2169858ms] r
+[  2169858ms] evision=0
+[  2170858ms] [
+[  2170858ms] geyi:motion] x=113 y=10 key1=0 
+[  2170858ms] r
+[  2170858ms] evision=0
+[  2171858ms] [
+[  2171858ms] geyi:motion] x=118 y=8 key1=0 r
+[  2171858ms] e
+[  2171858ms] vision=0
+[  2172858ms] [
+[  2172858ms] geyi:motion] x=118 y=11 key1=0 
+[  2172858ms] r
+[  2172858ms] evision=0
+[  2173858ms] [
+[  2173858ms] geyi:motion] x=116 y=8 key1=0 r
+[  2173858ms] e
+[  2173858ms] vision=0
+[  2174858ms] [
+[  2174858ms] geyi:motion] x=118 y=8 key1=0 r
+[  2174858ms] e
+[  2174858ms] vision=0
+[  2175858ms] [
+[  2175858ms] geyi:motion] x=115 y=9 key1=0 r
+[  2175858ms] e
+[  2175858ms] vision=0
+[  2176858ms] [
+[  2176858ms] geyi:motion] x=117 y=10 key1=0 
+[  2176858ms] r
+[  2176858ms] evision=0
+[  2177858ms] [
+[  2177858ms] geyi:motion] x=117 y=8 key1=0 r
+[  2177858ms] e
+[  2177858ms] vision=0
+[  2178858ms] [
+[  2178858ms] geyi:motion] x=119 y=9 key1=0 r
+[  2178858ms] e
+[  2178858ms] vision=0
+[  2179858ms] [
+[  2179858ms] geyi:motion] x=119 y=11 key1=0 
+[  2179858ms] r
+[  2179858ms] evision=0
+[  2180858ms] [
+[  2180858ms] geyi:motion] x=117 y=8 key1=0 r
+[  2180858ms] e
+[  2180858ms] vision=0
+[  2181858ms] [
+[  2181858ms] geyi:motion] x=133 y=26 key1=0 
+[  2181858ms] r
+[  2181858ms] evision=0
+[  2182858ms] [
+[  2182858ms] geyi:motion] x=116 y=6 key1=0 r
+[  2182858ms] e
+[  2182858ms] vision=0
+[  2183858ms] [
+[  2183858ms] geyi:motion] x=117 y=13 key1=0 
+[  2183858ms] r
+[  2183858ms] evision=0
+[  2184858ms] [
+[  2184858ms] geyi:motion] x=133 y=25 key1=0 
+[  2184858ms] r
+[  2184858ms] evision=0
+[  2185858ms] [
+[  2185858ms] geyi:motion] x=116 y=11 key1=0 
+[  2185858ms] r
+[  2185858ms] evision=0
+[  2186858ms] [
+[  2186858ms] geyi:motion] x=132 y=21 key1=0 
+[  2186858ms] r
+[  2186858ms] evision=0
+[  2187843ms] [
+[  2187858ms] geyi:motion] x=136 y=25 key1=0 
+[  2187858ms] r
+[  2187858ms] evision=0
+[  2188843ms] [
+[  2188843ms] geyi:motion] x=132 y=25 key1=0 
+[  2188858ms] r
+[  2188858ms] evision=0
+[  2189843ms] [
+[  2189843ms] geyi:motion] x=133 y=21 key1=0 
+[  2189843ms] r
+[  2189843ms] evision=0
+[  2190843ms] [
+[  2190843ms] geyi:motion] x=134 y=24 key1=0 
+[  2190843ms] r
+[  2190843ms] evision=0
+[  2191843ms] [
+[  2191843ms] geyi:motion] x=118 y=11 key1=0 
+[  2191843ms] r
+[  2191843ms] evision=0
+[  2192843ms] [
+[  2192843ms] geyi:motion] x=116 y=9 key1=0 r
+[  2192843ms] e
+[  2192843ms] vision=0
+[  2193843ms] [
+[  2193843ms] geyi:motion] x=134 y=25 key1=0 
+[  2193843ms] r
+[  2193843ms] evision=0
+[  2194843ms] [
+[  2194843ms] geyi:motion] x=134 y=24 key1=0 
+[  2194843ms] r
+[  2194843ms] evision=0
+[  2195843ms] [
+[  2195843ms] geyi:motion] x=183 y=37 key1=0 
+[  2195843ms] r
+[  2195843ms] evision=0
+[  2196843ms] [
+[  2196843ms] geyi:motion] x=144 y=27 key1=0 
+[  2196843ms] r
+[  2196843ms] evision=0
+[  2197843ms] [
+[  2197843ms] geyi:motion] x=139 y=26 key1=0 
+[  2197843ms] r
+[  2197843ms] evision=0
+[  2198843ms] [
+[  2198843ms] geyi:motion] x=118 y=10 key1=0 
+[  2198843ms] r
+[  2198843ms] evision=0
+[  2199843ms] [
+[  2199843ms] geyi:motion] x=118 y=8 key1=0 r
+[  2199843ms] e
+[  2199843ms] vision=0
+[  2200843ms] [
+[  2200843ms] geyi:motion] x=137 y=27 key1=0 
+[  2200843ms] r
+[  2200843ms] evision=0
+[  2201843ms] [
+[  2201843ms] geyi:motion] x=138 y=26 key1=0 
+[  2201843ms] r
+[  2201843ms] evision=0
+[  2202843ms] [
+[  2202843ms] geyi:motion] x=179 y=30 key1=0 
+[  2202843ms] r
+[  2202843ms] evision=0
+[  2203843ms] [
+[  2203843ms] geyi:motion] x=143 y=27 key1=0 
+[  2203843ms] r
+[  2203843ms] evision=0
+[  2204843ms] [
+[  2204843ms] geyi:motion] x=147 y=26 key1=0 
+[  2204843ms] r
+[  2204843ms] evision=0
+[  2205843ms] [
+[  2205843ms] geyi:motion] x=181 y=31 key1=0 
+[  2205843ms] r
+[  2205843ms] evision=0
+[  2206827ms] [
+[  2206843ms] geyi:motion] x=155 y=26 key1=0 
+[  2206843ms] r
+[  2206843ms] evision=0
+[  2207827ms] [
+[  2207827ms] geyi:motion] x=166 y=33 key1=0 
+[  2207827ms] r
+[  2207843ms] evision=0
+[  2208827ms] [
+[  2208827ms] geyi:motion] x=138 y=26 key1=0 
+[  2208827ms] r
+[  2208827ms] evision=0
+[  2209827ms] [
+[  2209827ms] geyi:motion] x=123 y=13 key1=0 
+[  2209827ms] r
+[  2209827ms] evision=0
+[  2210827ms] [
+[  2210827ms] geyi:motion] x=123 y=15 key1=0 
+[  2210827ms] r
+[  2210827ms] evision=0
+[  2211827ms] [
+[  2211827ms] geyi:motion] x=119 y=10 key1=0 
+[  2211827ms] r
+[  2211827ms] evision=0
+[  2212827ms] [
+[  2212827ms] geyi:motion] x=121 y=15 key1=0 
+[  2212827ms] r
+[  2212827ms] evision=0
+[  2213827ms] [
+[  2213827ms] geyi:motion] x=125 y=15 key1=0 
+[  2213827ms] r
+[  2213827ms] evision=0
+[  2214827ms] [
+[  2214827ms] geyi:motion] x=122 y=13 key1=0 
+[  2214827ms] r
+[  2214827ms] evision=0
+[  2215827ms] [
+[  2215827ms] geyi:motion] x=121 y=17 key1=0 
+[  2215827ms] r
+[  2215827ms] evision=0
+[  2216827ms] [
+[  2216827ms] geyi:motion] x=125 y=11 key1=0 
+[  2216827ms] r
+[  2216827ms] evision=0
+[  2217827ms] [
+[  2217827ms] geyi:motion] x=123 y=15 key1=0 
+[  2217827ms] r
+[  2217827ms] evision=0
+[  2218827ms] [
+[  2218827ms] geyi:motion] x=124 y=13 key1=0 
+[  2218827ms] r
+[  2218827ms] evision=0
+[  2219827ms] [
+[  2219827ms] geyi:motion] x=122 y=16 key1=0 
+[  2219827ms] r
+[  2219827ms] evision=0
+[  2220827ms] [
+[  2220827ms] geyi:motion] x=123 y=17 key1=0 
+[  2220827ms] r
+[  2220827ms] evision=0
+[  2221827ms] [
+[  2221827ms] geyi:motion] x=122 y=15 key1=0 
+[  2221827ms] r
+[  2221827ms] evision=0
+[  2222827ms] [
+[  2222827ms] geyi:motion] x=124 y=15 key1=0 
+[  2222827ms] r
+[  2222827ms] evision=0
+[  2223827ms] [
+[  2223827ms] geyi:motion] x=123 y=16 key1=0 
+[  2223827ms] r
+[  2223827ms] evision=0
+[  2224812ms] [
+[  2224812ms] geyi:motion] x=123 y=13 key1=0 
+[  2224827ms] r
+[  2224827ms] evision=0
+[  2225812ms] [
+[  2225812ms] geyi:motion] x=123 y=14 key1=0 
+[  2225812ms] r
+[  2225812ms] evision=0
+[  2226812ms] [
+[  2226812ms] geyi:motion] x=125 y=15 key1=0 
+[  2226812ms] r
+[  2226812ms] evision=0
+[  2227812ms] [
+[  2227812ms] geyi:motion] x=122 y=13 key1=0 
+[  2227812ms] r
+[  2227812ms] evision=0
+[  2228812ms] [
+[  2228812ms] geyi:motion] x=123 y=15 key1=0 
+[  2228812ms] r
+[  2228812ms] evision=0
+[  2229812ms] [
+[  2229812ms] geyi:motion] x=123 y=13 key1=0 
+[  2229812ms] r
+[  2229812ms] evision=0
+[  2230812ms] [
+[  2230812ms] geyi:motion] x=125 y=13 key1=0 
+[  2230812ms] r
+[  2230812ms] evision=0
+[  2231812ms] [
+[  2231812ms] geyi:motion] x=124 y=14 key1=0 
+[  2231812ms] r
+[  2231812ms] evision=0
+[  2232812ms] [
+[  2232812ms] geyi:motion] x=121 y=14 key1=0 
+[  2232812ms] r
+[  2232812ms] evision=0
+[  2233812ms] [
+[  2233812ms] geyi:motion] x=125 y=17 key1=0 
+[  2233812ms] r
+[  2233812ms] evision=0
+[  2234812ms] [
+[  2234812ms] geyi:motion] x=124 y=14 key1=0 
+[  2234812ms] r
+[  2234812ms] evision=0
+[  2235812ms] [
+[  2235812ms] geyi:motion] x=124 y=14 key1=0 
+[  2235812ms] r
+[  2235812ms] evision=0
+[  2236812ms] [
+[  2236812ms] geyi:motion] x=123 y=12 key1=0 
+[  2236812ms] r
+[  2236812ms] evision=0
+[  2237812ms] [
+[  2237812ms] geyi:motion] x=123 y=16 key1=0 
+[  2237812ms] r
+[  2237812ms] evision=0
+[  2238812ms] [
+[  2238812ms] geyi:motion] x=123 y=15 key1=0 
+[  2238812ms] r
+[  2238812ms] evision=0
+[  2239812ms] [
+[  2239812ms] geyi:motion] x=124 y=16 key1=0 
+[  2239812ms] r
+[  2239812ms] evision=0
+[  2240812ms] [
+[  2240812ms] geyi:motion] x=124 y=13 key1=0 
+[  2240812ms] r
+[  2240812ms] evision=0
+[  2241812ms] [
+[  2241812ms] geyi:motion] x=123 y=17 key1=0 
+[  2241812ms] r
+[  2241812ms] evision=0
+[  2242797ms] [
+[  2242812ms] geyi:motion] x=124 y=15 key1=0 
+[  2242812ms] r
+[  2242812ms] evision=0
+[  2243797ms] [
+[  2243797ms] geyi:motion] x=124 y=15 key1=0 
+[  2243812ms] r
+[  2243812ms] evision=0
+[  2244797ms] [
+[  2244797ms] geyi:motion] x=121 y=13 key1=0 
+[  2244797ms] r
+[  2244797ms] evision=0
+[  2245797ms] [
+[  2245797ms] geyi:motion] x=124 y=13 key1=0 
+[  2245797ms] r
+[  2245797ms] evision=0
+[  2246797ms] [
+[  2246797ms] geyi:motion] x=126 y=14 key1=0 
+[  2246797ms] r
+[  2246797ms] evision=0
+[  2247797ms] [
+[  2247797ms] geyi:motion] x=124 y=17 key1=0 
+[  2247797ms] r
+[  2247797ms] evision=0
+[  2248797ms] [
+[  2248797ms] geyi:motion] x=122 y=14 key1=0 
+[  2248797ms] r
+[  2248797ms] evision=0
+[  2249797ms] [
+[  2249797ms] geyi:motion] x=124 y=14 key1=0 
+[  2249797ms] r
+[  2249797ms] evision=0
+[  2250797ms] [
+[  2250797ms] geyi:motion] x=124 y=15 key1=0 
+[  2250797ms] r
+[  2250797ms] evision=0
+[  2251797ms] [
+[  2251797ms] geyi:motion] x=123 y=15 key1=0 
+[  2251797ms] r
+[  2251797ms] evision=0
+[  2252797ms] [
+[  2252797ms] geyi:motion] x=122 y=14 key1=0 
+[  2252797ms] r
+[  2252797ms] evision=0
+[  2253797ms] [
+[  2253797ms] geyi:motion] x=125 y=14 key1=0 
+[  2253797ms] r
+[  2253797ms] evision=0
+[  2254797ms] [
+[  2254797ms] geyi:motion] x=122 y=12 key1=0 
+[  2254797ms] r
+[  2254797ms] evision=0
+[  2255797ms] [
+[  2255797ms] geyi:motion] x=120 y=13 key1=0 
+[  2255797ms] r
+[  2255797ms] evision=0
+[  2256797ms] [
+[  2256797ms] geyi:motion] x=123 y=16 key1=0 
+[  2256797ms] r
+[  2256797ms] evision=0
+[  2257797ms] [
+[  2257797ms] geyi:motion] x=124 y=16 key1=0 
+[  2257797ms] r
+[  2257797ms] evision=0
+[  2258797ms] [
+[  2258797ms] geyi:motion] x=124 y=14 key1=0 
+[  2258797ms] r
+[  2258797ms] evision=0
+[  2259797ms] [
+[  2259797ms] geyi:motion] x=123 y=14 key1=0 
+[  2259797ms] r
+[  2259797ms] evision=0
+[  2260780ms] [
+[  2260780ms] geyi:motion] x=124 y=14 key1=0 
+[  2260797ms] r
+[  2260797ms] evision=0
+[  2261780ms] [
+[  2261780ms] geyi:motion] x=123 y=16 key1=0 
+[  2261797ms] r
+[  2261797ms] evision=0
+[  2262780ms] [
+[  2262780ms] geyi:motion] x=121 y=12 key1=0 
+[  2262780ms] r
+[  2262780ms] evision=0
+[  2263780ms] [
+[  2263780ms] geyi:motion] x=123 y=15 key1=0 
+[  2263780ms] r
+[  2263780ms] evision=0
+[  2264780ms] [
+[  2264780ms] geyi:motion] x=123 y=12 key1=0 
+[  2264780ms] r
+[  2264780ms] evision=0
+[  2265780ms] [
+[  2265780ms] geyi:motion] x=125 y=17 key1=0 
+[  2265780ms] r
+[  2265780ms] evision=0
+[  2266780ms] [
+[  2266780ms] geyi:motion] x=122 y=15 key1=0 
+[  2266780ms] r
+[  2266780ms] evision=0
+[  2267780ms] [
+[  2267780ms] geyi:motion] x=125 y=15 key1=0 
+[  2267780ms] r
+[  2267780ms] evision=0
+[  2268780ms] [
+[  2268780ms] geyi:motion] x=125 y=16 key1=0 
+[  2268780ms] r
+[  2268780ms] evision=0
+[  2269780ms] [
+[  2269780ms] geyi:motion] x=124 y=14 key1=0 
+[  2269780ms] r
+[  2269780ms] evision=0
+[  2270780ms] [
+[  2270780ms] geyi:motion] x=123 y=18 key1=0 
+[  2270780ms] r
+[  2270780ms] evision=0
+[  2271780ms] [
+[  2271780ms] geyi:motion] x=122 y=16 key1=0 
+[  2271780ms] r
+[  2271780ms] evision=0
+[  2272780ms] [
+[  2272780ms] geyi:motion] x=123 y=15 key1=0 
+[  2272780ms] r
+[  2272780ms] evision=0
+[  2273780ms] [
+[  2273780ms] geyi:motion] x=123 y=14 key1=0 
+[  2273780ms] r
+[  2273780ms] evision=0
+[  2274780ms] [
+[  2274780ms] geyi:motion] x=124 y=18 key1=0 
+[  2274780ms] r
+[  2274780ms] evision=0
+[  2275765ms] [
+[  2275780ms] geyi:motion] x=127 y=15 key1=0 
+[  2275780ms] r
+[  2275780ms] evision=0
+[  2276765ms] [
+[  2276765ms] geyi:motion] x=123 y=17 key1=0 
+[  2276780ms] r
+[  2276780ms] evision=0
+[  2277765ms] [
+[  2277765ms] geyi:motion] x=124 y=15 key1=0 
+[  2277765ms] r
+[  2277765ms] evision=0
+[  2278765ms] [
+[  2278765ms] geyi:motion] x=125 y=13 key1=0 
+[  2278765ms] r
+[  2278765ms] evision=0
+[  2279765ms] [
+[  2279765ms] geyi:motion] x=122 y=17 key1=0 
+[  2279765ms] r
+[  2279765ms] evision=0
+[  2280765ms] [
+[  2280765ms] geyi:motion] x=125 y=15 key1=0 
+[  2280765ms] r
+[  2280765ms] evision=0
+[  2281765ms] [
+[  2281765ms] geyi:motion] x=125 y=17 key1=0 
+[  2281765ms] r
+[  2281765ms] evision=0
+[  2282765ms] [
+[  2282765ms] geyi:motion] x=123 y=16 key1=0 
+[  2282765ms] r
+[  2282765ms] evision=0
+[  2283765ms] [
+[  2283765ms] geyi:motion] x=123 y=15 key1=0 
+[  2283765ms] r
+[  2283765ms] evision=0
+[  2284765ms] [
+[  2284765ms] geyi:motion] x=122 y=15 key1=0 
+[  2284765ms] r
+[  2284765ms] evision=0
+[  2285765ms] [
+[  2285765ms] geyi:motion] x=125 y=16 key1=0 
+[  2285765ms] r
+[  2285765ms] evision=0
+[  2286765ms] [
+[  2286765ms] geyi:motion] x=124 y=14 key1=0 
+[  2286765ms] r
+[  2286765ms] evision=0
+[  2287765ms] [
+[  2287765ms] geyi:motion] x=125 y=16 key1=0 
+[  2287765ms] r
+[  2287765ms] evision=0
+[  2288765ms] [
+[  2288765ms] geyi:motion] x=124 y=14 key1=0 
+[  2288765ms] r
+[  2288765ms] evision=0
+[  2289765ms] [
+[  2289765ms] geyi:motion] x=125 y=14 key1=0 
+[  2289765ms] r
+[  2289765ms] evision=0
+[  2290765ms] [
+[  2290765ms] geyi:motion] x=125 y=15 key1=0 
+[  2290765ms] r
+[  2290765ms] evision=0
+[  2291765ms] [
+[  2291765ms] geyi:motion] x=124 y=17 key1=0 
+[  2291765ms] r
+[  2291765ms] evision=0
+[  2292750ms] [
+[  2292765ms] geyi:motion] x=125 y=18 key1=0 
+[  2292765ms] r
+[  2292765ms] evision=0
+[  2293750ms] [
+[  2293750ms] geyi:motion] x=123 y=13 key1=0 
+[  2293750ms] r
+[  2293750ms] evision=0
+[  2294750ms] [
+[  2294750ms] geyi:motion] x=126 y=15 key1=0 
+[  2294750ms] r
+[  2294750ms] evision=0
+[  2295750ms] [
+[  2295750ms] geyi:motion] x=127 y=15 key1=0 
+[  2295750ms] r
+[  2295750ms] evision=0
+[  2296750ms] [
+[  2296750ms] geyi:motion] x=124 y=17 key1=0 
+[  2296750ms] r
+[  2296750ms] evision=0
+[  2297750ms] [
+[  2297750ms] geyi:motion] x=123 y=16 key1=0 
+[  2297750ms] r
+[  2297750ms] evision=0
+[  2298750ms] [
+[  2298750ms] geyi:motion] x=125 y=15 key1=0 
+[  2298750ms] r
+[  2298750ms] evision=0
+[  2299750ms] [
+[  2299750ms] geyi:motion] x=125 y=16 key1=0 
+[  2299750ms] r
+[  2299750ms] evision=0
+[  2300750ms] [
+[  2300750ms] geyi:motion] x=123 y=17 key1=0 
+[  2300750ms] r
+[  2300750ms] evision=0
+[  2301750ms] [
+[  2301750ms] geyi:motion] x=123 y=17 key1=0 
+[  2301750ms] r
+[  2301750ms] evision=0
+[  2302750ms] [
+[  2302750ms] geyi:motion] x=125 y=17 key1=0 
+[  2302750ms] r
+[  2302750ms] evision=0
+[  2303750ms] [
+[  2303750ms] geyi:motion] x=124 y=15 key1=0 
+[  2303750ms] r
+[  2303750ms] evision=0
+[  2304750ms] [
+[  2304750ms] geyi:motion] x=125 y=15 key1=0 
+[  2304750ms] r
+[  2304750ms] evision=0
+[  2305750ms] [
+[  2305750ms] geyi:motion] x=126 y=17 key1=0 
+[  2305750ms] r
+[  2305750ms] evision=0
+[  2306750ms] [
+[  2306750ms] geyi:motion] x=125 y=17 key1=0 
+[  2306750ms] r
+[  2306750ms] evision=0
+[  2307750ms] [
+[  2307750ms] geyi:motion] x=121 y=19 key1=0 
+[  2307750ms] r
+[  2307750ms] evision=0
+[  2308750ms] [
+[  2308750ms] geyi:motion] x=125 y=16 key1=0 
+[  2308750ms] r
+[  2308750ms] evision=0
+[  2309750ms] [
+[  2309750ms] geyi:motion] x=125 y=15 key1=0 
+[  2309750ms] r
+[  2309750ms] evision=0
+[  2310733ms] [
+[  2310733ms] geyi:motion] x=123 y=14 key1=0 
+[  2310750ms] r
+[  2310750ms] evision=0
+[  2311733ms] [
+[  2311733ms] geyi:motion] x=123 y=14 key1=0 
+[  2311733ms] r
+[  2311733ms] evision=0
+[  2312733ms] [
+[  2312733ms] geyi:motion] x=122 y=12 key1=0 
+[  2312733ms] r
+[  2312733ms] evision=0
+[  2313733ms] [
+[  2313733ms] geyi:motion] x=123 y=15 key1=0 
+[  2313733ms] r
+[  2313733ms] evision=0
+[  2314733ms] [
+[  2314733ms] geyi:motion] x=125 y=14 key1=0 
+[  2314733ms] r
+[  2314733ms] evision=0
+[  2315733ms] [
+[  2315733ms] geyi:motion] x=124 y=17 key1=0 
+[  2315733ms] r
+[  2315733ms] evision=0
+[  2316733ms] [
+[  2316733ms] geyi:motion] x=124 y=14 key1=0 
+[  2316733ms] r
+[  2316733ms] evision=0
+[  2317733ms] [
+[  2317733ms] geyi:motion] x=123 y=15 key1=0 
+[  2317733ms] r
+[  2317733ms] evision=0
+[  2318733ms] [
+[  2318733ms] geyi:motion] x=125 y=16 key1=0 
+[  2318733ms] r
+[  2318733ms] evision=0
+[  2319733ms] [
+[  2319733ms] geyi:motion] x=123 y=16 key1=0 
+[  2319733ms] r
+[  2319733ms] evision=0
+[  2320733ms] [
+[  2320733ms] geyi:motion] x=124 y=17 key1=0 
+[  2320733ms] r
+[  2320733ms] evision=0
+[  2321733ms] [
+[  2321733ms] geyi:motion] x=122 y=18 key1=0 
+[  2321733ms] r
+[  2321733ms] evision=0
+[  2322733ms] [
+[  2322733ms] geyi:motion] x=122 y=16 key1=0 
+[  2322733ms] r
+[  2322733ms] evision=0
+[  2323733ms] [
+[  2323733ms] geyi:motion] x=123 y=16 key1=0 
+[  2323733ms] r
+[  2323733ms] evision=0
+[  2324733ms] [
+[  2324733ms] geyi:motion] x=126 y=17 key1=0 
+[  2324733ms] r
+[  2324733ms] evision=0
+[  2325718ms] [
+[  2325718ms] geyi:motion] x=124 y=17 key1=0 
+[  2325733ms] r
+[  2325733ms] evision=0
+[  2326718ms] [
+[  2326718ms] geyi:motion] x=124 y=17 key1=0 
+[  2326718ms] r
+[  2326718ms] evision=0
+[  2327718ms] [
+[  2327718ms] geyi:motion] x=124 y=17 key1=0 
+[  2327718ms] r
+[  2327718ms] evision=0
+[  2328718ms] [
+[  2328718ms] geyi:motion] x=124 y=16 key1=0 
+[  2328718ms] r
+[  2328718ms] evision=0
+[  2329718ms] [
+[  2329718ms] geyi:motion] x=123 y=16 key1=0 
+[  2329718ms] r
+[  2329718ms] evision=0
+[  2330718ms] [
+[  2330718ms] geyi:motion] x=123 y=16 key1=0 
+[  2330718ms] r
+[  2330718ms] evision=0
+[  2331718ms] [
+[  2331718ms] geyi:motion] x=125 y=17 key1=0 
+[  2331718ms] r
+[  2331718ms] evision=0
+[  2332718ms] [
+[  2332718ms] geyi:motion] x=125 y=15 key1=0 
+[  2332718ms] r
+[  2332718ms] evision=0
+[  2333718ms] [
+[  2333718ms] geyi:motion] x=122 y=15 key1=0 
+[  2333718ms] r
+[  2333718ms] evision=0
+[  2334718ms] [
+[  2334718ms] geyi:motion] x=125 y=14 key1=0 
+[  2334718ms] r
+[  2334718ms] evision=0
+[  2335718ms] [
+[  2335718ms] geyi:motion] x=125 y=15 key1=0 
+[  2335718ms] r
+[  2335718ms] evision=0
+[  2336718ms] [
+[  2336718ms] geyi:motion] x=126 y=14 key1=0 
+[  2336718ms] r
+[  2336718ms] evision=0
+[  2337718ms] [
+[  2337718ms] geyi:motion] x=124 y=16 key1=0 
+[  2337718ms] r
+[  2337718ms] evision=0
+[  2338718ms] [
+[  2338718ms] geyi:motion] x=125 y=16 key1=0 
+[  2338718ms] r
+[  2338718ms] evision=0
+[  2339718ms] [
+[  2339718ms] geyi:motion] x=123 y=18 key1=0 
+[  2339718ms] r
+[  2339718ms] evision=0
+[  2340718ms] [
+[  2340718ms] geyi:motion] x=124 y=16 key1=0 
+[  2340718ms] r
+[  2340718ms] evision=0
+[  2341718ms] [
+[  2341718ms] geyi:motion] x=123 y=15 key1=0 
+[  2341718ms] r
+[  2341718ms] evision=0
+[  2342718ms] [
+[  2342718ms] geyi:motion] x=121 y=13 key1=0 
+[  2342718ms] r
+[  2342718ms] evision=0
+[  2343702ms] [
+[  2343702ms] geyi:motion] x=125 y=15 key1=0 
+[  2343718ms] r
+[  2343718ms] evision=0
+[  2344702ms] [
+[  2344702ms] geyi:motion] x=124 y=14 key1=0 
+[  2344702ms] r
+[  2344702ms] evision=0
+[  2345702ms] [
+[  2345702ms] geyi:motion] x=125 y=16 key1=0 
+[  2345702ms] r
+[  2345702ms] evision=0
+[  2346702ms] [
+[  2346702ms] geyi:motion] x=123 y=14 key1=0 
+[  2346702ms] r
+[  2346702ms] evision=0
+[  2347702ms] [
+[  2347702ms] geyi:motion] x=124 y=15 key1=0 
+[  2347702ms] r
+[  2347702ms] evision=0
+[  2348702ms] [
+[  2348702ms] geyi:motion] x=123 y=16 key1=0 
+[  2348702ms] r
+[  2348702ms] evision=0
+[  2349702ms] [
+[  2349702ms] geyi:motion] x=126 y=17 key1=0 
+[  2349702ms] r
+[  2349702ms] evision=0
+[  2350702ms] [
+[  2350702ms] geyi:motion] x=125 y=16 key1=0 
+[  2350702ms] r
+[  2350702ms] evision=0
+[  2351702ms] [
+[  2351702ms] geyi:motion] x=124 y=14 key1=0 
+[  2351702ms] r
+[  2351702ms] evision=0
+[  2352702ms] [
+[  2352702ms] geyi:motion] x=125 y=15 key1=0 
+[  2352702ms] r
+[  2352702ms] evision=0
+[  2353702ms] [
+[  2353702ms] geyi:motion] x=124 y=16 key1=0 
+[  2353702ms] r
+[  2353702ms] evision=0
+[  2354702ms] [
+[  2354702ms] geyi:motion] x=125 y=18 key1=0 
+[  2354702ms] r
+[  2354702ms] evision=0
+[  2355702ms] [
+[  2355702ms] geyi:motion] x=122 y=15 key1=0 
+[  2355702ms] r
+[  2355702ms] evision=0
+[  2356702ms] [
+[  2356702ms] geyi:motion] x=124 y=17 key1=0 
+[  2356702ms] r
+[  2356702ms] evision=0
+[  2357702ms] [
+[  2357702ms] geyi:motion] x=124 y=15 key1=0 
+[  2357702ms] r
+[  2357702ms] evision=0
+[  2358687ms] [
+[  2358687ms] geyi:motion] x=126 y=16 key1=0 
+[  2358702ms] r
+[  2358702ms] evision=0
+[  2359687ms] [
+[  2359687ms] geyi:motion] x=123 y=15 key1=0 
+[  2359702ms] r
+[  2359702ms] evision=0
+[  2360687ms] [
+[  2360687ms] geyi:motion] x=124 y=17 key1=0 
+[  2360687ms] r
+[  2360687ms] evision=0
+[  2361687ms] [
+[  2361687ms] geyi:motion] x=125 y=17 key1=0 
+[  2361687ms] r
+[  2361687ms] evision=0
+[  2362687ms] [
+[  2362687ms] geyi:motion] x=124 y=18 key1=0 
+[  2362687ms] r
+[  2362687ms] evision=0
+[  2363687ms] [
+[  2363687ms] geyi:motion] x=123 y=16 key1=0 
+[  2363687ms] r
+[  2363687ms] evision=0
+[  2364687ms] [
+[  2364687ms] geyi:motion] x=124 y=15 key1=0 
+[  2364687ms] r
+[  2364687ms] evision=0
+[  2365687ms] [
+[  2365687ms] geyi:motion] x=125 y=17 key1=0 
+[  2365687ms] r
+[  2365687ms] evision=0
+[  2366687ms] [
+[  2366687ms] geyi:motion] x=124 y=16 key1=0 
+[  2366687ms] r
+[  2366687ms] evision=0
+[  2367687ms] [
+[  2367687ms] geyi:motion] x=123 y=16 key1=0 
+[  2367687ms] r
+[  2367687ms] evision=0
+[  2368687ms] [
+[  2368687ms] geyi:motion] x=125 y=18 key1=0 
+[  2368687ms] r
+[  2368687ms] evision=0
+[  2369687ms] [
+[  2369687ms] geyi:motion] x=124 y=17 key1=0 
+[  2369687ms] r
+[  2369687ms] evision=0
+[  2370687ms] [
+[  2370687ms] geyi:motion] x=125 y=17 key1=0 
+[  2370687ms] r
+[  2370687ms] evision=0
+[  2371687ms] [
+[  2371687ms] geyi:motion] x=123 y=17 key1=0 
+[  2371687ms] r
+[  2371687ms] evision=0
+[  2372687ms] [
+[  2372687ms] geyi:motion] x=123 y=18 key1=0 
+[  2372687ms] r
+[  2372687ms] evision=0
+[  2373672ms] [
+[  2373687ms] geyi:motion] x=124 y=15 key1=0 
+[  2373687ms] r
+[  2373687ms] evision=0
+[  2374672ms] [
+[  2374672ms] geyi:motion] x=125 y=16 key1=0 
+[  2374687ms] r
+[  2374687ms] evision=0
+[  2375672ms] [
+[  2375672ms] geyi:motion] x=124 y=15 key1=0 
+[  2375672ms] r
+[  2375672ms] evision=0
+[  2376672ms] [
+[  2376672ms] geyi:motion] x=126 y=15 key1=0 
+[  2376672ms] r
+[  2376672ms] evision=0
+[  2377672ms] [
+[  2377672ms] geyi:motion] x=123 y=18 key1=0 
+[  2377672ms] r
+[  2377672ms] evision=0
+[  2378672ms] [
+[  2378672ms] geyi:motion] x=123 y=16 key1=0 
+[  2378672ms] r
+[  2378672ms] evision=0
+[  2379672ms] [
+[  2379672ms] geyi:motion] x=125 y=17 key1=0 
+[  2379672ms] r
+[  2379672ms] evision=0
+[  2380672ms] [
+[  2380672ms] geyi:motion] x=123 y=18 key1=0 
+[  2380672ms] r
+[  2380672ms] evision=0
+[  2381672ms] [
+[  2381672ms] geyi:motion] x=123 y=17 key1=0 
+[  2381672ms] r
+[  2381672ms] evision=0
+[  2382672ms] [
+[  2382672ms] geyi:motion] x=123 y=19 key1=0 
+[  2382672ms] r
+[  2382672ms] evision=0
+[  2383672ms] [
+[  2383672ms] geyi:motion] x=121 y=17 key1=0 
+[  2383672ms] r
+[  2383672ms] evision=0
+[  2384672ms] [
+[  2384672ms] geyi:motion] x=124 y=18 key1=0 
+[  2384672ms] r
+[  2384672ms] evision=0
+[  2385672ms] [
+[  2385672ms] geyi:motion] x=123 y=18 key1=0 
+[  2385672ms] r
+[  2385672ms] evision=0
+[  2386672ms] [
+[  2386672ms] geyi:motion] x=122 y=15 key1=0 
+[  2386672ms] r
+[  2386672ms] evision=0
+[  2387672ms] [
+[  2387672ms] geyi:motion] x=125 y=16 key1=0 
+[  2387672ms] r
+[  2387672ms] evision=0
+[  2388655ms] [
+[  2388655ms] geyi:motion] x=124 y=19 key1=0 
+[  2388672ms] r
+[  2388672ms] evision=0
+[  2389655ms] [
+[  2389655ms] geyi:motion] x=130 y=19 key1=0 
+[  2389655ms] r
+[  2389655ms] evision=0
+[  2390655ms] [
+[  2390655ms] geyi:motion] x=121 y=12 key1=0 
+[  2390655ms] r
+[  2390655ms] evision=0
+[  2391655ms] [
+[  2391655ms] geyi:motion] x=124 y=18 key1=0 
+[  2391655ms] r
+[  2391655ms] evision=0
+[  2392655ms] [
+[  2392655ms] geyi:motion] x=123 y=15 key1=0 
+[  2392655ms] r
+[  2392655ms] evision=0
+[  2393655ms] [
+[  2393655ms] geyi:motion] x=124 y=13 key1=0 
+[  2393655ms] r
+[  2393655ms] evision=0
+[  2394655ms] [
+[  2394655ms] geyi:motion] x=125 y=18 key1=0 
+[  2394655ms] r
+[  2394655ms] evision=0
+[  2395655ms] [
+[  2395655ms] geyi:motion] x=123 y=16 key1=0 
+[  2395655ms] r
+[  2395655ms] evision=0
+[  2396655ms] [
+[  2396655ms] geyi:motion] x=122 y=18 key1=0 
+[  2396655ms] r
+[  2396655ms] evision=0
+[  2397655ms] [
+[  2397655ms] geyi:motion] x=124 y=16 key1=0 
+[  2397655ms] r
+[  2397655ms] evision=0
+[  2398655ms] [
+[  2398655ms] geyi:motion] x=123 y=18 key1=0 
+[  2398655ms] r
+[  2398655ms] evision=0
+[  2399655ms] [
+[  2399655ms] geyi:motion] x=126 y=15 key1=0 
+[  2399655ms] r
+[  2399655ms] evision=0
+[  2400655ms] [
+[  2400655ms] geyi:motion] x=124 y=15 key1=0 
+[  2400655ms] r
+[  2400655ms] evision=0
+[  2401655ms] [
+[  2401655ms] geyi:motion] x=125 y=16 key1=0 
+[  2401655ms] r
+[  2401655ms] evision=0
+[  2402655ms] [
+[  2402655ms] geyi:motion] x=123 y=17 key1=0 
+[  2402655ms] r
+[  2402655ms] evision=0
+[  2403640ms] [
+[  2403655ms] geyi:motion] x=123 y=17 key1=0 
+[  2403655ms] r
+[  2403655ms] evision=0
+[  2404640ms] [
+[  2404640ms] geyi:motion] x=124 y=16 key1=0 
+[  2404640ms] r
+[  2404655ms] evision=0
+[  2405640ms] [
+[  2405640ms] geyi:motion] x=126 y=17 key1=0 
+[  2405640ms] r
+[  2405640ms] evision=0
+[  2406640ms] [
+[  2406640ms] geyi:motion] x=123 y=17 key1=0 
+[  2406640ms] r
+[  2406640ms] evision=0
+[  2407640ms] [
+[  2407640ms] geyi:motion] x=126 y=16 key1=0 
+[  2407640ms] r
+[  2407640ms] evision=0
+[  2408640ms] [
+[  2408640ms] geyi:motion] x=125 y=15 key1=0 
+[  2408640ms] r
+[  2408640ms] evision=0
+[  2409640ms] [
+[  2409640ms] geyi:motion] x=124 y=17 key1=0 
+[  2409640ms] r
+[  2409640ms] evision=0
+[  2410640ms] [
+[  2410640ms] geyi:motion] x=124 y=17 key1=0 
+[  2410640ms] r
+[  2410640ms] evision=0
+[  2411640ms] [
+[  2411640ms] geyi:motion] x=125 y=18 key1=0 
+[  2411640ms] r
+[  2411640ms] evision=0
+[  2412640ms] [
+[  2412640ms] geyi:motion] x=125 y=17 key1=0 
+[  2412640ms] r
+[  2412640ms] evision=0
+[  2413640ms] [
+[  2413640ms] geyi:motion] x=126 y=13 key1=0 
+[  2413640ms] r
+[  2413640ms] evision=0
+[  2414640ms] [
+[  2414640ms] geyi:motion] x=124 y=16 key1=0 
+[  2414640ms] r
+[  2414640ms] evision=0
+[  2415640ms] [
+[  2415640ms] geyi:motion] x=123 y=16 key1=0 
+[  2415640ms] r
+[  2415640ms] evision=0
+[  2416640ms] [
+[  2416640ms] geyi:motion] x=123 y=18 key1=0 
+[  2416640ms] r
+[  2416640ms] evision=0
+[  2417640ms] [
+[  2417640ms] geyi:motion] x=122 y=15 key1=0 
+[  2417640ms] r
+[  2417640ms] evision=0
+[  2418640ms] [
+[  2418640ms] geyi:motion] x=123 y=15 key1=0 
+[  2418640ms] r
+[  2418640ms] evision=0
+[  2419640ms] [
+[  2419640ms] geyi:motion] x=127 y=20 key1=0 
+[  2419640ms] r
+[  2419640ms] evision=0
+[  2420625ms] [
+[  2420625ms] geyi:motion] x=124 y=18 key1=0 
+[  2420625ms] r
+[  2420625ms] evision=0
+[  2421625ms] [
+[  2421625ms] geyi:motion] x=124 y=17 key1=0 
+[  2421625ms] r
+[  2421625ms] evision=0
+[  2422625ms] [
+[  2422625ms] geyi:motion] x=122 y=19 key1=0 
+[  2422625ms] r
+[  2422625ms] evision=0
+[  2423625ms] [
+[  2423625ms] geyi:motion] x=126 y=18 key1=0 
+[  2423625ms] r
+[  2423625ms] evision=0
+[  2424625ms] [
+[  2424625ms] geyi:motion] x=124 y=16 key1=0 
+[  2424625ms] r
+[  2424625ms] evision=0
+[  2425625ms] [
+[  2425625ms] geyi:motion] x=125 y=20 key1=0 
+[  2425625ms] r
+[  2425625ms] evision=0
+[  2426625ms] [
+[  2426625ms] geyi:motion] x=123 y=17 key1=0 
+[  2426625ms] r
+[  2426625ms] evision=0
+[  2427625ms] [
+[  2427625ms] geyi:motion] x=124 y=17 key1=0 
+[  2427625ms] r
+[  2427625ms] evision=0
+[  2428625ms] [
+[  2428625ms] geyi:motion] x=124 y=19 key1=0 
+[  2428625ms] r
+[  2428625ms] evision=0
+[  2429625ms] [
+[  2429625ms] geyi:motion] x=123 y=19 key1=0 
+[  2429625ms] r
+[  2429625ms] evision=0
+[  2430625ms] [
+[  2430625ms] geyi:motion] x=125 y=17 key1=0 
+[  2430625ms] r
+[  2430625ms] evision=0
+[  2431625ms] [
+[  2431625ms] geyi:motion] x=126 y=16 key1=0 
+[  2431625ms] r
+[  2431625ms] evision=0
+[  2432625ms] [
+[  2432625ms] geyi:motion] x=125 y=17 key1=0 
+[  2432625ms] r
+[  2432625ms] evision=0
+[  2433608ms] [
+[  2433608ms] geyi:motion] x=124 y=20 key1=0 
+[  2433625ms] r
+[  2433625ms] evision=0
+[  2434608ms] [
+[  2434608ms] geyi:motion] x=123 y=18 key1=0 
+[  2434608ms] r
+[  2434608ms] evision=0
+[  2435608ms] [
+[  2435608ms] geyi:motion] x=124 y=20 key1=0 
+[  2435608ms] r
+[  2435608ms] evision=0
+[  2436608ms] [
+[  2436608ms] geyi:motion] x=124 y=17 key1=0 
+[  2436608ms] r
+[  2436608ms] evision=0
+[  2437608ms] [
+[  2437608ms] geyi:motion] x=125 y=20 key1=0 
+[  2437608ms] r
+[  2437608ms] evision=0
+[  2438608ms] [
+[  2438608ms] geyi:motion] x=127 y=18 key1=0 
+[  2438608ms] r
+[  2438608ms] evision=0
+[  2439608ms] [
+[  2439608ms] geyi:motion] x=125 y=15 key1=0 
+[  2439608ms] r
+[  2439608ms] evision=0
+[  2440608ms] [
+[  2440608ms] geyi:motion] x=126 y=17 key1=0 
+[  2440608ms] r
+[  2440608ms] evision=0
+[  2441608ms] [
+[  2441608ms] geyi:motion] x=126 y=16 key1=0 
+[  2441608ms] r
+[  2441608ms] evision=0
+[  2442608ms] [
+[  2442608ms] geyi:motion] x=124 y=13 key1=0 
+[  2442608ms] r
+[  2442608ms] evision=0
+[  2443608ms] [
+[  2443608ms] geyi:motion] x=125 y=18 key1=0 
+[  2443608ms] r
+[  2443608ms] evision=0
+[  2444608ms] [
+[  2444608ms] geyi:motion] x=126 y=17 key1=0 
+[  2444608ms] r
+[  2444608ms] evision=0
+[  2445608ms] [
+[  2445608ms] geyi:motion] x=125 y=16 key1=0 
+[  2445608ms] r
+[  2445608ms] evision=0
+[  2446608ms] [
+[  2446608ms] geyi:motion] x=124 y=15 key1=0 
+[  2446608ms] r
+[  2446608ms] evision=0
+[  2447608ms] [
+[  2447608ms] geyi:motion] x=125 y=18 key1=0 
+[  2447608ms] r
+[  2447608ms] evision=0
+[  2448593ms] [
+[  2448593ms] geyi:motion] x=124 y=17 key1=0 
+[  2448593ms] r
+[  2448593ms] evision=0
+[  2449593ms] [
+[  2449593ms] geyi:motion] x=123 y=18 key1=0 
+[  2449593ms] r
+[  2449593ms] evision=0
+[  2450593ms] [
+[  2450593ms] geyi:motion] x=125 y=19 key1=0 
+[  2450593ms] r
+[  2450593ms] evision=0
+[  2451593ms] [
+[  2451593ms] geyi:motion] x=124 y=17 key1=0 
+[  2451593ms] r
+[  2451593ms] evision=0
+[  2452593ms] [
+[  2452593ms] geyi:motion] x=126 y=18 key1=0 
+[  2452593ms] r
+[  2452593ms] evision=0
+[  2453593ms] [
+[  2453593ms] geyi:motion] x=125 y=18 key1=0 
+[  2453593ms] r
+[  2453593ms] evision=0
+[  2454593ms] [
+[  2454593ms] geyi:motion] x=125 y=18 key1=0 
+[  2454593ms] r
+[  2454593ms] evision=0
+[  2455593ms] [
+[  2455593ms] geyi:motion] x=125 y=16 key1=0 
+[  2455593ms] r
+[  2455593ms] evision=0
+[  2456593ms] [
+[  2456593ms] geyi:motion] x=125 y=17 key1=0 
+[  2456593ms] r
+[  2456593ms] evision=0
+[  2457593ms] [
+[  2457593ms] geyi:motion] x=124 y=16 key1=0 
+[  2457593ms] r
+[  2457593ms] evision=0
+[  2458593ms] [
+[  2458593ms] geyi:motion] x=123 y=17 key1=0 
+[  2458593ms] r
+[  2458593ms] evision=0
+[  2459593ms] [
+[  2459593ms] geyi:motion] x=125 y=17 key1=0 
+[  2459593ms] r
+[  2459593ms] evision=0
+[  2460577ms] [
+[  2460577ms] geyi:motion] x=123 y=18 key1=0 
+[  2460593ms] r
+[  2460593ms] evision=0
+[  2461577ms] [
+[  2461577ms] geyi:motion] x=124 y=18 key1=0 
+[  2461577ms] r
+[  2461593ms] evision=0
+[  2462577ms] [
+[  2462577ms] geyi:motion] x=123 y=16 key1=0 
+[  2462577ms] r
+[  2462577ms] evision=0
+[  2463577ms] [
+[  2463577ms] geyi:motion] x=124 y=16 key1=0 
+[  2463577ms] r
+[  2463577ms] evision=0
+[  2464577ms] [
+[  2464577ms] geyi:motion] x=124 y=21 key1=0 
+[  2464577ms] r
+[  2464577ms] evision=0
+[  2465577ms] [
+[  2465577ms] geyi:motion] x=123 y=20 key1=0 
+[  2465577ms] r
+[  2465577ms] evision=0
+[  2466577ms] [
+[  2466577ms] geyi:motion] x=124 y=18 key1=0 
+[  2466577ms] r
+[  2466577ms] evision=0
+[  2467577ms] [
+[  2467577ms] geyi:motion] x=125 y=19 key1=0 
+[  2467577ms] r
+[  2467577ms] evision=0
+[  2468577ms] [
+[  2468577ms] geyi:motion] x=125 y=16 key1=0 
+[  2468577ms] r
+[  2468577ms] evision=0
+[  2469577ms] [
+[  2469577ms] geyi:motion] x=123 y=18 key1=0 
+[  2469577ms] r
+[  2469577ms] evision=0
+[  2470577ms] [
+[  2470577ms] geyi:motion] x=128 y=20 key1=0 
+[  2470577ms] r
+[  2470577ms] evision=0
+[  2471577ms] [
+[  2471577ms] geyi:motion] x=123 y=15 key1=0 
+[  2471577ms] r
+[  2471577ms] evision=0
+[  2472577ms] [
+[  2472577ms] geyi:motion] x=124 y=15 key1=0 
+[  2472577ms] r
+[  2472577ms] evision=0
+[  2473577ms] [
+[  2473577ms] geyi:motion] x=127 y=18 key1=0 
+[  2473577ms] r
+[  2473577ms] evision=0
+[  2474577ms] [
+[  2474577ms] geyi:motion] x=125 y=19 key1=0 
+[  2474577ms] r
+[  2474577ms] evision=0
+[  2475577ms] [
+[  2475577ms] geyi:motion] x=123 y=17 key1=0 
+[  2475577ms] r
+[  2475577ms] evision=0
+[  2476562ms] [
+[  2476562ms] geyi:motion] x=125 y=17 key1=0 
+[  2476562ms] r
+[  2476562ms] evision=0
+[  2477562ms] [
+[  2477562ms] geyi:motion] x=124 y=16 key1=0 
+[  2477562ms] r
+[  2477562ms] evision=0
+[  2478562ms] [
+[  2478562ms] geyi:motion] x=124 y=17 key1=0 
+[  2478562ms] r
+[  2478562ms] evision=0
+[  2479562ms] [
+[  2479562ms] geyi:motion] x=119 y=11 key1=0 
+[  2479562ms] r
+[  2479562ms] evision=0
+[  2480562ms] [
+[  2480562ms] geyi:motion] x=127 y=18 key1=0 
+[  2480562ms] r
+[  2480562ms] evision=0
+[  2481562ms] [
+[  2481562ms] geyi:motion] x=124 y=16 key1=0 
+[  2481562ms] r
+[  2481562ms] evision=0
+[  2482562ms] [
+[  2482562ms] geyi:motion] x=125 y=19 key1=0 
+[  2482562ms] r
+[  2482562ms] evision=0
+[  2483562ms] [
+[  2483562ms] geyi:motion] x=123 y=20 key1=0 
+[  2483562ms] r
+[  2483562ms] evision=0
+[  2484562ms] [
+[  2484562ms] geyi:motion] x=125 y=18 key1=0 
+[  2484562ms] r
+[  2484562ms] evision=0
+[  2485562ms] [
+[  2485562ms] geyi:motion] x=126 y=17 key1=0 
+[  2485562ms] r
+[  2485562ms] evision=0
+[  2486562ms] [
+[  2486562ms] geyi:motion] x=126 y=18 key1=0 
+[  2486562ms] r
+[  2486562ms] evision=0
+[  2487562ms] [
+[  2487562ms] geyi:motion] x=128 y=21 key1=0 
+[  2487562ms] r
+[  2487562ms] evision=0
+[  2488562ms] [
+[  2488562ms] geyi:motion] x=124 y=17 key1=0 
+[  2488562ms] r
+[  2488562ms] evision=0
+[  2489562ms] [
+[  2489562ms] geyi:motion] x=127 y=17 key1=0 
+[  2489562ms] r
+[  2489562ms] evision=0
+[  2490562ms] [
+[  2490562ms] geyi:motion] x=125 y=19 key1=0 
+[  2490562ms] r
+[  2490562ms] evision=0
+[  2491547ms] [
+[  2491547ms] geyi:motion] x=125 y=18 key1=0 
+[  2491562ms] r
+[  2491562ms] evision=0
+[  2492547ms] [
+[  2492547ms] geyi:motion] x=123 y=19 key1=0 
+[  2492547ms] r
+[  2492562ms] evision=0
+[  2493547ms] [
+[  2493547ms] geyi:motion] x=127 y=19 key1=0 
+[  2493547ms] r
+[  2493547ms] evision=0
+[  2494547ms] [
+[  2494547ms] geyi:motion] x=126 y=19 key1=0 
+[  2494547ms] r
+[  2494547ms] evision=0
+[  2495547ms] [
+[  2495547ms] geyi:motion] x=125 y=19 key1=0 
+[  2495547ms] r
+[  2495547ms] evision=0
+[  2496547ms] [
+[  2496547ms] geyi:motion] x=124 y=19 key1=0 
+[  2496547ms] r
+[  2496547ms] evision=0
+[  2497547ms] [
+[  2497547ms] geyi:motion] x=126 y=18 key1=0 
+[  2497547ms] r
+[  2497547ms] evision=0
+[  2498547ms] [
+[  2498547ms] geyi:motion] x=127 y=17 key1=0 
+[  2498547ms] r
+[  2498547ms] evision=0
+[  2499547ms] [
+[  2499547ms] geyi:motion] x=126 y=21 key1=0 
+[  2499547ms] r
+[  2499547ms] evision=0
+[  2500547ms] [
+[  2500547ms] geyi:motion] x=124 y=19 key1=0 
+[  2500547ms] r
+[  2500547ms] evision=0
+[  2501547ms] [
+[  2501547ms] geyi:motion] x=125 y=19 key1=0 
+[  2501547ms] r
+[  2501547ms] evision=0
+[  2502547ms] [
+[  2502547ms] geyi:motion] x=124 y=17 key1=0 
+[  2502547ms] r
+[  2502547ms] evision=0
+[  2503530ms] [
+[  2503547ms] geyi:motion] x=126 y=17 key1=0 
+[  2503547ms] r
+[  2503547ms] evision=0
+[  2504530ms] [
+[  2504530ms] geyi:motion] x=129 y=17 key1=0 
+[  2504530ms] r
+[  2504530ms] evision=0
+[  2505530ms] [
+[  2505530ms] geyi:motion] x=127 y=18 key1=0 
+[  2505530ms] r
+[  2505530ms] evision=0
+[  2506530ms] [
+[  2506530ms] geyi:motion] x=126 y=19 key1=0 
+[  2506530ms] r
+[  2506530ms] evision=0
+[  2507530ms] [
+[  2507530ms] geyi:motion] x=126 y=19 key1=0 
+[  2507530ms] r
+[  2507530ms] evision=0
+[  2508530ms] [
+[  2508530ms] geyi:motion] x=126 y=20 key1=0 
+[  2508530ms] r
+[  2508530ms] evision=0
+[  2509530ms] [
+[  2509530ms] geyi:motion] x=124 y=19 key1=0 
+[  2509530ms] r
+[  2509530ms] evision=0
+[  2510530ms] [
+[  2510530ms] geyi:motion] x=125 y=22 key1=0 
+[  2510530ms] r
+[  2510530ms] evision=0
+[  2511530ms] [
+[  2511530ms] geyi:motion] x=126 y=18 key1=0 
+[  2511530ms] r
+[  2511530ms] evision=0
+[  2512530ms] [
+[  2512530ms] geyi:motion] x=127 y=21 key1=0 
+[  2512530ms] r
+[  2512530ms] evision=0
+[  2513530ms] [
+[  2513530ms] geyi:motion] x=126 y=19 key1=0 
+[  2513530ms] r
+[  2513530ms] evision=0
+[  2514530ms] [
+[  2514530ms] geyi:motion] x=125 y=21 key1=0 
+[  2514530ms] r
+[  2514530ms] evision=0
+[  2515515ms] [
+[  2515515ms] geyi:motion] x=127 y=17 key1=0 
+[  2515530ms] r
+[  2515530ms] evision=0
+[  2516515ms] [
+[  2516515ms] geyi:motion] x=128 y=19 key1=0 
+[  2516515ms] r
+[  2516515ms] evision=0
+[  2517515ms] [
+[  2517515ms] geyi:motion] x=127 y=18 key1=0 
+[  2517515ms] r
+[  2517515ms] evision=0
+[  2518515ms] [
+[  2518515ms] geyi:motion] x=126 y=17 key1=0 
+[  2518515ms] r
+[  2518515ms] evision=0
+[  2519515ms] [
+[  2519515ms] geyi:motion] x=127 y=19 key1=0 
+[  2519515ms] r
+[  2519515ms] evision=0
+[  2520515ms] [
+[  2520515ms] geyi:motion] x=127 y=20 key1=0 
+[  2520515ms] r
+[  2520515ms] evision=0
+[  2521515ms] [
+[  2521515ms] geyi:motion] x=127 y=19 key1=0 
+[  2521515ms] r
+[  2521515ms] evision=0
+[  2522515ms] [
+[  2522515ms] geyi:motion] x=125 y=18 key1=0 
+[  2522515ms] r
+[  2522515ms] evision=0
+[  2523515ms] [
+[  2523515ms] geyi:motion] x=133 y=22 key1=0 
+[  2523515ms] r
+[  2523515ms] evision=0
+[  2524515ms] [
+[  2524515ms] geyi:motion] x=127 y=23 key1=0 
+[  2524515ms] r
+[  2524515ms] evision=0
+[  2525515ms] [
+[  2525515ms] geyi:motion] x=127 y=21 key1=0 
+[  2525515ms] r
+[  2525515ms] evision=0
+[  2526500ms] [
+[  2526500ms] geyi:motion] x=127 y=20 key1=0 
+[  2526515ms] r
+[  2526515ms] evision=0
+[  2527500ms] [
+[  2527500ms] geyi:motion] x=124 y=16 key1=0 
+[  2527500ms] r
+[  2527500ms] evision=0
+[  2528500ms] [
+[  2528500ms] geyi:motion] x=126 y=21 key1=0 
+[  2528500ms] r
+[  2528500ms] evision=0
+[  2529500ms] [
+[  2529500ms] geyi:motion] x=126 y=19 key1=0 
+[  2529500ms] r
+[  2529500ms] evision=0
+[  2530500ms] [
+[  2530500ms] geyi:motion] x=126 y=19 key1=0 
+[  2530500ms] r
+[  2530500ms] evision=0
+[  2531500ms] [
+[  2531500ms] geyi:motion] x=127 y=21 key1=0 
+[  2531500ms] r
+[  2531500ms] evision=0
+[  2532500ms] [
+[  2532500ms] geyi:motion] x=125 y=18 key1=0 
+[  2532500ms] r
+[  2532500ms] evision=0
+[  2533500ms] [
+[  2533500ms] geyi:motion] x=126 y=20 key1=0 
+[  2533500ms] r
+[  2533500ms] evision=0
+[  2534500ms] [
+[  2534500ms] geyi:motion] x=124 y=20 key1=0 
+[  2534500ms] r
+[  2534500ms] evision=0
+[  2535500ms] [
+[  2535500ms] geyi:motion] x=126 y=19 key1=0 
+[  2535500ms] r
+[  2535500ms] evision=0
+[  2536500ms] [
+[  2536500ms] geyi:motion] x=125 y=17 key1=0 
+[  2536500ms] r
+[  2536500ms] evision=0
+[  2537483ms] [
+[  2537483ms] geyi:motion] x=127 y=19 key1=0 
+[  2537483ms] r
+[  2537483ms] evision=0
+[  2538483ms] [
+[  2538483ms] geyi:motion] x=125 y=18 key1=0 
+[  2538483ms] r
+[  2538483ms] evision=0
+[  2539483ms] [
+[  2539483ms] geyi:motion] x=126 y=18 key1=0 
+[  2539483ms] r
+[  2539483ms] evision=0
+[  2540483ms] [
+[  2540483ms] geyi:motion] x=125 y=19 key1=0 
+[  2540483ms] r
+[  2540483ms] evision=0
+[  2541483ms] [
+[  2541483ms] geyi:motion] x=127 y=20 key1=0 
+[  2541483ms] r
+[  2541483ms] evision=0
+[  2542483ms] [
+[  2542483ms] geyi:motion] x=126 y=17 key1=0 
+[  2542483ms] r
+[  2542483ms] evision=0
+[  2543483ms] [
+[  2543483ms] geyi:motion] x=127 y=20 key1=0 
+[  2543483ms] r
+[  2543483ms] evision=0
+[  2544483ms] [
+[  2544483ms] geyi:motion] x=128 y=21 key1=0 
+[  2544483ms] r
+[  2544483ms] evision=0
+[  2545483ms] [
+[  2545483ms] geyi:motion] x=126 y=21 key1=0 
+[  2545483ms] r
+[  2545483ms] evision=0
+[  2546483ms] [
+[  2546483ms] geyi:motion] x=125 y=17 key1=0 
+[  2546483ms] r
+[  2546483ms] evision=0
+[  2547468ms] [
+[  2547468ms] geyi:motion] x=125 y=22 key1=0 
+[  2547483ms] r
+[  2547483ms] evision=0
+[  2548468ms] [
+[  2548468ms] geyi:motion] x=125 y=19 key1=0 
+[  2548468ms] r
+[  2548468ms] evision=0
+[  2549468ms] [
+[  2549468ms] geyi:motion] x=126 y=19 key1=0 
+[  2549468ms] r
+[  2549468ms] evision=0
+[  2550468ms] [
+[  2550468ms] geyi:motion] x=126 y=21 key1=0 
+[  2550468ms] r
+[  2550468ms] evision=0
+[  2551468ms] [
+[  2551468ms] geyi:motion] x=126 y=20 key1=0 
+[  2551468ms] r
+[  2551468ms] evision=0
+[  2552468ms] [
+[  2552468ms] geyi:motion] x=125 y=18 key1=0 
+[  2552468ms] r
+[  2552468ms] evision=0
+[  2553468ms] [
+[  2553468ms] geyi:motion] x=127 y=19 key1=0 
+[  2553468ms] r
+[  2553468ms] evision=0
+[  2554468ms] [
+[  2554468ms] geyi:motion] x=128 y=20 key1=0 
+[  2554468ms] r
+[  2554468ms] evision=0
+[  2555468ms] [
+[  2555468ms] geyi:motion] x=125 y=21 key1=0 
+[  2555468ms] r
+[  2555468ms] evision=0
+[  2556468ms] [
+[  2556468ms] geyi:motion] x=124 y=20 key1=0 
+[  2556468ms] r
+[  2556468ms] evision=0
+[  2557468ms] [
+[  2557468ms] geyi:motion] x=125 y=20 key1=0 
+[  2557468ms] r
+[  2557468ms] evision=0
+[  2558452ms] [
+[  2558452ms] geyi:motion] x=128 y=20 key1=0 
+[  2558468ms] r
+[  2558468ms] evision=0
+[  2559452ms] [
+[  2559452ms] geyi:motion] x=127 y=22 key1=0 
+[  2559452ms] r
+[  2559452ms] evision=0
+[  2560452ms] [
+[  2560452ms] geyi:motion] x=120 y=18 key1=0 
+[  2560452ms] r
+[  2560452ms] evision=0
+[  2561452ms] [
+[  2561452ms] geyi:motion] x=127 y=18 key1=0 
+[  2561452ms] r
+[  2561452ms] evision=0
+[  2562452ms] [
+[  2562452ms] geyi:motion] x=129 y=19 key1=0 
+[  2562452ms] r
+[  2562452ms] evision=0
+[  2563452ms] [
+[  2563452ms] geyi:motion] x=125 y=19 key1=0 
+[  2563452ms] r
+[  2563452ms] evision=0
+[  2564452ms] [
+[  2564452ms] geyi:motion] x=126 y=19 key1=0 
+[  2564452ms] r
+[  2564452ms] evision=0
+[  2565452ms] [
+[  2565452ms] geyi:motion] x=126 y=19 key1=0 
+[  2565452ms] r
+[  2565452ms] evision=0
+[  2566452ms] [
+[  2566452ms] geyi:motion] x=124 y=20 key1=0 
+[  2566452ms] r
+[  2566452ms] evision=0
+[  2567452ms] [
+[  2567452ms] geyi:motion] x=125 y=21 key1=0 
+[  2567452ms] r
+[  2567452ms] evision=0
+[  2568452ms] [
+[  2568452ms] geyi:motion] x=126 y=21 key1=0 
+[  2568452ms] r
+[  2568452ms] evision=0
+[  2569452ms] [
+[  2569452ms] geyi:motion] x=125 y=19 key1=0 
+[  2569452ms] r
+[  2569452ms] evision=0
+[  2570452ms] [
+[  2570452ms] geyi:motion] x=126 y=18 key1=0 
+[  2570452ms] r
+[  2570452ms] evision=0
+[  2571452ms] [
+[  2571452ms] geyi:motion] x=124 y=21 key1=0 
+[  2571452ms] r
+[  2571452ms] evision=0
+[  2572452ms] [
+[  2572452ms] geyi:motion] x=124 y=19 key1=0 
+[  2572452ms] r
+[  2572452ms] evision=0
+[  2573437ms] [
+[  2573437ms] geyi:motion] x=124 y=20 key1=0 
+[  2573437ms] r
+[  2573437ms] evision=0
+[  2574437ms] [
+[  2574437ms] geyi:motion] x=126 y=20 key1=0 
+[  2574437ms] r
+[  2574437ms] evision=0
+[  2575437ms] [
+[  2575437ms] geyi:motion] x=126 y=20 key1=0 
+[  2575437ms] r
+[  2575437ms] evision=0
+[  2576437ms] [
+[  2576437ms] geyi:motion] x=123 y=20 key1=0 
+[  2576437ms] r
+[  2576437ms] evision=0
+[  2577437ms] [
+[  2577437ms] geyi:motion] x=126 y=15 key1=0 
+[  2577437ms] r
+[  2577437ms] evision=0
+[  2578437ms] [
+[  2578437ms] geyi:motion] x=125 y=19 key1=0 
+[  2578437ms] r
+[  2578437ms] evision=0
+[  2579437ms] [
+[  2579437ms] geyi:motion] x=123 y=20 key1=0 
+[  2579437ms] r
+[  2579437ms] evision=0
+[  2580437ms] [
+[  2580437ms] geyi:motion] x=123 y=17 key1=0 
+[  2580437ms] r
+[  2580437ms] evision=0
+[  2581437ms] [
+[  2581437ms] geyi:motion] x=126 y=18 key1=0 
+[  2581437ms] r
+[  2581437ms] evision=0
+[  2582437ms] [
+[  2582437ms] geyi:motion] x=127 y=19 key1=0 
+[  2582437ms] r
+[  2582437ms] evision=0
+[  2583437ms] [
+[  2583437ms] geyi:motion] x=127 y=20 key1=0 
+[  2583437ms] r
+[  2583437ms] evision=0
+[  2584437ms] [
+[  2584437ms] geyi:motion] x=128 y=20 key1=0 
+[  2584437ms] r
+[  2584437ms] evision=0
+[  2585422ms] [
+[  2585422ms] geyi:motion] x=124 y=19 key1=0 
+[  2585437ms] r
+[  2585437ms] evision=0
+[  2586422ms] [
+[  2586422ms] geyi:motion] x=126 y=17 key1=0 
+[  2586437ms] r
+[  2586437ms] evision=0
+[  2587422ms] [
+[  2587422ms] geyi:motion] x=127 y=24 key1=0 
+[  2587422ms] r
+[  2587422ms] evision=0
+[  2588422ms] [
+[  2588422ms] geyi:motion] x=126 y=19 key1=0 
+[  2588422ms] r
+[  2588422ms] evision=0
+[  2589422ms] [
+[  2589422ms] geyi:motion] x=127 y=19 key1=0 
+[  2589422ms] r
+[  2589422ms] evision=0
+[  2590422ms] [
+[  2590422ms] geyi:motion] x=126 y=20 key1=0 
+[  2590422ms] r
+[  2590422ms] evision=0
+[  2591422ms] [
+[  2591422ms] geyi:motion] x=124 y=21 key1=0 
+[  2591422ms] r
+[  2591422ms] evision=0
+[  2592422ms] [
+[  2592422ms] geyi:motion] x=127 y=20 key1=0 
+[  2592422ms] r
+[  2592422ms] evision=0
+[  2593422ms] [
+[  2593422ms] geyi:motion] x=124 y=16 key1=0 
+[  2593422ms] r
+[  2593422ms] evision=0
+[  2594422ms] [
+[  2594422ms] geyi:motion] x=126 y=18 key1=0 
+[  2594422ms] r
+[  2594422ms] evision=0
+[  2595422ms] [
+[  2595422ms] geyi:motion] x=124 y=18 key1=0 
+[  2595422ms] r
+[  2595422ms] evision=0
+[  2596422ms] [
+[  2596422ms] geyi:motion] x=126 y=20 key1=0 
+[  2596422ms] r
+[  2596422ms] evision=0
+[  2597422ms] [
+[  2597422ms] geyi:motion] x=124 y=20 key1=0 
+[  2597422ms] r
+[  2597422ms] evision=0
+[  2598405ms] [
+[  2598405ms] geyi:motion] x=123 y=19 key1=0 
+[  2598405ms] r
+[  2598422ms] evision=0
+[  2599405ms] [
+[  2599405ms] geyi:motion] x=126 y=20 key1=0 
+[  2599405ms] r
+[  2599405ms] evision=0
+[  2600405ms] [
+[  2600405ms] geyi:motion] x=127 y=18 key1=0 
+[  2600405ms] r
+[  2600405ms] evision=0
+[  2601405ms] [
+[  2601405ms] geyi:motion] x=125 y=19 key1=0 
+[  2601405ms] r
+[  2601405ms] evision=0
+[  2602405ms] [
+[  2602405ms] geyi:motion] x=127 y=20 key1=0 
+[  2602405ms] r
+[  2602405ms] evision=0
+[  2603405ms] [
+[  2603405ms] geyi:motion] x=126 y=19 key1=0 
+[  2603405ms] r
+[  2603405ms] evision=0
+[  2604405ms] [
+[  2604405ms] geyi:motion] x=129 y=21 key1=0 
+[  2604405ms] r
+[  2604405ms] evision=0
+[  2605405ms] [
+[  2605405ms] geyi:motion] x=126 y=19 key1=0 
+[  2605405ms] r
+[  2605405ms] evision=0
+[  2606405ms] [
+[  2606405ms] geyi:motion] x=127 y=19 key1=0 
+[  2606405ms] r
+[  2606405ms] evision=0
+[  2607405ms] [
+[  2607405ms] geyi:motion] x=126 y=20 key1=0 
+[  2607405ms] r
+[  2607405ms] evision=0
+[  2608405ms] [
+[  2608405ms] geyi:motion] x=130 y=23 key1=0 
+[  2608405ms] r
+[  2608405ms] evision=0
+[  2609405ms] [
+[  2609405ms] geyi:motion] x=125 y=20 key1=0 
+[  2609405ms] r
+[  2609405ms] evision=0
+[  2610405ms] [
+[  2610405ms] geyi:motion] x=128 y=20 key1=0 
+[  2610405ms] r
+[  2610405ms] evision=0
+[  2611390ms] [
+[  2611390ms] geyi:motion] x=127 y=18 key1=0 
+[  2611405ms] r
+[  2611405ms] evision=0
+[  2612390ms] [
+[  2612390ms] geyi:motion] x=124 y=20 key1=0 
+[  2612390ms] r
+[  2612390ms] evision=0
+[  2613390ms] [
+[  2613390ms] geyi:motion] x=132 y=19 key1=0 
+[  2613390ms] r
+[  2613390ms] evision=0
+[  2614390ms] [
+[  2614390ms] geyi:motion] x=126 y=15 key1=0 
+[  2614390ms] r
+[  2614390ms] evision=0
+[  2615390ms] [
+[  2615390ms] geyi:motion] x=129 y=21 key1=0 
+[  2615390ms] r
+[  2615390ms] evision=0
+[  2616390ms] [
+[  2616390ms] geyi:motion] x=126 y=22 key1=0 
+[  2616390ms] r
+[  2616390ms] evision=0
+[  2617390ms] [
+[  2617390ms] geyi:motion] x=129 y=21 key1=0 
+[  2617390ms] r
+[  2617390ms] evision=0
+[  2618390ms] [
+[  2618390ms] geyi:motion] x=127 y=22 key1=0 
+[  2618390ms] r
+[  2618390ms] evision=0
+[  2619390ms] [
+[  2619390ms] geyi:motion] x=129 y=20 key1=0 
+[  2619390ms] r
+[  2619390ms] evision=0
+[  2620390ms] [
+[  2620390ms] geyi:motion] x=128 y=21 key1=0 
+[  2620390ms] r
+[  2620390ms] evision=0
+[  2621390ms] [
+[  2621390ms] geyi:motion] x=127 y=22 key1=0 
+[  2621390ms] r
+[  2621390ms] evision=0
+[  2622390ms] [
+[  2622390ms] geyi:motion] x=129 y=22 key1=0 
+[  2622390ms] r
+[  2622390ms] evision=0
+[  2623375ms] [
+[  2623375ms] geyi:motion] x=129 y=22 key1=0 
+[  2623390ms] r
+[  2623390ms] evision=0
+[  2624375ms] [
+[  2624375ms] geyi:motion] x=128 y=23 key1=0 
+[  2624390ms] r
+[  2624390ms] evision=0
+[  2625375ms] [
+[  2625375ms] geyi:motion] x=125 y=20 key1=0 
+[  2625375ms] r
+[  2625375ms] evision=0
+[  2626375ms] [
+[  2626375ms] geyi:motion] x=128 y=20 key1=0 
+[  2626375ms] r
+[  2626375ms] evision=0
+[  2627375ms] [
+[  2627375ms] geyi:motion] x=126 y=21 key1=0 
+[  2627375ms] r
+[  2627375ms] evision=0
+[  2628375ms] [
+[  2628375ms] geyi:motion] x=129 y=21 key1=0 
+[  2628375ms] r
+[  2628375ms] evision=0
+[  2629375ms] [
+[  2629375ms] geyi:motion] x=128 y=21 key1=0 
+[  2629375ms] r
+[  2629375ms] evision=0
+[  2630375ms] [
+[  2630375ms] geyi:motion] x=129 y=22 key1=0 
+[  2630375ms] r
+[  2630375ms] evision=0
+[  2631375ms] [
+[  2631375ms] geyi:motion] x=127 y=22 key1=0 
+[  2631375ms] r
+[  2631375ms] evision=0
+[  2632375ms] [
+[  2632375ms] geyi:motion] x=128 y=21 key1=0 
+[  2632375ms] r
+[  2632375ms] evision=0
+[  2633375ms] [
+[  2633375ms] geyi:motion] x=130 y=22 key1=0 
+[  2633375ms] r
+[  2633375ms] evision=0
+[  2634375ms] [
+[  2634375ms] geyi:motion] x=129 y=21 key1=0 
+[  2634375ms] r
+[  2634375ms] evision=0
+[  2635375ms] [
+[  2635375ms] geyi:motion] x=129 y=21 key1=0 
+[  2635375ms] r
+[  2635375ms] evision=0
+[  2636375ms] [
+[  2636375ms] geyi:motion] x=128 y=20 key1=0 
+[  2636375ms] r
+[  2636375ms] evision=0
+[  2637358ms] [
+[  2637358ms] geyi:motion] x=129 y=19 key1=0 
+[  2637358ms] r
+[  2637375ms] evision=0
+[  2638358ms] [
+[  2638358ms] geyi:motion] x=131 y=14 key1=0 
+[  2638358ms] r
+[  2638358ms] evision=0
+[  2639358ms] [
+[  2639358ms] geyi:motion] x=129 y=20 key1=0 
+[  2639358ms] r
+[  2639358ms] evision=0
+[  2640358ms] [
+[  2640358ms] geyi:motion] x=127 y=20 key1=0 
+[  2640358ms] r
+[  2640358ms] evision=0
+[  2641358ms] [
+[  2641358ms] geyi:motion] x=129 y=19 key1=0 
+[  2641358ms] r
+[  2641358ms] evision=0
+[  2642358ms] [
+[  2642358ms] geyi:motion] x=128 y=19 key1=0 
+[  2642358ms] r
+[  2642358ms] evision=0
+[  2643358ms] [
+[  2643358ms] geyi:motion] x=128 y=21 key1=0 
+[  2643358ms] r
+[  2643358ms] evision=0
+[  2644358ms] [
+[  2644358ms] geyi:motion] x=131 y=22 key1=0 
+[  2644358ms] r
+[  2644358ms] evision=0
+[  2645358ms] [
+[  2645358ms] geyi:motion] x=126 y=22 key1=0 
+[  2645358ms] r
+[  2645358ms] evision=0
+[  2646358ms] [
+[  2646358ms] geyi:motion] x=127 y=20 key1=0 
+[  2646358ms] r
+[  2646358ms] evision=0
+[  2647358ms] [
+[  2647358ms] geyi:motion] x=128 y=20 key1=0 
+[  2647358ms] r
+[  2647358ms] evision=0
+[  2648358ms] [
+[  2648358ms] geyi:motion] x=126 y=20 key1=0 
+[  2648358ms] r
+[  2648358ms] evision=0
+[  2649358ms] [
+[  2649358ms] geyi:motion] x=126 y=22 key1=0 
+[  2649358ms] r
+[  2649358ms] evision=0
+[  2650358ms] [
+[  2650358ms] geyi:motion] x=130 y=21 key1=0 
+[  2650358ms] r
+[  2650358ms] evision=0
+[  2651358ms] [
+[  2651358ms] geyi:motion] x=126 y=19 key1=0 
+[  2651358ms] r
+[  2651358ms] evision=0
+[  2652343ms] [
+[  2652343ms] geyi:motion] x=130 y=25 key1=0 
+[  2652358ms] r
+[  2652358ms] evision=0
+[  2653343ms] [
+[  2653343ms] geyi:motion] x=128 y=18 key1=0 
+[  2653343ms] r
+[  2653358ms] evision=0
+[  2654343ms] [
+[  2654343ms] geyi:motion] x=131 y=30 key1=0 
+[  2654343ms] r
+[  2654343ms] evision=0
+[  2655343ms] [
+[  2655343ms] geyi:motion] x=127 y=19 key1=0 
+[  2655343ms] r
+[  2655343ms] evision=0
+[  2656343ms] [
+[  2656343ms] geyi:motion] x=131 y=21 key1=0 
+[  2656343ms] r
+[  2656343ms] evision=0
+[  2657343ms] [
+[  2657343ms] geyi:motion] x=130 y=20 key1=0 
+[  2657343ms] r
+[  2657343ms] evision=0
+[  2658343ms] [
+[  2658343ms] geyi:motion] x=127 y=22 key1=0 
+[  2658343ms] r
+[  2658343ms] evision=0
+[  2659343ms] [
+[  2659343ms] geyi:motion] x=128 y=22 key1=0 
+[  2659343ms] r
+[  2659343ms] evision=0
+[  2660343ms] [
+[  2660343ms] geyi:motion] x=129 y=22 key1=0 
+[  2660343ms] r
+[  2660343ms] evision=0
+[  2661343ms] [
+[  2661343ms] geyi:motion] x=128 y=21 key1=0 
+[  2661343ms] r
+[  2661343ms] evision=0
+[  2662343ms] [
+[  2662343ms] geyi:motion] x=128 y=22 key1=0 
+[  2662343ms] r
+[  2662343ms] evision=0
+[  2663343ms] [
+[  2663343ms] geyi:motion] x=128 y=18 key1=0 
+[  2663343ms] r
+[  2663343ms] evision=0
+[  2664343ms] [
+[  2664343ms] geyi:motion] x=128 y=21 key1=0 
+[  2664343ms] r
+[  2664343ms] evision=0
+[  2665343ms] [
+[  2665343ms] geyi:motion] x=126 y=23 key1=0 
+[  2665343ms] r
+[  2665343ms] evision=0
+[  2666327ms] [
+[  2666327ms] geyi:motion] x=128 y=22 key1=0 
+[  2666343ms] r
+[  2666343ms] evision=0
+[  2667327ms] [
+[  2667327ms] geyi:motion] x=125 y=21 key1=0 
+[  2667343ms] r
+[  2667343ms] evision=0
+[  2668327ms] [
+[  2668327ms] geyi:motion] x=128 y=21 key1=0 
+[  2668327ms] r
+[  2668327ms] evision=0
+[  2669327ms] [
+[  2669327ms] geyi:motion] x=128 y=20 key1=0 
+[  2669327ms] r
+[  2669327ms] evision=0
+[  2670327ms] [
+[  2670327ms] geyi:motion] x=128 y=20 key1=0 
+[  2670327ms] r
+[  2670327ms] evision=0
+[  2671327ms] [
+[  2671327ms] geyi:motion] x=128 y=21 key1=0 
+[  2671327ms] r
+[  2671327ms] evision=0
+[  2672327ms] [
+[  2672327ms] geyi:motion] x=128 y=22 key1=0 
+[  2672327ms] r
+[  2672327ms] evision=0
+[  2673327ms] [
+[  2673327ms] geyi:motion] x=128 y=20 key1=0 
+[  2673327ms] r
+[  2673327ms] evision=0
+[  2674327ms] [
+[  2674327ms] geyi:motion] x=129 y=21 key1=0 
+[  2674327ms] r
+[  2674327ms] evision=0
+[  2675327ms] [
+[  2675327ms] geyi:motion] x=125 y=22 key1=0 
+[  2675327ms] r
+[  2675327ms] evision=0
+[  2676327ms] [
+[  2676327ms] geyi:motion] x=126 y=16 key1=0 
+[  2676327ms] r
+[  2676327ms] evision=0
+[  2677327ms] [
+[  2677327ms] geyi:motion] x=129 y=20 key1=0 
+[  2677327ms] r
+[  2677327ms] evision=0
+[  2678327ms] [
+[  2678327ms] geyi:motion] x=128 y=21 key1=0 
+[  2678327ms] r
+[  2678327ms] evision=0
+[  2679327ms] [
+[  2679327ms] geyi:motion] x=126 y=22 key1=0 
+[  2679327ms] r
+[  2679327ms] evision=0
+[  2680312ms] [
+[  2680312ms] geyi:motion] x=126 y=22 key1=0 
+[  2680327ms] r
+[  2680327ms] evision=0
+[  2681312ms] [
+[  2681312ms] geyi:motion] x=127 y=21 key1=0 
+[  2681312ms] r
+[  2681312ms] evision=0
+[  2682312ms] [
+[  2682312ms] geyi:motion] x=125 y=22 key1=0 
+[  2682312ms] r
+[  2682312ms] evision=0
+[  2683312ms] [
+[  2683312ms] geyi:motion] x=128 y=20 key1=0 
+[  2683312ms] r
+[  2683312ms] evision=0
+[  2684312ms] [
+[  2684312ms] geyi:motion] x=130 y=16 key1=0 
+[  2684312ms] r
+[  2684312ms] evision=0
+[  2685312ms] [
+[  2685312ms] geyi:motion] x=129 y=23 key1=0 
+[  2685312ms] r
+[  2685312ms] evision=0
+[  2686312ms] [
+[  2686312ms] geyi:motion] x=128 y=22 key1=0 
+[  2686312ms] r
+[  2686312ms] evision=0
+[  2687312ms] [
+[  2687312ms] geyi:motion] x=127 y=24 key1=0 
+[  2687312ms] r
+[  2687312ms] evision=0
+[  2688312ms] [
+[  2688312ms] geyi:motion] x=128 y=22 key1=0 
+[  2688312ms] r
+[  2688312ms] evision=0
+[  2689312ms] [
+[  2689312ms] geyi:motion] x=127 y=22 key1=0 
+[  2689312ms] r
+[  2689312ms] evision=0
+[  2690312ms] [
+[  2690312ms] geyi:motion] x=127 y=21 key1=0 
+[  2690312ms] r
+[  2690312ms] evision=0
+[  2691312ms] [
+[  2691312ms] geyi:motion] x=128 y=19 key1=0 
+[  2691312ms] r
+[  2691312ms] evision=0
+[  2692312ms] [
+[  2692312ms] geyi:motion] x=129 y=22 key1=0 
+[  2692312ms] r
+[  2692312ms] evision=0
+[  2693312ms] [
+[  2693312ms] geyi:motion] x=127 y=23 key1=0 
+[  2693312ms] r
+[  2693312ms] evision=0
+[  2694297ms] [
+[  2694297ms] geyi:motion] x=126 y=26 key1=0 
+[  2694312ms] r
+[  2694312ms] evision=0
+[  2695297ms] [
+[  2695297ms] geyi:motion] x=127 y=25 key1=0 
+[  2695297ms] r
+[  2695297ms] evision=0
+[  2696297ms] [
+[  2696297ms] geyi:motion] x=132 y=24 key1=0 
+[  2696297ms] r
+[  2696297ms] evision=0
+[  2697297ms] [
+[  2697297ms] geyi:motion] x=128 y=21 key1=0 
+[  2697297ms] r
+[  2697297ms] evision=0
+[  2698297ms] [
+[  2698297ms] geyi:motion] x=128 y=20 key1=0 
+[  2698297ms] r
+[  2698297ms] evision=0
+[  2699297ms] [
+[  2699297ms] geyi:motion] x=128 y=24 key1=0 
+[  2699297ms] r
+[  2699297ms] evision=0
+[  2700297ms] [
+[  2700297ms] geyi:motion] x=132 y=26 key1=0 
+[  2700297ms] r
+[  2700297ms] evision=0
+[  2701297ms] [
+[  2701297ms] geyi:motion] x=131 y=26 key1=0 
+[  2701297ms] r
+[  2701297ms] evision=0
+[  2702297ms] [
+[  2702297ms] geyi:motion] x=130 y=25 key1=0 
+[  2702297ms] r
+[  2702297ms] evision=0
+[  2703297ms] [
+[  2703297ms] geyi:motion] x=128 y=22 key1=0 
+[  2703297ms] r
+[  2703297ms] evision=0
+[  2704297ms] [
+[  2704297ms] geyi:motion] x=135 y=28 key1=0 
+[  2704297ms] r
+[  2704297ms] evision=0
+[  2705297ms] [
+[  2705297ms] geyi:motion] x=131 y=24 key1=0 
+[  2705297ms] r
+[  2705297ms] evision=0
+[  2706297ms] [
+[  2706297ms] geyi:motion] x=135 y=27 key1=0 
+[  2706297ms] r
+[  2706297ms] evision=0
+[  2707280ms] [
+[  2707280ms] geyi:motion] x=133 y=27 key1=0 
+[  2707297ms] r
+[  2707297ms] evision=0
+[  2708280ms] [
+[  2708280ms] geyi:motion] x=131 y=22 key1=0 
+[  2708297ms] r
+[  2708297ms] evision=0
+[  2709280ms] [
+[  2709280ms] geyi:motion] x=129 y=28 key1=0 
+[  2709280ms] r
+[  2709280ms] evision=0
+[  2710280ms] [
+[  2710280ms] geyi:motion] x=132 y=28 key1=0 
+[  2710280ms] r
+[  2710280ms] evision=0
+[  2711280ms] [
+[  2711280ms] geyi:motion] x=127 y=24 key1=0 
+[  2711280ms] r
+[  2711280ms] evision=0
+[  2712280ms] [
+[  2712280ms] geyi:motion] x=132 y=24 key1=0 
+[  2712280ms] r
+[  2712280ms] evision=0
+[  2713280ms] [
+[  2713280ms] geyi:motion] x=127 y=26 key1=0 
+[  2713280ms] r
+[  2713280ms] evision=0
+[  2714280ms] [
+[  2714280ms] geyi:motion] x=129 y=26 key1=0 
+[  2714280ms] r
+[  2714280ms] evision=0
+[  2715280ms] [
+[  2715280ms] geyi:motion] x=129 y=26 key1=0 
+[  2715280ms] r
+[  2715280ms] evision=0
+[  2716280ms] [
+[  2716280ms] geyi:motion] x=131 y=28 key1=0 
+[  2716280ms] r
+[  2716280ms] evision=0
+[  2717280ms] [
+[  2717280ms] geyi:motion] x=131 y=26 key1=0 
+[  2717280ms] r
+[  2717280ms] evision=0
+[  2718280ms] [
+[  2718280ms] geyi:motion] x=129 y=21 key1=0 
+[  2718280ms] r
+[  2718280ms] evision=0
+[  2719280ms] [
+[  2719280ms] geyi:motion] x=130 y=25 key1=0 
+[  2719280ms] r
+[  2719280ms] evision=0
+[  2720280ms] [
+[  2720280ms] geyi:motion] x=126 y=24 key1=0 
+[  2720280ms] r
+[  2720280ms] evision=0
+[  2721280ms] [
+[  2721280ms] geyi:motion] x=131 y=26 key1=0 
+[  2721280ms] r
+[  2721280ms] evision=0
+[  2722280ms] [
+[  2722280ms] geyi:motion] x=131 y=27 key1=0 
+[  2722280ms] r
+[  2722280ms] evision=0
+[  2723265ms] [
+[  2723280ms] geyi:motion] x=131 y=25 key1=0 
+[  2723280ms] r
+[  2723280ms] evision=0
+[  2724265ms] [
+[  2724265ms] geyi:motion] x=342 y=57 key1=0 
+[  2724265ms] r
+[  2724265ms] evision=0
+[  2725265ms] [
+[  2725265ms] geyi:motion] x=356 y=58 key1=0 
+[  2725265ms] r
+[  2725265ms] evision=0
+[  2726265ms] [
+[  2726265ms] geyi:motion] x=362 y=58 key1=0 
+[  2726265ms] r
+[  2726265ms] evision=0
+[  2727265ms] [
+[  2727265ms] geyi:motion] x=358 y=60 key1=0 
+[  2727265ms] r
+[  2727265ms] evision=0
+[  2728265ms] [
+[  2728265ms] geyi:motion] x=353 y=57 key1=0 
+[  2728265ms] r
+[  2728265ms] evision=0
+[  2729265ms] [
+[  2729265ms] geyi:motion] x=354 y=59 key1=0 
+[  2729265ms] r
+[  2729265ms] evision=0
+[  2730265ms] [
+[  2730265ms] geyi:motion] x=359 y=56 key1=0 
+[  2730265ms] r
+[  2730265ms] evision=0
+[  2731265ms] [
+[  2731265ms] geyi:motion] x=365 y=59 key1=0 
+[  2731265ms] r
+[  2731265ms] evision=0
+[  2732265ms] [
+[  2732265ms] geyi:motion] x=360 y=58 key1=0 
+[  2732265ms] r
+[  2732265ms] evision=0
+[  2733265ms] [
+[  2733265ms] geyi:motion] x=362 y=59 key1=0 
+[  2733265ms] r
+[  2733265ms] evision=0
+[  2734265ms] [
+[  2734265ms] geyi:motion] x=360 y=58 key1=0 
+[  2734265ms] r
+[  2734265ms] evision=0
+[  2735265ms] [
+[  2735265ms] geyi:motion] x=360 y=60 key1=0 
+[  2735265ms] r
+[  2735265ms] evision=0
+[  2736265ms] [
+[  2736265ms] geyi:motion] x=358 y=58 key1=0 
+[  2736265ms] r
+[  2736265ms] evision=0
+[  2737250ms] [
+[  2737250ms] geyi:motion] x=357 y=57 key1=0 
+[  2737265ms] r
+[  2737265ms] evision=0
+[  2738250ms] [
+[  2738250ms] geyi:motion] x=354 y=58 key1=0 
+[  2738250ms] r
+[  2738250ms] evision=0
+[  2739250ms] [
+[  2739250ms] geyi:motion] x=358 y=58 key1=0 
+[  2739250ms] r
+[  2739250ms] evision=0
+[  2740250ms] [
+[  2740250ms] geyi:motion] x=352 y=59 key1=0 
+[  2740250ms] r
+[  2740250ms] evision=0
+[  2741250ms] [
+[  2741250ms] geyi:motion] x=356 y=57 key1=0 
+[  2741250ms] r
+[  2741250ms] evision=0
+[  2742250ms] [
+[  2742250ms] geyi:motion] x=348 y=56 key1=0 
+[  2742250ms] r
+[  2742250ms] evision=0
+[  2743250ms] [
+[  2743250ms] geyi:motion] x=351 y=56 key1=0 
+[  2743250ms] r
+[  2743250ms] evision=0
+[  2744250ms] [
+[  2744250ms] geyi:motion] x=353 y=55 key1=0 
+[  2744250ms] r
+[  2744250ms] evision=0
+[  2745250ms] [
+[  2745250ms] geyi:motion] x=346 y=60 key1=0 
+[  2745250ms] r
+[  2745250ms] evision=0
+[  2746250ms] [
+[  2746250ms] geyi:motion] x=333 y=55 key1=0 
+[  2746250ms] r
+[  2746250ms] evision=0
+[  2747250ms] [
+[  2747250ms] geyi:motion] x=335 y=57 key1=0 
+[  2747250ms] r
+[  2747250ms] evision=0
+[  2748250ms] [
+[  2748250ms] geyi:motion] x=338 y=54 key1=0 
+[  2748250ms] r
+[  2748250ms] evision=0
+[  2749250ms] [
+[  2749250ms] geyi:motion] x=339 y=56 key1=0 
+[  2749250ms] r
+[  2749250ms] evision=0
+[  2750250ms] [
+[  2750250ms] geyi:motion] x=224 y=39 key1=0 
+[  2750250ms] r
+[  2750250ms] evision=0
+[  2751250ms] [
+[  2751250ms] geyi:motion] x=176 y=34 key1=0 
+[  2751250ms] r
+[  2751250ms] evision=0
+[  2752250ms] [
+[  2752250ms] geyi:motion] x=160 y=30 key1=0 
+[  2752250ms] r
+[  2752250ms] evision=0
+[  2753250ms] [
+[  2753250ms] geyi:motion] x=153 y=29 key1=0 
+[  2753250ms] r
+[  2753250ms] evision=0
+[  2754233ms] [
+[  2754233ms] geyi:motion] x=141 y=26 key1=0 
+[  2754250ms] r
+[  2754250ms] evision=0
+[  2755233ms] [
+[  2755233ms] geyi:motion] x=141 y=26 key1=0 
+[  2755233ms] r
+[  2755233ms] evision=0
+[  2756233ms] [
+[  2756233ms] geyi:motion] x=141 y=30 key1=0 
+[  2756233ms] r
+[  2756233ms] evision=0
+[  2757233ms] [
+[  2757233ms] geyi:motion] x=142 y=27 key1=0 
+[  2757233ms] r
+[  2757233ms] evision=0
+[  2758233ms] [
+[  2758233ms] geyi:motion] x=141 y=27 key1=0 
+[  2758233ms] r
+[  2758233ms] evision=0
+[  2759233ms] [
+[  2759233ms] geyi:motion] x=140 y=29 key1=0 
+[  2759233ms] r
+[  2759233ms] evision=0
+[  2760233ms] [
+[  2760233ms] geyi:motion] x=139 y=27 key1=0 
+[  2760233ms] r
+[  2760233ms] evision=0
+[  2761233ms] [
+[  2761233ms] geyi:motion] x=140 y=28 key1=0 
+[  2761233ms] r
+[  2761233ms] evision=0
+[  2762233ms] [
+[  2762233ms] geyi:motion] x=144 y=30 key1=0 
+[  2762233ms] r
+[  2762233ms] evision=0
+[  2763233ms] [
+[  2763233ms] geyi:motion] x=140 y=28 key1=0 
+[  2763233ms] r
+[  2763233ms] evision=0
+[  2764233ms] [
+[  2764233ms] geyi:motion] x=142 y=29 key1=0 
+[  2764233ms] r
+[  2764233ms] evision=0
+[  2765233ms] [
+[  2765233ms] geyi:motion] x=140 y=28 key1=0 
+[  2765233ms] r
+[  2765233ms] evision=0
+[  2766233ms] [
+[  2766233ms] geyi:motion] x=142 y=27 key1=0 
+[  2766233ms] r
+[  2766233ms] evision=0
+[  2767233ms] [
+[  2767233ms] geyi:motion] x=140 y=28 key1=0 
+[  2767233ms] r
+[  2767233ms] evision=0
+[  2768233ms] [
+[  2768233ms] geyi:motion] x=143 y=29 key1=0 
+[  2768233ms] r
+[  2768233ms] evision=0
+[  2769233ms] [
+[  2769233ms] geyi:motion] x=141 y=29 key1=0 
+[  2769233ms] r
+[  2769233ms] evision=0
+[  2770218ms] [
+[  2770218ms] geyi:motion] x=140 y=28 key1=0 
+[  2770233ms] r
+[  2770233ms] evision=0
+[  2771218ms] [
+[  2771218ms] geyi:motion] x=141 y=28 key1=0 
+[  2771233ms] r
+[  2771233ms] evision=0
+[  2772218ms] [
+[  2772218ms] geyi:motion] x=140 y=27 key1=0 
+[  2772218ms] r
+[  2772218ms] evision=0
+[  2773218ms] [
+[  2773218ms] geyi:motion] x=139 y=28 key1=0 
+[  2773218ms] revision=0
+[  2774218ms] [
+[  2774218ms] geyi:motion] x=140 y=29 key1=0 
+[  2774218ms] r
+[  2774218ms] evision=0
+[  2775218ms] [
+[  2775218ms] geyi:motion] x=140 y=28 key1=0 
+[  2775218ms] r
+[  2775218ms] evision=0
+[  2776218ms] [
+[  2776218ms] geyi:motion] x=140 y=26 key1=0 
+[  2776218ms] r
+[  2776218ms] evision=0
+[  2777218ms] [
+[  2777218ms] geyi:motion] x=138 y=26 key1=0 
+[  2777218ms] r
+[  2777218ms] evision=0
+[  2778218ms] [
+[  2778218ms] geyi:motion] x=141 y=28 key1=0 
+[  2778218ms] r
+[  2778218ms] evision=0
+[  2779218ms] [
+[  2779218ms] geyi:motion] x=145 y=31 key1=0 
+[  2779218ms] r
+[  2779218ms] evision=0
+[  2780218ms] [
+[  2780218ms] geyi:motion] x=139 y=27 key1=0 
+[  2780218ms] r
+[  2780218ms] evision=0
+[  2781218ms] [
+[  2781218ms] geyi:motion] x=140 y=28 key1=0 
+[  2781218ms] r
+[  2781218ms] evision=0
+[  2782218ms] [
+[  2782218ms] geyi:motion] x=138 y=29 key1=0 
+[  2782218ms] r
+[  2782218ms] evision=0
+[  2783218ms] [
+[  2783218ms] geyi:motion] x=141 y=28 key1=0 
+[  2783218ms] r
+[  2783218ms] evision=0
+[  2784218ms] [
+[  2784218ms] geyi:motion] x=139 y=26 key1=0 
+[  2784218ms] r
+[  2784218ms] evision=0
+[  2785218ms] [
+[  2785218ms] geyi:motion] x=140 y=30 key1=0 
+[  2785218ms] r
+[  2785218ms] evision=0
+[  2786202ms] [
+[  2786202ms] geyi:motion] x=140 y=29 key1=0 
+[  2786218ms] r
+[  2786218ms] evision=0
+[  2787202ms] [
+[  2787202ms] geyi:motion] x=139 y=28 key1=0 
+[  2787202ms] r
+[  2787202ms] evision=0
+[  2788202ms] [
+[  2788202ms] geyi:motion] x=140 y=25 key1=0 
+[  2788202ms] r
+[  2788202ms] evision=0
+[  2789202ms] [
+[  2789202ms] geyi:motion] x=140 y=27 key1=0 
+[  2789202ms] r
+[  2789202ms] evision=0
+[  2790202ms] [
+[  2790202ms] geyi:motion] x=141 y=26 key1=0 
+[  2790202ms] r
+[  2790202ms] evision=0
+[  2791202ms] [
+[  2791202ms] geyi:motion] x=138 y=24 key1=0 
+[  2791202ms] r
+[  2791202ms] evision=0
+[  2792202ms] [
+[  2792202ms] geyi:motion] x=139 y=29 key1=0 
+[  2792202ms] r
+[  2792202ms] evision=0
+[  2793202ms] [
+[  2793202ms] geyi:motion] x=141 y=26 key1=0 
+[  2793202ms] r
+[  2793202ms] evision=0
+[  2794202ms] [
+[  2794202ms] geyi:motion] x=138 y=27 key1=0 
+[  2794202ms] r
+[  2794202ms] evision=0
+[  2795202ms] [
+[  2795202ms] geyi:motion] x=142 y=25 key1=0 
+[  2795202ms] r
+[  2795202ms] evision=0
+[  2796202ms] [
+[  2796202ms] geyi:motion] x=142 y=29 key1=0 
+[  2796202ms] r
+[  2796202ms] evision=0
+[  2797202ms] [
+[  2797202ms] geyi:motion] x=139 y=27 key1=0 
+[  2797202ms] r
+[  2797202ms] evision=0
+[  2798202ms] [
+[  2798202ms] geyi:motion] x=142 y=28 key1=0 
+[  2798202ms] r
+[  2798202ms] evision=0
+[  2799202ms] [
+[  2799202ms] geyi:motion] x=141 y=29 key1=0 
+[  2799202ms] r
+[  2799202ms] evision=0
+[  2800187ms] [
+[  2800187ms] geyi:motion] x=139 y=25 key1=0 
+[  2800202ms] r
+[  2800202ms] evision=0
+[  2801187ms] [
+[  2801187ms] geyi:motion] x=141 y=28 key1=0 
+[  2801187ms] r
+[  2801187ms] evision=0
+[  2802187ms] [
+[  2802187ms] geyi:motion] x=139 y=27 key1=0 
+[  2802187ms] r
+[  2802187ms] evision=0
+[  2803187ms] [
+[  2803187ms] geyi:motion] x=139 y=29 key1=0 
+[  2803187ms] r
+[  2803187ms] evision=0
+[  2804187ms] [
+[  2804187ms] geyi:motion] x=143 y=26 key1=0 
+[  2804187ms] r
+[  2804187ms] evision=0
+[  2805187ms] [
+[  2805187ms] geyi:motion] x=139 y=27 key1=0 
+[  2805187ms] r
+[  2805187ms] evision=0
+[  2806187ms] [
+[  2806187ms] geyi:motion] x=140 y=29 key1=0 
+[  2806187ms] r
+[  2806187ms] evision=0
+[  2807187ms] [
+[  2807187ms] geyi:motion] x=139 y=26 key1=0 
+[  2807187ms] r
+[  2807187ms] evision=0
+[  2808187ms] [
+[  2808187ms] geyi:motion] x=138 y=29 key1=0 
+[  2808187ms] r
+[  2808187ms] evision=0
+[  2809187ms] [
+[  2809187ms] geyi:motion] x=139 y=28 key1=0 
+[  2809187ms] r
+[  2809187ms] evision=0
+[  2810187ms] [
+[  2810187ms] geyi:motion] x=140 y=25 key1=0 
+[  2810187ms] r
+[  2810187ms] evision=0
+[  2811172ms] [
+[  2811172ms] geyi:motion] x=139 y=29 key1=0 
+[  2811187ms] r
+[  2811187ms] evision=0
+[  2812172ms] [
+[  2812172ms] geyi:motion] x=141 y=27 key1=0 
+[  2812172ms] r
+[  2812172ms] evision=0
+[  2813172ms] [
+[  2813172ms] geyi:motion] x=140 y=27 key1=0 
+[  2813172ms] r
+[  2813172ms] evision=0
+[  2814172ms] [
+[  2814172ms] geyi:motion] x=138 y=29 key1=0 
+[  2814172ms] r
+[  2814172ms] evision=0
+[  2815172ms] [
+[  2815172ms] geyi:motion] x=141 y=27 key1=0 
+[  2815172ms] r
+[  2815172ms] evision=0
+[  2816172ms] [
+[  2816172ms] geyi:motion] x=138 y=28 key1=0 
+[  2816172ms] r
+[  2816172ms] evision=0
+[  2817172ms] [
+[  2817172ms] geyi:motion] x=142 y=25 key1=0 
+[  2817172ms] r
+[  2817172ms] evision=0
+[  2818172ms] [
+[  2818172ms] geyi:motion] x=138 y=28 key1=0 
+[  2818172ms] r
+[  2818172ms] evision=0
+[  2819172ms] [
+[  2819172ms] geyi:motion] x=140 y=26 key1=0 
+[  2819172ms] r
+[  2819172ms] evision=0
+[  2820172ms] [
+[  2820172ms] geyi:motion] x=140 y=28 key1=0 
+[  2820172ms] r
+[  2820172ms] evision=0
+[  2821172ms] [
+[  2821172ms] geyi:motion] x=139 y=24 key1=0 
+[  2821172ms] r
+[  2821172ms] evision=0
+[  2822172ms] [
+[  2822172ms] geyi:motion] x=138 y=26 key1=0 
+[  2822172ms] r
+[  2822172ms] evision=0
+[  2823155ms] [
+[  2823155ms] geyi:motion] x=140 y=28 key1=0 
+[  2823172ms] r
+[  2823172ms] evision=0
+[  2824155ms] [
+[  2824155ms] geyi:motion] x=140 y=27 key1=0 
+[  2824172ms] r
+[  2824172ms] evision=0
+[  2825155ms] [
+[  2825155ms] geyi:motion] x=142 y=27 key1=0 
+[  2825155ms] r
+[  2825155ms] evision=0
+[  2826155ms] [
+[  2826155ms] geyi:motion] x=138 y=28 key1=0 
+[  2826155ms] r
+[  2826155ms] evision=0
+[  2827155ms] [
+[  2827155ms] geyi:motion] x=138 y=27 key1=0 
+[  2827155ms] r
+[  2827155ms] evision=0
+[  2828155ms] [
+[  2828155ms] geyi:motion] x=139 y=28 key1=0 
+[  2828155ms] r
+[  2828155ms] evision=0
+[  2829155ms] [
+[  2829155ms] geyi:motion] x=138 y=27 key1=0 
+[  2829155ms] r
+[  2829155ms] evision=0
+[  2830155ms] [
+[  2830155ms] geyi:motion] x=141 y=27 key1=0 
+[  2830155ms] r
+[  2830155ms] evision=0
+[  2831155ms] [
+[  2831155ms] geyi:motion] x=138 y=27 key1=0 
+[  2831155ms] r
+[  2831155ms] evision=0
+[  2832155ms] [
+[  2832155ms] geyi:motion] x=140 y=27 key1=0 
+[  2832155ms] r
+[  2832155ms] evision=0
+[  2833155ms] [
+[  2833155ms] geyi:motion] x=140 y=28 key1=0 
+[  2833155ms] r
+[  2833155ms] evision=0
+[  2834155ms] [
+[  2834155ms] geyi:motion] x=139 y=28 key1=0 
+[  2834155ms] r
+[  2834155ms] evision=0
+[  2835155ms] [
+[  2835155ms] geyi:motion] x=139 y=29 key1=0 
+[  2835155ms] r
+[  2835155ms] evision=0
+[  2836140ms] [
+[  2836140ms] geyi:motion] x=140 y=29 key1=0 
+[  2836155ms] r
+[  2836155ms] evision=0
+[  2837140ms] [
+[  2837140ms] geyi:motion] x=139 y=25 key1=0 
+[  2837140ms] r
+[  2837140ms] evision=0
+[  2838140ms] [
+[  2838140ms] geyi:motion] x=140 y=26 key1=0 
+[  2838140ms] r
+[  2838140ms] evision=0
+[  2839140ms] [
+[  2839140ms] geyi:motion] x=139 y=26 key1=0 
+[  2839140ms] r
+[  2839140ms] evision=0
+[  2840140ms] [
+[  2840140ms] geyi:motion] x=139 y=27 key1=0 
+[  2840140ms] r
+[  2840140ms] evision=0
+[  2841140ms] [
+[  2841140ms] geyi:motion] x=140 y=29 key1=0 
+[  2841140ms] r
+[  2841140ms] evision=0
+[  2842140ms] [
+[  2842140ms] geyi:motion] x=139 y=27 key1=0 
+[  2842140ms] r
+[  2842140ms] evision=0
+[  2843140ms] [
+[  2843140ms] geyi:motion] x=139 y=28 key1=0 
+[  2843140ms] r
+[  2843140ms] evision=0
+[  2844140ms] [
+[  2844140ms] geyi:motion] x=140 y=28 key1=0 
+[  2844140ms] r
+[  2844140ms] evision=0
+[  2845140ms] [
+[  2845140ms] geyi:motion] x=139 y=28 key1=0 
+[  2845140ms] r
+[  2845140ms] evision=0
+[  2846140ms] [
+[  2846140ms] geyi:motion] x=140 y=29 key1=0 
+[  2846140ms] r
+[  2846140ms] evision=0
+[  2847140ms] [
+[  2847140ms] geyi:motion] x=140 y=28 key1=0 
+[  2847140ms] r
+[  2847140ms] evision=0
+[  2848125ms] [
+[  2848125ms] geyi:motion] x=141 y=27 key1=0 
+[  2848140ms] r
+[  2848140ms] evision=0
+[  2849125ms] [
+[  2849125ms] geyi:motion] x=140 y=26 key1=0 
+[  2849125ms] r
+[  2849125ms] evision=0
+[  2850125ms] [
+[  2850125ms] geyi:motion] x=141 y=26 key1=0 
+[  2850125ms] r
+[  2850125ms] evision=0
+[  2851125ms] [
+[  2851125ms] geyi:motion] x=140 y=25 key1=0 
+[  2851125ms] r
+[  2851125ms] evision=0
+[  2852125ms] [
+[  2852125ms] geyi:motion] x=140 y=26 key1=0 
+[  2852125ms] r
+[  2852125ms] evision=0
+[  2853125ms] [
+[  2853125ms] geyi:motion] x=139 y=27 key1=0 
+[  2853125ms] r
+[  2853125ms] evision=0
+[  2854125ms] [
+[  2854125ms] geyi:motion] x=139 y=29 key1=0 
+[  2854125ms] r
+[  2854125ms] evision=0
+[  2855125ms] [
+[  2855125ms] geyi:motion] x=140 y=27 key1=0 
+[  2855125ms] r
+[  2855125ms] evision=0
+[  2856125ms] [
+[  2856125ms] geyi:motion] x=137 y=26 key1=0 
+[  2856125ms] r
+[  2856125ms] evision=0
+[  2857125ms] [
+[  2857125ms] geyi:motion] x=140 y=28 key1=0 
+[  2857125ms] r
+[  2857125ms] evision=0
+[  2858125ms] [
+[  2858125ms] geyi:motion] x=144 y=32 key1=0 
+[  2858125ms] r
+[  2858125ms] evision=0
+[  2859125ms] [
+[  2859125ms] geyi:motion] x=138 y=26 key1=0 
+[  2859125ms] r
+[  2859125ms] evision=0
+[  2860125ms] [
+[  2860125ms] geyi:motion] x=139 y=29 key1=0 
+[  2860125ms] r
+[  2860125ms] evision=0
+[  2861125ms] [
+[  2861125ms] geyi:motion] x=140 y=26 key1=0 
+[  2861125ms] r
+[  2861125ms] evision=0
+[  2862108ms] [
+[  2862108ms] geyi:motion] x=138 y=29 key1=0 
+[  2862125ms] r
+[  2862125ms] evision=0
+[  2863108ms] [
+[  2863108ms] geyi:motion] x=140 y=28 key1=0 
+[  2863108ms] r
+[  2863108ms] evision=0
+[  2864108ms] [
+[  2864108ms] geyi:motion] x=138 y=27 key1=0 
+[  2864108ms] r
+[  2864108ms] evision=0
+[  2865108ms] [
+[  2865108ms] geyi:motion] x=2393 y=2533 key1
+[  2865108ms] =
+[  2865108ms] 0 revision=0
+[  2866108ms] [
+[  2866108ms] geyi:motion] x=2120 y=2309 key1
+[  2866108ms] =
+[  2866108ms] 0 revision=0
+[  2867108ms] [
+[  2867108ms] geyi:motion] x=2135 y=2337 key1
+[  2867108ms] =
+[  2867108ms] 0 revision=0
+[  2868108ms] [
+[  2868108ms] geyi:motion] x=2135 y=2341 key1
+[  2868108ms] =
+[  2868108ms] 0 revision=0
+[  2869108ms] [
+[  2869108ms] geyi:motion] x=2093 y=2272 key1
+[  2869108ms] =
+[  2869108ms] 0 revision=0
+[  2870108ms] [
+[  2870108ms] geyi:motion] x=2051 y=2202 key1
+[  2870108ms] =
+[  2870108ms] 0 revision=0
+[  2871108ms] [
+[  2871108ms] geyi:motion] x=2030 y=2167 key1
+[  2871108ms] =
+[  2871108ms] 0 revision=0
+[  2872108ms] [
+[  2872108ms] geyi:motion] x=2019 y=2149 key1
+[  2872108ms] =
+[  2872108ms] 0 revision=0
+[  2873108ms] [
+[  2873108ms] geyi:motion] x=2010 y=2138 key1
+[  2873108ms] =
+[  2873108ms] 0 revision=0
+[  2874093ms] [
+[  2874093ms] geyi:motion] x=2009 y=2132 key1
+[  2874108ms] =
+[  2874108ms] 0 revision=0
+[  2875093ms] [
+[  2875093ms] geyi:motion] x=2005 y=2126 key1
+[  2875093ms] =
+[  2875093ms] 0 revision=0
+[  2876093ms] [
+[  2876093ms] geyi:motion] x=2003 y=2122 key1
+[  2876093ms] =
+[  2876093ms] 0 revision=0
+[  2877093ms] [
+[  2877093ms] geyi:motion] x=2000 y=2119 key1
+[  2877093ms] =
+[  2877093ms] 0 revision=0
+[  2878093ms] [
+[  2878093ms] geyi:motion] x=1999 y=2116 key1
+[  2878093ms] =
+[  2878093ms] 0 revision=0
+[  2879093ms] [
+[  2879093ms] geyi:motion] x=1993 y=2108 key1
+[  2879093ms] =
+[  2879093ms] 0 revision=0
+[  2880093ms] [
+[  2880093ms] geyi:motion] x=1994 y=2109 key1
+[  2880093ms] =
+[  2880093ms] 0 revision=0
+[  2881093ms] [
+[  2881093ms] geyi:motion] x=1994 y=2106 key1
+[  2881093ms] =
+[  2881093ms] 0 revision=0
+[  2882093ms] [
+[  2882093ms] geyi:motion] x=1992 y=2107 key1
+[  2882093ms] =
+[  2882093ms] 0 revision=0
+[  2883093ms] [
+[  2883093ms] geyi:motion] x=1986 y=2097 key1
+[  2883093ms] =
+[  2883093ms] 0 revision=0
+[  2884093ms] [
+[  2884093ms] geyi:motion] x=1982 y=2087 key1
+[  2884093ms] =
+[  2884093ms] 0 revision=0
+[  2885093ms] [
+[  2885093ms] geyi:motion] x=1979 y=2083 key1
+[  2885093ms] =
+[  2885093ms] 0 revision=0
+[  2886077ms] [
+[  2886077ms] geyi:motion] x=1977 y=2078 key1
+[  2886093ms] =
+[  2886093ms] 0 revision=0
+[  2887077ms] [
+[  2887077ms] geyi:motion] x=1977 y=2076 key1
+[  2887077ms] =
+[  2887077ms] 0 revision=0
+[  2888077ms] [
+[  2888077ms] geyi:motion] x=1973 y=2072 key1
+[  2888077ms] =
+[  2888077ms] 0 revision=0
+[  2889077ms] [
+[  2889077ms] geyi:motion] x=1970 y=2070 key1
+[  2889077ms] =
+[  2889077ms] 0 revision=0
+[  2890077ms] [
+[  2890077ms] geyi:motion] x=1972 y=2069 key1
+[  2890077ms] =
+[  2890077ms] 0 revision=0
+[  2891077ms] [
+[  2891077ms] geyi:motion] x=1969 y=2062 key1
+[  2891077ms] =
+[  2891077ms] 0 revision=0
+[  2892077ms] [
+[  2892077ms] geyi:motion] x=1965 y=2059 key1
+[  2892077ms] =
+[  2892077ms] 0 revision=0
+[  2893077ms] [
+[  2893077ms] geyi:motion] x=1963 y=2054 key1
+[  2893077ms] =
+[  2893077ms] 0 revision=0
+[  2894077ms] [
+[  2894077ms] geyi:motion] x=1961 y=2052 key1
+[  2894077ms] =
+[  2894077ms] 0 revision=0
+[  2895077ms] [
+[  2895077ms] geyi:motion] x=1962 y=2055 key1
+[  2895077ms] =
+[  2895077ms] 0 revision=0
+[  2896077ms] [
+[  2896077ms] geyi:motion] x=1964 y=2052 key1
+[  2896077ms] =
+[  2896077ms] 0 revision=0
+[  2897077ms] [
+[  2897077ms] geyi:motion] x=1961 y=2053 key1
+[  2897077ms] =
+[  2897077ms] 0 revision=0
+[  2898077ms] [
+[  2898077ms] geyi:motion] x=1965 y=2056 key1
+[  2898077ms] =
+[  2898077ms] 0 revision=0
+[  2899062ms] [
+[  2899062ms] geyi:motion] x=1960 y=2048 key1
+[  2899077ms] =
+[  2899077ms] 0 revision=0
+[  2900062ms] [
+[  2900062ms] geyi:motion] x=1961 y=2049 key1
+[  2900062ms] =
+[  2900062ms] 0 revision=0
+[  2901062ms] [
+[  2901062ms] geyi:motion] x=1963 y=2048 key1
+[  2901062ms] =
+[  2901062ms] 0 revision=0
+[  2902062ms] [
+[  2902062ms] geyi:motion] x=1961 y=2049 key1
+[  2902062ms] =
+[  2902062ms] 0 revision=0
+[  2903062ms] [
+[  2903062ms] geyi:motion] x=1962 y=2053 key1
+[  2903062ms] =
+[  2903062ms] 0 revision=0
+[  2904062ms] [
+[  2904062ms] geyi:motion] x=1960 y=2051 key1
+[  2904062ms] =
+[  2904062ms] 0 revision=0
+[  2905062ms] [
+[  2905062ms] geyi:motion] x=1958 y=2046 key1
+[  2905062ms] =
+[  2905062ms] 0 revision=0
+[  2906062ms] [
+[  2906062ms] geyi:motion] x=1960 y=2047 key1
+[  2906062ms] =
+[  2906062ms] 0 revision=0
+[  2907062ms] [
+[  2907062ms] geyi:motion] x=1962 y=2049 key1
+[  2907062ms] =
+[  2907062ms] 0 revision=0
+[  2908062ms] [
+[  2908062ms] geyi:motion] x=1961 y=2050 key1
+[  2908062ms] =
+[  2908062ms] 0 revision=0
+[  2909047ms] [
+[  2909062ms] geyi:motion] x=1964 y=2049 key1
+[  2909062ms] =
+[  2909062ms] 0 revision=0
+[  2910047ms] [
+[  2910047ms] geyi:motion] x=1963 y=2049 key1
+[  2910047ms] =
+[  2910047ms] 0 revision=0
+[  2911047ms] [
+[  2911047ms] geyi:motion] x=1962 y=2051 key1
+[  2911047ms] =
+[  2911047ms] 0 revision=0
+[  2912047ms] [
+[  2912047ms] geyi:motion] x=1961 y=2051 key1
+[  2912047ms] =
+[  2912047ms] 0 revision=0
+[  2913047ms] [
+[  2913047ms] geyi:motion] x=1962 y=2048 key1
+[  2913047ms] =
+[  2913047ms] 0 revision=0
+[  2914047ms] [
+[  2914047ms] geyi:motion] x=1962 y=2051 key1
+[  2914047ms] =
+[  2914047ms] 0 revision=0
+[  2915047ms] [
+[  2915047ms] geyi:motion] x=1958 y=2044 key1
+[  2915047ms] =
+[  2915047ms] 0 revision=0
+[  2916047ms] [
+[  2916047ms] geyi:motion] x=1960 y=2044 key1
+[  2916047ms] =
+[  2916047ms] 0 revision=0
+[  2917047ms] [
+[  2917047ms] geyi:motion] x=1954 y=2039 key1
+[  2917047ms] =
+[  2917047ms] 0 revision=0
+[  2918047ms] [
+[  2918047ms] geyi:motion] x=1955 y=2038 key1
+[  2918047ms] =
+[  2918047ms] 0 revision=0
+[  2919047ms] [
+[  2919047ms] geyi:motion] x=1951 y=2036 key1
+[  2919047ms] =
+[  2919047ms] 0 revision=0
+[  2920030ms] [
+[  2920030ms] geyi:motion] x=1955 y=2038 key1
+[  2920030ms] =
+[  2920030ms] 0 revision=0
+[  2921030ms] [
+[  2921030ms] geyi:motion] x=1955 y=2039 key1
+[  2921030ms] =
+[  2921030ms] 0 revision=0
+[  2922030ms] [
+[  2922030ms] geyi:motion] x=1964 y=2054 key1
+[  2922030ms] =
+[  2922030ms] 0 revision=0
+[  2923030ms] [
+[  2923030ms] geyi:motion] x=1963 y=2050 key1
+[  2923030ms] =
+[  2923030ms] 0 revision=0
+[  2924030ms] [
+[  2924030ms] geyi:motion] x=1959 y=2044 key1
+[  2924030ms] =
+[  2924030ms] 0 revision=0
+[  2925030ms] [
+[  2925030ms] geyi:motion] x=1961 y=2047 key1
+[  2925030ms] =
+[  2925030ms] 0 revision=0
+[  2926030ms] [
+[  2926030ms] geyi:motion] x=1959 y=2043 key1
+[  2926030ms] =
+[  2926030ms] 0 revision=0
+[  2927030ms] [
+[  2927030ms] geyi:motion] x=1960 y=2050 key1
+[  2927030ms] =
+[  2927030ms] 0 revision=0
+[  2928030ms] [
+[  2928030ms] geyi:motion] x=1961 y=2050 key1
+[  2928030ms] =
+[  2928030ms] 0 revision=0
+[  2929030ms] [
+[  2929030ms] geyi:motion] x=1960 y=2048 key1
+[  2929030ms] =
+[  2929030ms] 0 revision=0
+[  2930015ms] [
+[  2930030ms] geyi:motion] x=1964 y=2051 key1
+[  2930030ms] =
+[  2930030ms] 0 revision=0
+[  2931015ms] [
+[  2931015ms] geyi:motion] x=1962 y=2057 key1
+[  2931015ms] =
+[  2931015ms] 0 revision=0
+[  2932015ms] [
+[  2932015ms] geyi:motion] x=1965 y=2059 key1
+[  2932015ms] =
+[  2932015ms] 0 revision=0
+[  2933015ms] [
+[  2933015ms] geyi:motion] x=1967 y=2059 key1
+[  2933015ms] =
+[  2933015ms] 0 revision=0
+[  2934015ms] [
+[  2934015ms] geyi:motion] x=1968 y=2061 key1
+[  2934015ms] =
+[  2934015ms] 0 revision=0
+[  2935015ms] [
+[  2935015ms] geyi:motion] x=1969 y=2061 key1
+[  2935015ms] =
+[  2935015ms] 0 revision=0
+[  2936015ms] [
+[  2936015ms] geyi:motion] x=1970 y=2063 key1
+[  2936015ms] =
+[  2936015ms] 0 revision=0
+[  2937015ms] [
+[  2937015ms] geyi:motion] x=1966 y=2056 key1
+[  2937015ms] =
+[  2937015ms] 0 revision=0
+[  2938015ms] [
+[  2938015ms] geyi:motion] x=1959 y=2044 key1
+[  2938015ms] =
+[  2938015ms] 0 revision=0
+[  2939015ms] [
+[  2939015ms] geyi:motion] x=1962 y=2049 key1
+[  2939015ms] =
+[  2939015ms] 0 revision=0
+[  2940015ms] [
+[  2940015ms] geyi:motion] x=1962 y=2048 key1
+[  2940015ms] =
+[  2940015ms] 0 revision=0
+[  2941015ms] [
+[  2941015ms] geyi:motion] x=1966 y=2055 key1
+[  2941015ms] =
+[  2941015ms] 0 revision=0
+[  2942000ms] [
+[  2942000ms] geyi:motion] x=1969 y=2058 key1
+[  2942015ms] =
+[  2942015ms] 0 revision=0
+[  2943000ms] [
+[  2943000ms] geyi:motion] x=1970 y=2061 key1
+[  2943000ms] =
+[  2943000ms] 0 revision=0
+[  2944000ms] [
+[  2944000ms] geyi:motion] x=1970 y=2064 key1
+[  2944000ms] =
+[  2944000ms] 0 revision=0
+[  2945000ms] [
+[  2945000ms] geyi:motion] x=1971 y=2066 key1
+[  2945000ms] =
+[  2945000ms] 0 revision=0
+[  2946000ms] [
+[  2946000ms] geyi:motion] x=1971 y=2065 key1
+[  2946000ms] =
+[  2946000ms] 0 revision=0
+[  2947000ms] [
+[  2947000ms] geyi:motion] x=1970 y=2063 key1
+[  2947000ms] =
+[  2947000ms] 0 revision=0
+[  2948000ms] [
+[  2948000ms] geyi:motion] x=1972 y=2066 key1
+[  2948000ms] =
+[  2948000ms] 0 revision=0
+[  2949000ms] [
+[  2949000ms] geyi:motion] x=1973 y=2067 key1
+[  2949000ms] =
+[  2949000ms] 0 revision=0
+[  2950000ms] [
+[  2950000ms] geyi:motion] x=1975 y=2070 key1
+[  2950000ms] =
+[  2950000ms] 0 revision=0
+[  2951000ms] [
+[  2951000ms] geyi:motion] x=1976 y=2071 key1
+[  2951000ms] =
+[  2951000ms] 0 revision=0
+[  2952000ms] [
+[  2952000ms] geyi:motion] x=1973 y=2067 key1
+[  2952000ms] =
+[  2952000ms] 0 revision=0
+[  2953000ms] [
+[  2953000ms] geyi:motion] x=1974 y=2069 key1
+[  2953000ms] =
+[  2953000ms] 0 revision=0
+[  2954000ms] [
+[  2954000ms] geyi:motion] x=1974 y=2064 key1
+[  2954000ms] =
+[  2954000ms] 0 revision=0
+[  2954983ms] [
+[  2955000ms] geyi:motion] x=1979 y=2065 key1
+[  2955000ms] =
+[  2955000ms] 0 revision=0
+[  2955983ms] [
+[  2955983ms] geyi:motion] x=1974 y=2072 key1
+[  2955983ms] =
+[  2955983ms] 0 revision=0
+[  2956983ms] [
+[  2956983ms] geyi:motion] x=1976 y=2071 key1
+[  2956983ms] =
+[  2956983ms] 0 revision=0
+[  2957983ms] [
+[  2957983ms] geyi:motion] x=1976 y=2071 key1
+[  2957983ms] =
+[  2957983ms] 0 revision=0
+[  2958983ms] [
+[  2958983ms] geyi:motion] x=1980 y=2073 key1
+[  2958983ms] =
+[  2958983ms] 0 revision=0
+[  2959983ms] [
+[  2959983ms] geyi:motion] x=1974 y=2065 key1
+[  2959983ms] =
+[  2959983ms] 0 revision=0
+[  2960983ms] [
+[  2960983ms] geyi:motion] x=1972 y=2068 key1
+[  2960983ms] =
+[  2960983ms] 0 revision=0
+[  2961983ms] [
+[  2961983ms] geyi:motion] x=1951 y=2030 key1
+[  2961983ms] =
+[  2961983ms] 0 revision=0
+[  2962983ms] [
+[  2962983ms] geyi:motion] x=1953 y=2033 key1
+[  2962983ms] =
+[  2962983ms] 0 revision=0
+[  2963983ms] [
+[  2963983ms] geyi:motion] x=1957 y=2035 key1
+[  2963983ms] =
+[  2963983ms] 0 revision=0
+[  2964968ms] [
+[  2964968ms] geyi:motion] x=1986 y=2086 key1
+[  2964983ms] =
+[  2964983ms] 0 revision=0
+[  2965968ms] [
+[  2965968ms] geyi:motion] x=1979 y=2078 key1
+[  2965968ms] =
+[  2965968ms] 0 revision=0
+[  2966968ms] [
+[  2966968ms] geyi:motion] x=1971 y=2068 key1
+[  2966968ms] =
+[  2966968ms] 0 revision=0
+[  2967968ms] [
+[  2967968ms] geyi:motion] x=1976 y=2064 key1
+[  2967968ms] =
+[  2967968ms] 0 revision=0
+[  2968968ms] [
+[  2968968ms] geyi:motion] x=1976 y=2069 key1
+[  2968968ms] =
+[  2968968ms] 0 revision=0
+[  2969968ms] [
+[  2969968ms] geyi:motion] x=1989 y=2088 key1
+[  2969968ms] =
+[  2969968ms] 0 revision=0
+[  2970968ms] [
+[  2970968ms] geyi:motion] x=1986 y=2083 key1
+[  2970968ms] =
+[  2970968ms] 0 revision=0
+[  2971968ms] [
+[  2971968ms] geyi:motion] x=1984 y=2087 key1
+[  2971968ms] =
+[  2971968ms] 0 revision=0
+[  2972968ms] [
+[  2972968ms] geyi:motion] x=1976 y=2075 key1
+[  2972968ms] =
+[  2972968ms] 0 revision=0
+[  2973968ms] [
+[  2973968ms] geyi:motion] x=1971 y=2069 key1
+[  2973968ms] =
+[  2973968ms] 0 revision=0
+[  2974952ms] [
+[  2974968ms] geyi:motion] x=1971 y=2066 key1
+[  2974968ms] =
+[  2974968ms] 0 revision=0
+[  2975952ms] [
+[  2975952ms] geyi:motion] x=1974 y=2067 key1
+[  2975952ms] =
+[  2975952ms] 0 revision=0
+[  2976952ms] [
+[  2976952ms] geyi:motion] x=1975 y=2072 key1
+[  2976952ms] =
+[  2976952ms] 0 revision=0
+[  2977952ms] [
+[  2977952ms] geyi:motion] x=1975 y=2068 key1
+[  2977952ms] =
+[  2977952ms] 0 revision=0
+[  2978952ms] [
+[  2978952ms] geyi:motion] x=1969 y=2063 key1
+[  2978952ms] =
+[  2978952ms] 0 revision=0
+[  2979952ms] [
+[  2979952ms] geyi:motion] x=1967 y=2057 key1
+[  2979952ms] =
+[  2979952ms] 0 revision=0
+[  2980952ms] [
+[  2980952ms] geyi:motion] x=1975 y=2069 key1
+[  2980952ms] =
+[  2980952ms] 0 revision=0
+[  2981952ms] [
+[  2981952ms] geyi:motion] x=1975 y=2068 key1
+[  2981952ms] =
+[  2981952ms] 0 revision=0
+[  2982952ms] [
+[  2982952ms] geyi:motion] x=1976 y=2071 key1
+[  2982952ms] =
+[  2982952ms] 0 revision=0
+[  2983952ms] [
+[  2983952ms] geyi:motion] x=1973 y=2065 key1
+[  2983952ms] =
+[  2983952ms] 0 revision=0
+[  2984937ms] [
+[  2984937ms] geyi:motion] x=1972 y=2064 key1
+[  2984952ms] =
+[  2984952ms] 0 revision=0
+[  2985937ms] [
+[  2985937ms] geyi:motion] x=1969 y=2058 key1
+[  2985937ms] =
+[  2985937ms] 0 revision=0
+[  2986937ms] [
+[  2986937ms] geyi:motion] x=1974 y=2069 key1
+[  2986937ms] =
+[  2986937ms] 0 revision=0
+[  2987937ms] [
+[  2987937ms] geyi:motion] x=1973 y=2065 key1
+[  2987937ms] =
+[  2987937ms] 0 revision=0
+[  2988937ms] [
+[  2988937ms] geyi:motion] x=1966 y=2057 key1
+[  2988937ms] =
+[  2988937ms] 0 revision=0
+[  2989937ms] [
+[  2989937ms] geyi:motion] x=1953 y=2033 key1
+[  2989937ms] =
+[  2989937ms] 0 revision=0
+[  2990937ms] [
+[  2990937ms] geyi:motion] x=1958 y=2038 key1
+[  2990937ms] =
+[  2990937ms] 0 revision=0
+[  2991937ms] [
+[  2991937ms] geyi:motion] x=1954 y=2032 key1
+[  2991937ms] =
+[  2991937ms] 0 revision=0
+[  2992937ms] [
+[  2992937ms] geyi:motion] x=1949 y=2030 key1
+[  2992937ms] =
+[  2992937ms] 0 revision=0
+[  2993922ms] [
+[  2993922ms] geyi:motion] x=1955 y=2040 key1
+[  2993937ms] =
+[  2993937ms] 0 revision=0
+[  2994922ms] [
+[  2994922ms] geyi:motion] x=2053 y=2153 key1
+[  2994922ms] =
+[  2994937ms] 0 revision=0
+[  2995922ms] [
+[  2995922ms] geyi:motion] x=2052 y=2162 key1
+[  2995922ms] =
+[  2995922ms] 0 revision=0
+[  2996922ms] [
+[  2996922ms] geyi:motion] x=2092 y=2261 key1
+[  2996922ms] =
+[  2996922ms] 0 revision=0
+[  2997922ms] [
+[  2997922ms] geyi:motion] x=2091 y=2262 key1
+[  2997922ms] =
+[  2997922ms] 0 revision=0
+[  2998922ms] [
+[  2998922ms] geyi:motion] x=2094 y=2260 key1
+[  2998922ms] =
+[  2998922ms] 0 revision=0
+[  2999922ms] [
+[  2999922ms] geyi:motion] x=2089 y=2263 key1
+[  2999922ms] =
+[  2999922ms] 0 revision=0
+[  3000922ms] [
+[  3000922ms] geyi:motion] x=2092 y=2262 key1
+[  3000922ms] =
+[  3000922ms] 0 revision=0
+[  3001922ms] [
+[  3001922ms] geyi:motion] x=2127 y=2337 key1
+[  3001922ms] =
+[  3001922ms] 0 revision=0
+[  3002922ms] [
+[  3002922ms] geyi:motion] x=2114 y=2315 key1
+[  3002922ms] =
+[  3002922ms] 0 revision=0
+[  3003922ms] [
+[  3003922ms] geyi:motion] x=2108 y=2300 key1
+[  3003922ms] =
+[  3003922ms] 0 revision=0
+[  3004922ms] [
+[  3004922ms] geyi:motion] x=2109 y=2305 key1
+[  3004922ms] =
+[  3004922ms] 0 revision=0
+[  3005922ms] [
+[  3005922ms] geyi:motion] x=2105 y=2295 key1
+[  3005922ms] =
+[  3005922ms] 0 revision=0
+[  3006922ms] [
+[  3006922ms] geyi:motion] x=2100 y=2288 key1
+[  3006922ms] =
+[  3006922ms] 0 revision=0
+[  3007905ms] [
+[  3007905ms] geyi:motion] x=2102 y=2288 key1
+[  3007905ms] =
+[  3007905ms] 0 revision=0
+[  3008905ms] [
+[  3008905ms] geyi:motion] x=2102 y=2286 key1
+[  3008905ms] =
+[  3008905ms] 0 revision=0
+[  3009905ms] [
+[  3009905ms] geyi:motion] x=2099 y=2283 key1
+[  3009905ms] =
+[  3009905ms] 0 revision=0
+[  3010905ms] [
+[  3010905ms] geyi:motion] x=2099 y=2284 key1
+[  3010905ms] =
+[  3010905ms] 0 revision=0
+[  3011905ms] [
+[  3011905ms] geyi:motion] x=2101 y=2285 key1
+[  3011905ms] =
+[  3011905ms] 0 revision=0
+[  3012905ms] [
+[  3012905ms] geyi:motion] x=2098 y=2287 key1
+[  3012905ms] =
+[  3012905ms] 0 revision=0
+[  3013905ms] [
+[  3013905ms] geyi:motion] x=2102 y=2285 key1
+[  3013905ms] =
+[  3013905ms] 0 revision=0
+[  3014905ms] [
+[  3014905ms] geyi:motion] x=2100 y=2282 key1
+[  3014905ms] =
+[  3014905ms] 0 revision=0
+[  3015905ms] [
+[  3015905ms] geyi:motion] x=2102 y=2283 key1
+[  3015905ms] =
+[  3015905ms] 0 revision=0
+[  3016890ms] [
+[  3016890ms] geyi:motion] x=2100 y=2284 key1
+[  3016905ms] =
+[  3016905ms] 0 revision=0
+[  3017890ms] [
+[  3017890ms] geyi:motion] x=2099 y=2281 key1
+[  3017890ms] =
+[  3017890ms] 0 revision=0
+[  3018890ms] [
+[  3018890ms] geyi:motion] x=2098 y=2280 key1
+[  3018890ms] =
+[  3018890ms] 0 revision=0
+[  3019890ms] [
+[  3019890ms] geyi:motion] x=2101 y=2285 key1
+[  3019890ms] =
+[  3019890ms] 0 revision=0
+[  3020890ms] [
+[  3020890ms] geyi:motion] x=2099 y=2283 key1
+[  3020890ms] =
+[  3020890ms] 0 revision=0
+[  3021890ms] [
+[  3021890ms] geyi:motion] x=2099 y=2281 key1
+[  3021890ms] =
+[  3021890ms] 0 revision=0
+[  3022890ms] [
+[  3022890ms] geyi:motion] x=2098 y=2280 key1
+[  3022890ms] =
+[  3022890ms] 0 revision=0
+[  3023890ms] [
+[  3023890ms] geyi:motion] x=2099 y=2281 key1
+[  3023890ms] =
+[  3023890ms] 0 revision=0
+[  3024890ms] [
+[  3024890ms] geyi:motion] x=2097 y=2281 key1
+[  3024890ms] =
+[  3024890ms] 0 revision=0
+[  3025875ms] [
+[  3025875ms] geyi:motion] x=2100 y=2283 key1
+[  3025890ms] =
+[  3025890ms] 0 revision=0
+[  3026875ms] [
+[  3026875ms] geyi:motion] x=2099 y=2280 key1
+[  3026875ms] =
+[  3026875ms] 0 revision=0
+[  3027875ms] [
+[  3027875ms] geyi:motion] x=2100 y=2281 key1
+[  3027875ms] =
+[  3027875ms] 0 revision=0
+[  3028875ms] [
+[  3028875ms] geyi:motion] x=2100 y=2281 key1
+[  3028875ms] =
+[  3028875ms] 0 revision=0
+[  3029875ms] [
+[  3029875ms] geyi:motion] x=2098 y=2282 key1
+[  3029875ms] =
+[  3029875ms] 0 revision=0
+[  3030875ms] [
+[  3030875ms] geyi:motion] x=2101 y=2281 key1
+[  3030875ms] =
+[  3030875ms] 0 revision=0
+[  3031875ms] [
+[  3031875ms] geyi:motion] x=2100 y=2280 key1
+[  3031875ms] =
+[  3031875ms] 0 revision=0
+[  3032875ms] [
+[  3032875ms] geyi:motion] x=2099 y=2281 key1
+[  3032875ms] =
+[  3032875ms] 0 revision=0
+[  3033875ms] [
+[  3033875ms] geyi:motion] x=2099 y=2280 key1
+[  3033875ms] =
+[  3033875ms] 0 revision=0
+[  3034858ms] [
+[  3034875ms] geyi:motion] x=2100 y=2281 key1
+[  3034875ms] =
+[  3034875ms] 0 revision=0
+[  3035858ms] [
+[  3035858ms] geyi:motion] x=2099 y=2281 key1
+[  3035858ms] =
+[  3035858ms] 0 revision=0
+[  3036858ms] [
+[  3036858ms] geyi:motion] x=2099 y=2280 key1
+[  3036858ms] =
+[  3036858ms] 0 revision=0
+[  3037858ms] [
+[  3037858ms] geyi:motion] x=2099 y=2280 key1
+[  3037858ms] =
+[  3037858ms] 0 revision=0
+[  3038858ms] [
+[  3038858ms] geyi:motion] x=2096 y=2282 key1
+[  3038858ms] =
+[  3038858ms] 0 revision=0
+[  3039858ms] [
+[  3039858ms] geyi:motion] x=2095 y=2277 key1
+[  3039858ms] =
+[  3039858ms] 0 revision=0
+[  3040858ms] [
+[  3040858ms] geyi:motion] x=2098 y=2280 key1
+[  3040858ms] =
+[  3040858ms] 0 revision=0
+[  3041858ms] [
+[  3041858ms] geyi:motion] x=2097 y=2276 key1
+[  3041858ms] =
+[  3041858ms] 0 revision=0
+[  3042858ms] [
+[  3042858ms] geyi:motion] x=2111 y=2254 key1
+[  3042858ms] =
+[  3042858ms] 0 revision=0
+[  3043843ms] [
+[  3043843ms] geyi:motion] x=2082 y=2271 key1
+[  3043858ms] =
+[  3043858ms] 0 revision=0
+[  3044843ms] [
+[  3044843ms] geyi:motion] x=2338 y=2800 key1
+[  3044843ms] =
+[  3044843ms] 0 revision=0
+[  3045843ms] [
+[  3045843ms] geyi:motion] x=2520 y=3130 key1
+[  3045843ms] =
+[  3045843ms] 0 revision=0
+[  3046843ms] [
+[  3046843ms] geyi:motion] x=2545 y=3182 key1
+[  3046843ms] =
+[  3046843ms] 0 revision=0
+[  3047843ms] [
+[  3047843ms] geyi:motion] x=2600 y=3268 key1
+[  3047843ms] =
+[  3047843ms] 0 revision=0
+[  3048843ms] [
+[  3048843ms] geyi:motion] x=2608 y=3280 key1
+[  3048843ms] =
+[  3048843ms] 0 revision=0
+[  3049843ms] [
+[  3049843ms] geyi:motion] x=2612 y=3280 key1
+[  3049843ms] =
+[  3049843ms] 0 revision=0
+[  3050843ms] [
+[  3050843ms] geyi:motion] x=2617 y=3285 key1
+[  3050843ms] =
+[  3050843ms] 0 revision=0
+[  3051827ms] [
+[  3051827ms] geyi:motion] x=2620 y=3285 key1
+[  3051843ms] =
+[  3051843ms] 0 revision=0
+[  3052827ms] [
+[  3052827ms] geyi:motion] x=2625 y=3293 key1
+[  3052827ms] =
+[  3052827ms] 0 revision=0
+[  3053827ms] [
+[  3053827ms] geyi:motion] x=2631 y=3298 key1
+[  3053827ms] =
+[  3053827ms] 0 revision=0
+[  3054827ms] [
+[  3054827ms] geyi:motion] x=2635 y=3306 key1
+[  3054827ms] =
+[  3054827ms] 0 revision=0
+[  3055827ms] [
+[  3055827ms] geyi:motion] x=2634 y=3309 key1
+[  3055827ms] =
+[  3055827ms] 0 revision=0
+[  3056827ms] [
+[  3056827ms] geyi:motion] x=2635 y=3312 key1
+[  3056827ms] =
+[  3056827ms] 0 revision=0
+[  3057827ms] [
+[  3057827ms] geyi:motion] x=2640 y=3311 key1
+[  3057827ms] =
+[  3057827ms] 0 revision=0
+[  3058827ms] [
+[  3058827ms] geyi:motion] x=2639 y=3311 key1
+[  3058827ms] =
+[  3058827ms] 0 revision=0
+[  3059827ms] [
+[  3059827ms] geyi:motion] x=2641 y=3310 key1
+[  3059827ms] =
+[  3059827ms] 0 revision=0
+[  3060827ms] [
+[  3060827ms] geyi:motion] x=2643 y=3314 key1
+[  3060827ms] =
+[  3060827ms] 0 revision=0
+[  3061812ms] [
+[  3061812ms] geyi:motion] x=2639 y=3316 key1
+[  3061827ms] =
+[  3061827ms] 0 revision=0
+[  3062812ms] [
+[  3062812ms] geyi:motion] x=2647 y=3318 key1
+[  3062812ms] =
+[  3062812ms] 0 revision=0
+[  3063812ms] [
+[  3063812ms] geyi:motion] x=2650 y=3319 key1
+[  3063812ms] =
+[  3063812ms] 0 revision=0
+[  3064812ms] [
+[  3064812ms] geyi:motion] x=2647 y=3320 key1
+[  3064812ms] =
+[  3064812ms] 0 revision=0
+[  3065812ms] [
+[  3065812ms] geyi:motion] x=2650 y=3319 key1
+[  3065812ms] =
+[  3065812ms] 0 revision=0
+[  3066812ms] [
+[  3066812ms] geyi:motion] x=2650 y=3321 key1
+[  3066812ms] =
+[  3066812ms] 0 revision=0
+[  3067812ms] [
+[  3067812ms] geyi:motion] x=2654 y=3324 key1
+[  3067812ms] =
+[  3067812ms] 0 revision=0
+[  3068812ms] [
+[  3068812ms] geyi:motion] x=2652 y=3320 key1
+[  3068812ms] =
+[  3068812ms] 0 revision=0
+[  3069812ms] [
+[  3069812ms] geyi:motion] x=2659 y=3324 key1
+[  3069812ms] =
+[  3069812ms] 0 revision=0
+[  3070797ms] [
+[  3070797ms] geyi:motion] x=2662 y=3333 key1
+[  3070797ms] =
+[  3070797ms] 0 revision=0
+[  3071797ms] [
+[  3071797ms] geyi:motion] x=2662 y=3334 key1
+[  3071797ms] =
+[  3071797ms] 0 revision=0
+[  3072797ms] [
+[  3072797ms] geyi:motion] x=2661 y=3329 key1
+[  3072797ms] =
+[  3072797ms] 0 revision=0
+[  3073797ms] [
+[  3073797ms] geyi:motion] x=2664 y=3334 key1
+[  3073797ms] =
+[  3073797ms] 0 revision=0
+[  3074797ms] [
+[  3074797ms] geyi:motion] x=2663 y=3333 key1
+[  3074797ms] =
+[  3074797ms] 0 revision=0
+[  3075797ms] [
+[  3075797ms] geyi:motion] x=3511 y=4659 key1
+[  3075797ms] =
+[  3075797ms] 0 revision=0
+[  3076797ms] [
+[  3076797ms] geyi:motion] x=4160 y=5314 key1
+[  3076797ms] =
+[  3076797ms] 0 revision=0
+[  3077797ms] [
+[  3077797ms] geyi:motion] x=4288 y=5418 key1
+[  3077797ms] =
+[  3077797ms] 0 revision=0
+[  3078797ms] [
+[  3078797ms] geyi:motion] x=4428 y=5527 key1
+[  3078797ms] =
+[  3078797ms] 0 revision=0
+[  3079780ms] [
+[  3079780ms] geyi:motion] x=4502 y=5579 key1
+[  3079780ms] =
+[  3079780ms] 0 revision=0
+[  3080780ms] [
+[  3080780ms] geyi:motion] x=4545 y=5612 key1
+[  3080780ms] =
+[  3080780ms] 0 revision=0
+[  3081780ms] [
+[  3081780ms] geyi:motion] x=4601 y=5649 key1
+[  3081780ms] =
+[  3081780ms] 0 revision=0
+[  3082780ms] [
+[  3082780ms] geyi:motion] x=4675 y=5692 key1
+[  3082780ms] =
+[  3082780ms] 0 revision=0
+[  3083780ms] [
+[  3083780ms] geyi:motion] x=4868 y=5820 key1
+[  3083780ms] =
+[  3083780ms] 0 revision=0
+[  3084780ms] [
+[  3084780ms] geyi:motion] x=4937 y=5860 key1
+[  3084780ms] =
+[  3084780ms] 0 revision=0
+[  3085780ms] [
+[  3085780ms] geyi:motion] x=4951 y=5868 key1
+[  3085780ms] =
+[  3085780ms] 0 revision=0
+[  3086780ms] [
+[  3086780ms] geyi:motion] x=4960 y=5873 key1
+[  3086780ms] =
+[  3086780ms] 0 revision=0
+[  3087780ms] [
+[  3087780ms] geyi:motion] x=5083 y=5945 key1
+[  3087780ms] =
+[  3087780ms] 0 revision=0
+[  3088765ms] [
+[  3088765ms] geyi:motion] x=5132 y=5952 key1
+[  3088780ms] =
+[  3088780ms] 0 revision=0
+[  3089765ms] [
+[  3089765ms] geyi:motion] x=5170 y=5968 key1
+[  3089765ms] =
+[  3089765ms] 0 revision=0
+[  3090765ms] [
+[  3090765ms] geyi:motion] x=5231 y=6005 key1
+[  3090765ms] =
+[  3090765ms] 0 revision=0
+[  3091765ms] [
+[  3091765ms] geyi:motion] x=5281 y=6033 key1
+[  3091765ms] =
+[  3091765ms] 0 revision=0
+[  3092765ms] [
+[  3092765ms] geyi:motion] x=5347 y=6065 key1
+[  3092765ms] =
+[  3092765ms] 0 revision=0
+[  3093765ms] [
+[  3093765ms] geyi:motion] x=5380 y=6079 key1
+[  3093765ms] =
+[  3093765ms] 0 revision=0
+[  3094765ms] [
+[  3094765ms] geyi:motion] x=5401 y=6090 key1
+[  3094765ms] =
+[  3094765ms] 0 revision=0
+[  3095765ms] [
+[  3095765ms] geyi:motion] x=5455 y=6113 key1
+[  3095765ms] =
+[  3095765ms] 0 revision=0
+[  3096765ms] [
+[  3096765ms] geyi:motion] x=5495 y=6135 key1
+[  3096765ms] =
+[  3096765ms] 0 revision=0
+[  3097765ms] [
+[  3097765ms] geyi:motion] x=5499 y=6139 key1
+[  3097765ms] =
+[  3097765ms] 0 revision=0
+[  3098750ms] [
+[  3098750ms] geyi:motion] x=5505 y=6139 key1
+[  3098765ms] =
+[  3098765ms] 0 revision=0
+[  3099750ms] [
+[  3099750ms] geyi:motion] x=5521 y=6145 key1
+[  3099750ms] =
+[  3099750ms] 0 revision=0
+[  3100750ms] [
+[  3100750ms] geyi:motion] x=5578 y=6171 key1
+[  3100750ms] =
+[  3100750ms] 0 revision=0
+[  3101750ms] [
+[  3101750ms] geyi:motion] x=5638 y=6194 key1
+[  3101750ms] =
+[  3101750ms] 0 revision=0
+[  3102750ms] [
+[  3102750ms] geyi:motion] x=5651 y=6202 key1
+[  3102750ms] =
+[  3102750ms] 0 revision=0
+[  3103750ms] [
+[  3103750ms] geyi:motion] x=5654 y=6202 key1
+[  3103750ms] =
+[  3103750ms] 0 revision=0
+[  3104750ms] [
+[  3104750ms] geyi:motion] x=5638 y=6197 key1
+[  3104750ms] =
+[  3104750ms] 0 revision=0
+[  3105750ms] [
+[  3105750ms] geyi:motion] x=5648 y=6202 key1
+[  3105750ms] =
+[  3105750ms] 0 revision=0
+[  3106750ms] [
+[  3106750ms] geyi:motion] x=5666 y=6209 key1
+[  3106750ms] =
+[  3106750ms] 0 revision=0
+[  3107733ms] [
+[  3107750ms] geyi:motion] x=5734 y=6235 key1
+[  3107750ms] =
+[  3107750ms] 0 revision=0
+[  3108733ms] [
+[  3108733ms] geyi:motion] x=5773 y=6250 key1
+[  3108733ms] =
+[  3108733ms] 0 revision=0
+[  3109733ms] [
+[  3109733ms] geyi:motion] x=5806 y=6261 key1
+[  3109733ms] =
+[  3109733ms] 0 revision=0
+[  3110733ms] [
+[  3110733ms] geyi:motion] x=5861 y=6281 key1
+[  3110733ms] =
+[  3110733ms] 0 revision=0
+[  3111733ms] [
+[  3111733ms] geyi:motion] x=5915 y=6302 key1
+[  3111733ms] =
+[  3111733ms] 0 revision=0
+[  3112733ms] [
+[  3112733ms] geyi:motion] x=5974 y=6323 key1
+[  3112733ms] =
+[  3112733ms] 0 revision=0
+[  3113733ms] [
+[  3113733ms] geyi:motion] x=6002 y=6332 key1
+[  3113733ms] =
+[  3113733ms] 0 revision=0
+[  3114733ms] [
+[  3114733ms] geyi:motion] x=6045 y=6351 key1
+[  3114733ms] =
+[  3114733ms] 0 revision=0
+[  3115733ms] [
+[  3115733ms] geyi:motion] x=6075 y=6360 key1
+[  3115733ms] =
+[  3115733ms] 0 revision=0
+[  3116733ms] [
+[  3116733ms] geyi:motion] x=6113 y=6373 key1
+[  3116733ms] =0 revision=0
+[  3117718ms] [
+[  3117718ms] geyi:motion] x=6141 y=6385 key1
+[  3117733ms] =
+[  3117733ms] 0 revision=0
+[  3118718ms] [
+[  3118718ms] geyi:motion] x=6185 y=6398 key1
+[  3118718ms] =
+[  3118718ms] 0 revision=0
+[  3119718ms] [
+[  3119718ms] geyi:motion] x=6199 y=6403 key1
+[  3119718ms] =
+[  3119718ms] 0 revision=0
+[  3120718ms] [
+[  3120718ms] geyi:motion] x=6235 y=6415 key1
+[  3120718ms] =
+[  3120718ms] 0 revision=0
+[  3121718ms] [
+[  3121718ms] geyi:motion] x=6251 y=6427 key1
+[  3121718ms] =
+[  3121718ms] 0 revision=0
+[  3122718ms] [
+[  3122718ms] geyi:motion] x=6278 y=6431 key1
+[  3122718ms] =
+[  3122718ms] 0 revision=0
+[  3123718ms] [
+[  3123718ms] geyi:motion] x=6294 y=6439 key1
+[  3123718ms] =
+[  3123718ms] 0 revision=0
+[  3124718ms] [
+[  3124718ms] geyi:motion] x=6325 y=6444 key1
+[  3124718ms] =
+[  3124718ms] 0 revision=0
+[  3125718ms] [
+[  3125718ms] geyi:motion] x=6370 y=6461 key1
+[  3125718ms] =
+[  3125718ms] 0 revision=0
+[  3126718ms] [
+[  3126718ms] geyi:motion] x=6400 y=6469 key1
+[  3126718ms] =
+[  3126718ms] 0 revision=0
+[  3127702ms] [
+[  3127702ms] geyi:motion] x=6416 y=6475 key1
+[  3127718ms] =
+[  3127718ms] 0 revision=0
+[  3128702ms] [
+[  3128702ms] geyi:motion] x=6414 y=6461 key1
+[  3128702ms] =
+[  3128702ms] 0 revision=0
+[  3129702ms] [
+[  3129702ms] geyi:motion] x=6461 y=6487 key1
+[  3129702ms] =
+[  3129702ms] 0 revision=0
+[  3130702ms] [
+[  3130702ms] geyi:motion] x=6468 y=6488 key1
+[  3130702ms] =
+[  3130702ms] 0 revision=0
+[  3131702ms] [
+[  3131702ms] geyi:motion] x=6480 y=6489 key1
+[  3131702ms] =
+[  3131702ms] 0 revision=0
+[  3132702ms] [
+[  3132702ms] geyi:motion] x=6716 y=6577 key1
+[  3132702ms] =
+[  3132702ms] 0 revision=0
+[  3133702ms] [
+[  3133702ms] geyi:motion] x=6961 y=6608 key1
+[  3133702ms] =
+[  3133702ms] 0 revision=0
+[  3134702ms] [
+[  3134702ms] geyi:motion] x=7232 y=6678 key1
+[  3134702ms] =
+[  3134702ms] 0 revision=0
+[  3135702ms] [
+[  3135702ms] geyi:motion] x=7496 y=6729 key1
+[  3135702ms] =
+[  3135702ms] 0 revision=0
+[  3136702ms] [
+[  3136702ms] geyi:motion] x=7533 y=6724 key1
+[  3136702ms] =
+[  3136702ms] 0 revision=0
+[  3137702ms] [
+[  3137702ms] geyi:motion] x=7535 y=6724 key1
+[  3137702ms] =
+[  3137702ms] 0 revision=0
+[  3138687ms] [
+[  3138702ms] geyi:motion] x=7544 y=6717 key1
+[  3138702ms] =
+[  3138702ms] 0 revision=0
+[  3139687ms] [
+[  3139687ms] geyi:motion] x=7555 y=6719 key1
+[  3139687ms] =
+[  3139687ms] 0 revision=0
+[  3140687ms] [
+[  3140687ms] geyi:motion] x=7564 y=6720 key1
+[  3140687ms] =
+[  3140687ms] 0 revision=0
+[  3141687ms] [
+[  3141687ms] geyi:motion] x=7572 y=6715 key1
+[  3141687ms] =
+[  3141687ms] 0 revision=0
+[  3142687ms] [
+[  3142687ms] geyi:motion] x=7551 y=6713 key1
+[  3142687ms] =
+[  3142687ms] 0 revision=0
+[  3143687ms] [
+[  3143687ms] geyi:motion] x=7544 y=6711 key1
+[  3143687ms] =
+[  3143687ms] 0 revision=0
+[  3144687ms] [
+[  3144687ms] geyi:motion] x=7553 y=6713 key1
+[  3144687ms] =
+[  3144687ms] 0 revision=0
+[  3145687ms] [
+[  3145687ms] geyi:motion] x=7548 y=6708 key1
+[  3145687ms] =
+[  3145687ms] 0 revision=0
+[  3146687ms] [
+[  3146687ms] geyi:motion] x=7482 y=6711 key1
+[  3146687ms] =
+[  3146687ms] 0 revision=0
+[  3147687ms] [
+[  3147687ms] geyi:motion] x=7469 y=6712 key1
+[  3147687ms] =
+[  3147687ms] 0 revision=0
+[  3148672ms] [
+[  3148672ms] geyi:motion] x=7490 y=6716 key1
+[  3148687ms] =
+[  3148687ms] 0 revision=0
+[  3149672ms] [
+[  3149672ms] geyi:motion] x=7508 y=6717 key1
+[  3149672ms] =
+[  3149672ms] 0 revision=0
+[  3150672ms] [
+[  3150672ms] geyi:motion] x=7496 y=6718 key1
+[  3150672ms] =
+[  3150672ms] 0 revision=0
+[  3151672ms] [
+[  3151672ms] geyi:motion] x=7510 y=6715 key1
+[  3151672ms] =
+[  3151672ms] 0 revision=0
+[  3152672ms] [
+[  3152672ms] geyi:motion] x=7517 y=6716 key1
+[  3152672ms] =
+[  3152672ms] 0 revision=0
+[  3153672ms] [
+[  3153672ms] geyi:motion] x=7521 y=6718 key1
+[  3153672ms] =
+[  3153672ms] 0 revision=0
+[  3154672ms] [
+[  3154672ms] geyi:motion] x=7538 y=6718 key1
+[  3154672ms] =
+[  3154672ms] 0 revision=0
+[  3155672ms] [
+[  3155672ms] geyi:motion] x=7544 y=6720 key1
+[  3155672ms] =
+[  3155672ms] 0 revision=0
+[  3156672ms] [
+[  3156672ms] geyi:motion] x=7548 y=6718 key1
+[  3156672ms] =
+[  3156672ms] 0 revision=0
+[  3157672ms] [
+[  3157672ms] geyi:motion] x=7537 y=6718 key1
+[  3157672ms] =
+[  3157672ms] 0 revision=0
+[  3158672ms] [
+[  3158672ms] geyi:motion] x=7538 y=6715 key1
+[  3158672ms] =
+[  3158672ms] 0 revision=0
+[  3159672ms] [
+[  3159672ms] geyi:motion] x=7537 y=6717 key1
+[  3159672ms] =
+[  3159672ms] 0 revision=0
+[  3160672ms] [
+[  3160672ms] geyi:motion] x=7538 y=6715 key1
+[  3160672ms] =
+[  3160672ms] 0 revision=0
+[  3161655ms] [
+[  3161655ms] geyi:motion] x=7542 y=6715 key1
+[  3161672ms] =
+[  3161672ms] 0 revision=0
+[  3162655ms] [
+[  3162655ms] geyi:motion] x=7555 y=6715 key1
+[  3162655ms] =
+[  3162655ms] 0 revision=0
+[  3163655ms] [
+[  3163655ms] geyi:motion] x=7544 y=6716 key1
+[  3163655ms] =
+[  3163655ms] 0 revision=0
+[  3164655ms] [
+[  3164655ms] geyi:motion] x=7526 y=6708 key1
+[  3164655ms] =
+[  3164655ms] 0 revision=0
+[  3165655ms] [
+[  3165655ms] geyi:motion] x=7545 y=6708 key1
+[  3165655ms] =
+[  3165655ms] 0 revision=0
+[  3166655ms] [
+[  3166655ms] geyi:motion] x=7544 y=6712 key1
+[  3166655ms] =
+[  3166655ms] 0 revision=0
+[  3167655ms] [
+[  3167655ms] geyi:motion] x=7544 y=6713 key1
+[  3167655ms] =
+[  3167655ms] 0 revision=0
+[  3168655ms] [
+[  3168655ms] geyi:motion] x=7547 y=6712 key1
+[  3168655ms] =
+[  3168655ms] 0 revision=0
+[  3169655ms] [
+[  3169655ms] geyi:motion] x=7124 y=6594 key1
+[  3169655ms] =
+[  3169655ms] 0 revision=0
+[  3170655ms] [
+[  3170655ms] geyi:motion] x=7281 y=6628 key1
+[  3170655ms] =
+[  3170655ms] 0 revision=0
+[  3171655ms] [
+[  3171655ms] geyi:motion] x=7288 y=6627 key1
+[  3171655ms] =
+[  3171655ms] 0 revision=0
+[  3172640ms] [
+[  3172640ms] geyi:motion] x=7282 y=6624 key1
+[  3172655ms] =
+[  3172655ms] 0 revision=0
+[  3173640ms] [
+[  3173640ms] geyi:motion] x=7279 y=6624 key1
+[  3173640ms] =
+[  3173640ms] 0 revision=0
+[  3174640ms] [
+[  3174640ms] geyi:motion] x=7298 y=6626 key1
+[  3174640ms] =
+[  3174640ms] 0 revision=0
+[  3175640ms] [
+[  3175640ms] geyi:motion] x=7304 y=6626 key1
+[  3175640ms] =
+[  3175640ms] 0 revision=0
+[  3176640ms] [
+[  3176640ms] geyi:motion] x=7312 y=6625 key1
+[  3176640ms] =
+[  3176640ms] 0 revision=0
+[  3177640ms] [
+[  3177640ms] geyi:motion] x=7304 y=6625 key1
+[  3177640ms] =
+[  3177640ms] 0 revision=0
+[  3178640ms] [
+[  3178640ms] geyi:motion] x=7312 y=6627 key1
+[  3178640ms] =
+[  3178640ms] 0 revision=0
+[  3179640ms] [
+[  3179640ms] geyi:motion] x=7312 y=6624 key1
+[  3179640ms] =
+[  3179640ms] 0 revision=0
+[  3180640ms] [
+[  3180640ms] geyi:motion] x=7317 y=6623 key1
+[  3180640ms] =
+[  3180640ms] 0 revision=0
+[  3181640ms] [
+[  3181640ms] geyi:motion] x=7319 y=6627 key1
+[  3181640ms] =
+[  3181640ms] 0 revision=0
+[  3182640ms] [
+[  3182640ms] geyi:motion] x=7301 y=6621 key1
+[  3182640ms] =
+[  3182640ms] 0 revision=0
+[  3183625ms] [
+[  3183625ms] geyi:motion] x=7212 y=6744 key1
+[  3183640ms] =
+[  3183640ms] 0 revision=0
+[  3184625ms] [
+[  3184625ms] geyi:motion] x=7085 y=6775 key1
+[  3184625ms] =
+[  3184625ms] 0 revision=0
+[  3185625ms] [
+[  3185625ms] geyi:motion] x=7045 y=6787 key1
+[  3185625ms] =
+[  3185625ms] 0 revision=0
+[  3186625ms] [
+[  3186625ms] geyi:motion] x=7018 y=6799 key1
+[  3186625ms] =
+[  3186625ms] 0 revision=0
+[  3187625ms] [
+[  3187625ms] geyi:motion] x=2126 y=3654 key1
+[  3187625ms] =
+[  3187625ms] 0 revision=0
+[  3188625ms] [
+[  3188625ms] geyi:motion] x=6634 y=2024 key1
+[  3188625ms] =
+[  3188625ms] 0 revision=0
+[  3189625ms] [
+[  3189625ms] geyi:motion] x=5118 y=4135 key1
+[  3189625ms] =
+[  3189625ms] 0 revision=0
+[  3190233ms] [
+[  3190233ms] geyi:tilt] x=-3062 y=527 dir=3 
+[  3190233ms] c
+[  3190233ms] ount=1 preview=1
+[  3190625ms] [
+[  3190625ms] geyi:motion] x=-4003 y=3414 key
+[  3190625ms] 1
+[  3190625ms] =0 revision=0
+[  3191625ms] [
+[  3191625ms] geyi:motion] x=3485 y=3876 key1
+[  3191625ms] =
+[  3191625ms] 0 revision=0
+[  3192625ms] [
+[  3192625ms] geyi:motion] x=4771 y=2535 key1
+[  3192625ms] =
+[  3192625ms] 0 revision=0
+[  3193718ms] [
+[  3193718ms] geyi:motion] x=7273 y=3412 key1
+[  3193733ms] =
+[  3193733ms] 0 revision=0
+[  3194718ms] [
+[  3194718ms] geyi:motion] x=2812 y=3462 key1
+[  3194718ms] =
+[  3194718ms] 0 revision=0
+[  3195718ms] [
+[  3195718ms] geyi:motion] x=-5970 y=-595 key
+[  3195718ms] 1
+[  3195718ms] =0 revision=0
+[  3196718ms] [
+[  3196718ms] geyi:motion] x=-5483 y=4385 key
+[  3196718ms] 1
+[  3196718ms] =0 revision=0
+[  3197718ms] [
+[  3197718ms] geyi:motion] x=3315 y=3610 key1
+[  3197718ms] =
+[  3197718ms] 0 revision=0
+[  3198718ms] [
+[  3198718ms] geyi:motion] x=7202 y=3411 key1
+[  3198718ms] =
+[  3198718ms] 0 revision=0
+[  3199718ms] [
+[  3199718ms] geyi:motion] x=-4318 y=0 key1=0
+[  3199718ms] revision=0
+[  3200718ms] [
+[  3200718ms] geyi:motion] x=-4194 y=580 key1
+[  3200718ms] =
+[  3200718ms] 0 revision=0
+[  3201718ms] [
+[  3201718ms] geyi:motion] x=-4179 y=583 key1
+[  3201718ms] =
+[  3201718ms] 0 revision=0
+[  3202718ms] [
+[  3202718ms] geyi:motion] x=-4167 y=584 key1
+[  3202718ms] =
+[  3202718ms] 0 revision=0
+[  3203702ms] [
+[  3203702ms] geyi:motion] x=-4155 y=585 key1
+[  3203718ms] =
+[  3203718ms] 0 revision=0
+[  3204702ms] [
+[  3204702ms] geyi:motion] x=-4142 y=587 key1
+[  3204702ms] =
+[  3204702ms] 0 revision=0
+[  3205702ms] [
+[  3205702ms] geyi:motion] x=-4131 y=587 key1
+[  3205702ms] =
+[  3205702ms] 0 revision=0
+[  3206702ms] [
+[  3206702ms] geyi:motion] x=-4123 y=588 key1
+[  3206702ms] =
+[  3206702ms] 0 revision=0
+[  3207702ms] [
+[  3207702ms] geyi:motion] x=-4116 y=593 key1
+[  3207702ms] =
+[  3207702ms] 0 revision=0
+[  3208702ms] [
+[  3208702ms] geyi:motion] x=-4106 y=590 key1
+[  3208702ms] =
+[  3208702ms] 0 revision=0
+[  3209702ms] [
+[  3209702ms] geyi:motion] x=-4100 y=591 key1
+[  3209702ms] =
+[  3209702ms] 0 revision=0
+[  3210702ms] [
+[  3210702ms] geyi:motion] x=-4097 y=592 key1
+[  3210702ms] =
+[  3210702ms] 0 revision=0
+[  3211687ms] [
+[  3211687ms] geyi:motion] x=-4098 y=593 key1
+[  3211702ms] =
+[  3211702ms] 0 revision=0
+[  3212687ms] [
+[  3212687ms] geyi:motion] x=-4095 y=590 key1
+[  3212687ms] =
+[  3212687ms] 0 revision=0
+[  3213687ms] [
+[  3213687ms] geyi:motion] x=-4096 y=589 key1
+[  3213687ms] =
+[  3213687ms] 0 revision=0
+[  3214687ms] [
+[  3214687ms] geyi:motion] x=-4094 y=589 key1
+[  3214687ms] =
+[  3214687ms] 0 revision=0
+[  3215687ms] [
+[  3215687ms] geyi:motion] x=-4092 y=591 key1
+[  3215687ms] =
+[  3215687ms] 0 revision=0
+[  3216687ms] [
+[  3216687ms] geyi:motion] x=-1960 y=547 key1
+[  3216687ms] =
+[  3216687ms] 0 revision=0
+[  3217687ms] [
+[  3217687ms] geyi:motion] x=-1606 y=2324 key
+[  3217687ms] 1
+[  3217687ms] =0 revision=0
+[  3218687ms] [
+[  3218687ms] geyi:motion] x=-1593 y=2586 key
+[  3218687ms] 1
+[  3218687ms] =0 revision=0
+[  3219687ms] [
+[  3219687ms] geyi:motion] x=-1753 y=3770 key
+[  3219687ms] 1
+[  3219687ms] =0 revision=0
+[  3220687ms] [
+[  3220687ms] geyi:motion] x=-2533 y=3082 key
+[  3220687ms] 1
+[  3220687ms] =0 revision=0
+[  3221672ms] [
+[  3221672ms] geyi:motion] x=1271 y=2433 key1
+[  3221687ms] =
+[  3221687ms] 0 revision=0
+[  3222672ms] [
+[  3222672ms] geyi:motion] x=-2486 y=2335 key
+[  3222672ms] 1
+[  3222672ms] =0 revision=0
+[  3223672ms] [
+[  3223672ms] geyi:motion] x=-2424 y=-2986 ke
+[  3223672ms] y
+[  3223672ms] 1=0 revision=0
+[  3224672ms] [
+[  3224672ms] geyi:motion] x=-2217 y=-2067 ke
+[  3224672ms] y
+[  3224672ms] 1=0 revision=0
+[  3225672ms] [
+[  3225672ms] geyi:motion] x=-2234 y=540 key1
+[  3225672ms] =
+[  3225672ms] 0 revision=0
+[  3226672ms] [
+[  3226672ms] geyi:motion] x=-2606 y=1415 key
+[  3226672ms] 1
+[  3226672ms] =0 revision=0
+[  3227672ms] [
+[  3227672ms] geyi:motion] x=-2834 y=1926 key
+[  3227672ms] 1
+[  3227672ms] =0 revision=0
+[  3228672ms] [
+[  3228672ms] geyi:motion] x=-3201 y=867 key1
+[  3228672ms] =
+[  3228672ms] 0 revision=0
+[  3229672ms] [
+[  3229672ms] geyi:motion] x=-4583 y=-350 key
+[  3229672ms] 1
+[  3229672ms] =0 revision=0
+[  3230672ms] [
+[  3230672ms] geyi:motion] x=-4816 y=509 key1
+[  3230672ms] =
+[  3230672ms] 0 revision=0
+[  3231672ms] [
+[  3231672ms] geyi:motion] x=-4817 y=514 key1
+[  3231672ms] =
+[  3231672ms] 0 revision=0
+[  3232672ms] [
+[  3232672ms] geyi:motion] x=-4816 y=512 key1
+[  3232672ms] =
+[  3232672ms] 0 revision=0
+[  3233672ms] [
+[  3233672ms] geyi:motion] x=-4820 y=512 key1
+[  3233672ms] =
+[  3233672ms] 0 revision=0
+[  3234655ms] [
+[  3234655ms] geyi:motion] x=-4819 y=509 key1
+[  3234672ms] =
+[  3234672ms] 0 revision=0
+[  3235655ms] [
+[  3235655ms] geyi:motion] x=-4818 y=512 key1
+[  3235655ms] =
+[  3235655ms] 0 revision=0
+[  3236655ms] [
+[  3236655ms] geyi:motion] x=-4819 y=509 key1
+[  3236655ms] =
+[  3236655ms] 0 revision=0
+[  3237655ms] [
+[  3237655ms] geyi:motion] x=-4756 y=198 key1
+[  3237655ms] =
+[  3237655ms] 0 revision=0
+[  3238655ms] [
+[  3238655ms] geyi:motion] x=-5506 y=24 key1=
+[  3238655ms] 0
+[  3238655ms]  revision=0
+# 结束 2026-11-07T15:34:01，共 6744 行
