@@ -30,6 +30,8 @@ static lv_obj_t *net_spectator_label;
 static lv_obj_t *net_red_box,*net_blue_box,*net_room_hint;
 static lv_obj_t *net_ready_button,*net_leave_button,*place_button,*resign_button;
 static lv_obj_t *net_result_overlay,*net_result_title,*net_result_sub;
+static lv_obj_t *net_reconn_overlay,*net_reconn_label;
+static int net_last_reconn=-1;
 static lv_obj_t *net_confirm_block,*net_confirm_overlay,*net_confirm_label;
 static int net_lobby_active,net_room_active,net_game_active;
 static uint32_t net_last_rev;static int net_last_phase=-1;
@@ -111,8 +113,10 @@ static void show_page(lv_obj_t *page)
     net_lobby_active=page==net_lobby_page;
     net_room_active=page==net_room_page;
     net_game_active=page==game_page&&gy_net_app_active();
+    net_last_reconn=-1;
     if(page!=game_page){
         if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
+        if(net_reconn_overlay)lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
         if(net_confirm_block)lv_obj_add_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
         if(net_confirm_overlay)lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
     }
@@ -400,6 +404,7 @@ static void net_result_show(int result)
     net_result_shown=result;
     lv_label_set_text(net_result_title,title);
     lv_label_set_text(net_result_sub,sub);
+    if(net_reconn_overlay)lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(net_result_overlay);
 }
@@ -408,10 +413,26 @@ static void net_result_hide(void)
     net_result_shown=-1;
     if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
 }
+static void net_reconn_refresh(void)
+{
+    char text[80];
+    int sec=gy_net_app_reconnect_seconds();
+    if(!net_reconn_overlay||!net_reconn_label)return;
+    if(sec>0&&gy_net_app_active()&&!gy_net_app_local_terminal()){
+        lv_snprintf(text,sizeof(text),"%s 重连中 %d s",
+                    gy_net_app_role()==GY_NET_ROLE_HOST?"对方断线":"连接中断",sec);
+        lv_label_set_text(net_reconn_label,text);
+        lv_obj_remove_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
+        lv_obj_move_foreground(net_reconn_overlay);
+    }else{
+        lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
+    }
+}
 static void net_confirm_show(void)
 {
     if(!net_confirm_overlay)return;
     lv_label_set_text(net_confirm_label,"认输会让对手获胜,确定?");
+    if(net_reconn_overlay)lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
     if(net_confirm_block)lv_obj_remove_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(net_confirm_overlay);
@@ -1090,6 +1111,26 @@ void gy_ui_create(void)
     lv_obj_set_style_pad_all(hint,5,0);
     lv_obj_set_style_text_align(hint,LV_TEXT_ALIGN_CENTER,0);
 
+    /* 对局中断线重连：黄底大字横幅,和房间页的 10s 倒计时一致。 */
+    net_reconn_overlay=lv_obj_create(root);
+    lv_obj_set_size(net_reconn_overlay,340,58);
+    lv_obj_align(net_reconn_overlay,LV_ALIGN_TOP_MID,0,86);
+    lv_obj_set_style_bg_color(net_reconn_overlay,lv_color_hex(0xffdc79),0);
+    lv_obj_set_style_bg_opa(net_reconn_overlay,LV_OPA_COVER,0);
+    lv_obj_set_style_radius(net_reconn_overlay,10,0);
+    lv_obj_set_style_border_width(net_reconn_overlay,2,0);
+    lv_obj_set_style_border_color(net_reconn_overlay,lv_color_hex(0x8a5a00),0);
+    lv_obj_set_style_pad_all(net_reconn_overlay,0,0);
+    lv_obj_remove_flag(net_reconn_overlay,LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(net_reconn_overlay,LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
+    net_reconn_label=lv_label_create(net_reconn_overlay);
+    lv_obj_set_width(net_reconn_label,320);
+    lv_obj_align(net_reconn_label,LV_ALIGN_CENTER,0,0);
+    lv_obj_set_style_text_font(net_reconn_label,&geyi_font_cn16,0);
+    lv_obj_set_style_text_color(net_reconn_label,lv_color_hex(0x142238),0);
+    lv_obj_set_style_text_align(net_reconn_label,LV_TEXT_ALIGN_CENTER,0);
+
     /* 结算弹窗：比左下角小字更醒目,4s 后房间自动回到 WAIT。 */
     net_result_overlay=lv_obj_create(root);
     lv_obj_set_size(net_result_overlay,340,210);
@@ -1322,6 +1363,10 @@ static void run_test_command(void)
                    net_room_hint?lv_label_get_text(net_room_hint):"");
         GY_TEST_LOG("[gy_test] view readybtn=%d\n",
                    net_ready_button&&!lv_obj_has_flag(net_ready_button,LV_OBJ_FLAG_HIDDEN));
+        GY_TEST_LOG("[gy_test] view reconn=%d\n",
+                   net_reconn_overlay&&!lv_obj_has_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN));
+        GY_TEST_LOG("[gy_test] view reconn_text=%s\n",
+                   net_reconn_label?lv_label_get_text(net_reconn_label):"");
         GY_TEST_LOG("[gy_test] ui rules=%d page=%d corner=%d rbottom=%d playing=%d\n",
                    gy_ui_rules_active(),gy_ui_rules_page(),
                    gy_ui_corner_clip_count(48),gy_ui_rules_content_bottom(),
@@ -1450,6 +1495,11 @@ void gy_ui_tick(void)
             if(ng->revision!=net_last_rev){ready=0;placing=0;direction=-1;place_column=-1;}
             game=*ng;net_last_rev=ng->revision;net_last_phase=phase;
             layout_board();render();
+        }
+        {
+            int rsec=gy_net_app_reconnect_seconds();
+            if(rsec!=net_last_reconn){net_last_reconn=rsec;render();}
+            net_reconn_refresh();
         }
         if(place_button){
             if(gy_net_app_is_spectator())lv_obj_add_state(place_button,LV_STATE_DISABLED);
