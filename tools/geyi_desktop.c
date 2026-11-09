@@ -66,6 +66,23 @@ static void enter_ai_mode(int human_red)
     if(!human_red)click(100,200);
     click(270,372);
 }
+static int key2_tests(void)
+{
+    uint32_t revision;
+    gy_ui_action(GY_UI_HOME);
+    gy_ui_action(GY_UI_SINGLE);
+    check(!gy_ui_is_placing()&&!gy_ui_has_preview(),"KEY2 starts idle");
+    gy_ui_action(GY_UI_UP);
+    check(gy_ui_has_preview(),"KEY2 preview prepared");
+    revision=gy_ui_game()->revision;
+    gy_ui_key2();
+    check(gy_ui_game()->revision==revision+1&&!gy_ui_has_preview(),
+          "KEY2 confirms tilt preview");
+    gy_ui_key2();
+    check(!gy_ui_is_placing(),"KEY2 without coins does not enter placing");
+    gy_ui_action(GY_UI_RESTART);
+    return 0;
+}
 static int param_tests(void)
 {
     gy_ui_action(GY_UI_HOME);
@@ -202,8 +219,12 @@ static int tests(void)
                 int x,y=gy_ui_game()->turn?0:5;
                 for(x=0;x<6;++x)if(gy_ui_game()->cells[y][x].kind==GY_EMPTY){
                     uint32_t revision=gy_ui_game()->revision;
-                    gy_ui_action(GY_UI_PLACE);gy_ui_cell(x,y);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
-                    gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->revision==revision+1,"place confirmed");
+                    gy_ui_key2();check(gy_ui_is_placing(),"KEY2 enters placing with coins");
+                    gy_ui_key2();check(!gy_ui_is_placing(),"KEY2 leaves placing without column");
+                    gy_ui_key2();check(gy_ui_is_placing(),"KEY2 re-enters placing");
+                    gy_ui_cell(x,y);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
+                    gy_ui_key2();check(gy_ui_game()->revision==revision+1,"KEY2 confirms placement");
+                    check(!gy_ui_is_placing(),"KEY2 leaves placing after confirm");
                     check(gy_ui_take_feedback()==GY_FX_MOVE,"successful placement flashes");
                     goto placed;
                 }
@@ -304,8 +325,10 @@ done: ;
     check(!gy_ui_is_playing(),"home during AI preview");
     Sleep(600);gy_ui_tick();
     check(!gy_ui_is_playing(),"preview commit cancelled after home");
+    key2_tests();
     param_tests();
     puts("PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board");
+    puts("PASS: KEY2-only confirm/placing state machine (KEY1 untested as game key)");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
     puts("PASS: TC-315 AI modes, AI turn, input guard, stale result discard");

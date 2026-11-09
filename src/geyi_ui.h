@@ -24,6 +24,8 @@ const GyGame *gy_ui_game(void);
 int gy_ui_rules_active(void);
 int gy_ui_rules_page(void);
 int gy_ui_rules_content_bottom(void);
+/* KEY2 单键语义：预览确认落子；放兵有选列确认、无选列退出；空闲进入放兵。 */
+void gy_ui_key2(void);
 /* 真机屏幕为圆角矩形：统计按钮/文字框越出四角安全区的数量（0 = 通过）。 */
 int gy_ui_corner_clip_count(int radius);
 int gy_ui_has_preview(void);
