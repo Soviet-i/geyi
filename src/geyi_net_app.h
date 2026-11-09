@@ -24,6 +24,7 @@ typedef struct {
     uint8_t  phase;
     uint8_t  spectators;
     uint8_t  max_spectators;
+    uint8_t  flags;          /* adv flags，bit0=有玩家席位等待重连 */
     uint8_t  addr[6];
     uint8_t  addr_type;
     int8_t   rssi;
@@ -51,6 +52,12 @@ int gy_net_app_seat_occupied(int color);
 int gy_net_app_seat_ready(int color);
 int gy_net_app_seat_id(int color);
 int gy_net_app_connected(void);
+/* 对手/对端是否在线；断线重连窗口内为 0，UI 显示“断线重连中”。 */
+int gy_net_app_peer_online(void);
+/* 断线重连剩余秒数 10..1；无重连窗口返回 0。 */
+int gy_net_app_reconnect_seconds(void);
+/* 座位是否在线；房主用本地 seat.connected，客方用本机链路状态。 */
+int gy_net_app_seat_online(int color);
 int gy_net_app_host_adv_active(void); /* 房主是否仍在发可连接广播（测试/诊断） */
 int gy_net_app_local_terminal(void);
 int gy_net_app_join_rejected(void);
@@ -87,5 +94,8 @@ int gy_net_app_preview_visible(int side);
 const GyNetPreview *gy_net_app_preview_at(int side);
 
 int gy_net_app_selftest(void);
+
+/* 测试专用：只断开当前 BLE 链路，不结束应用会话；用于验证自动重连/REJOIN。 */
+void gy_net_app_test_drop(void);
 
 #endif /* GEYI_NET_APP_H */

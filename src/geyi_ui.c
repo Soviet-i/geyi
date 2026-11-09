@@ -33,6 +33,7 @@ static lv_obj_t *net_result_overlay,*net_result_title,*net_result_sub;
 static lv_obj_t *net_confirm_block,*net_confirm_overlay,*net_confirm_label;
 static int net_lobby_active,net_room_active,net_game_active;
 static uint32_t net_last_rev;static int net_last_phase=-1;
+static uint32_t net_terminal_at;   /* 对方断线 10s 后的本地提示停留起点 */
 static lv_obj_t *prep_red_label,*prep_blue_label;
 static lv_obj_t *prep_player_icon[2],*prep_ai_icon[2];
 static lv_obj_t *param_mode_buttons[GY_MODE_COUNT];
@@ -93,6 +94,7 @@ static int human_turn(void)
 static void show_page(lv_obj_t *page)
 {
     cancel_ai();
+    net_terminal_at=0;
     lv_obj_add_flag(home_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(mode_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(game_page,LV_OBJ_FLAG_HIDDEN);
@@ -228,15 +230,21 @@ static void net_room_refresh(void)
         const char *fail=gy_net_app_join_reason()==GY_NET_JOIN_REASON_NOT_FOUND?"房间不存在":
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_FULL?"房间已满":
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_TIMEOUT?"加入超时":"加入失败";
-        lv_snprintf(text,sizeof(text),"%s | %s | 本机 #%04X",
-                    gy_net_app_phase()==GY_NET_PHASE_CLOSED?"房间已关闭":
-                    gy_net_app_spectator_lost()?"已离开旁观":
-                    gy_net_app_join_rejected()||!gy_net_app_active()?fail:
-                    phase==GY_NET_PHASE_STARTING?"即将开始":net_phase_text(),
-                    gy_net_app_local_terminal()?"对方断线":
-                    gy_net_app_connected()?"已连接":
-                    role==GY_NET_ROLE_HOST?"等待对手":"连接中",
-                    (unsigned)gy_net_app_local_id());
+        int reconn=gy_net_app_reconnect_seconds();
+        if(reconn>0)
+            lv_snprintf(text,sizeof(text),"%s 重连中 %ds | 本机 #%04X",
+                        role==GY_NET_ROLE_HOST?"对手断线":"连接中断",
+                        reconn,(unsigned)gy_net_app_local_id());
+        else
+            lv_snprintf(text,sizeof(text),"%s | %s | 本机 #%04X",
+                        gy_net_app_phase()==GY_NET_PHASE_CLOSED?"房间已关闭":
+                        gy_net_app_spectator_lost()?"已离开旁观":
+                        gy_net_app_join_rejected()||!gy_net_app_active()?fail:
+                        phase==GY_NET_PHASE_STARTING?"即将开始":net_phase_text(),
+                        gy_net_app_local_terminal()?"对方断线":
+                        gy_net_app_connected()?"已连接":
+                        role==GY_NET_ROLE_HOST?"等待对手":"连接中",
+                        (unsigned)gy_net_app_local_id());
         lv_label_set_text(net_room_status,text);
     }
     {
@@ -266,7 +274,12 @@ static void net_room_refresh(void)
                     lv_snprintf(text,sizeof(text),"玩家%s",
                                 hc==GY_NET_COLOR_RED?"(房主)":"");
                 lv_label_set_text(net_red_name,text);
-                lv_label_set_text(net_red_state,red_ready?"已准备":"未准备");
+                if(!gy_net_app_seat_online(GY_NET_COLOR_RED))
+                    lv_snprintf(text,sizeof(text),"断线重连 %ds",
+                                gy_net_app_reconnect_seconds());
+                lv_label_set_text(net_red_state,
+                    gy_net_app_seat_online(GY_NET_COLOR_RED)?
+                    (red_ready?"已准备":"未准备"):text);
             }
             lv_obj_set_style_text_color(net_red_name,
                 lv_color_hex(red_occ?0x142238:0xe7edf8),0);
@@ -286,7 +299,12 @@ static void net_room_refresh(void)
                     lv_snprintf(text,sizeof(text),"玩家%s",
                                 hc==GY_NET_COLOR_BLUE?"(房主)":"");
                 lv_label_set_text(net_blue_name,text);
-                lv_label_set_text(net_blue_state,blue_ready?"已准备":"未准备");
+                if(!gy_net_app_seat_online(GY_NET_COLOR_BLUE))
+                    lv_snprintf(text,sizeof(text),"断线重连 %ds",
+                                gy_net_app_reconnect_seconds());
+                lv_label_set_text(net_blue_state,
+                    gy_net_app_seat_online(GY_NET_COLOR_BLUE)?
+                    (blue_ready?"已准备":"未准备"):text);
             }
             lv_obj_set_style_text_color(net_blue_name,
                 lv_color_hex(blue_occ?0x142238:0xe7edf8),0);
@@ -317,7 +335,22 @@ static void net_room_refresh(void)
         lv_obj_set_width(net_leave_button,
                          role==GY_NET_ROLE_SPECTATOR?358:170);
     }
-    if(phase==GY_NET_PHASE_STARTING&&gy_net_app_active()){
+    if(gy_net_app_reconnect_seconds()>0&&gy_net_app_active()){
+        if(net_spectator_label)lv_obj_add_flag(net_spectator_label,LV_OBJ_FLAG_HIDDEN);
+        if(net_room_hint){
+            lv_snprintf(text,sizeof(text),
+                        role==GY_NET_ROLE_HOST?"等待对手重连 %ds":"连接中断 重连中 %ds",
+                        gy_net_app_reconnect_seconds());
+            lv_label_set_text(net_room_hint,text);
+            lv_obj_set_style_text_font(net_room_hint,&geyi_font_cn16,0);
+            lv_obj_set_style_text_color(net_room_hint,lv_color_hex(0x142238),0);
+            lv_obj_set_style_bg_color(net_room_hint,lv_color_hex(0xffdc79),0);
+            lv_obj_set_style_bg_opa(net_room_hint,LV_OPA_COVER,0);
+            lv_obj_set_style_radius(net_room_hint,8,0);
+            lv_obj_set_style_pad_all(net_room_hint,6,0);
+            lv_obj_set_pos(net_room_hint,16,292);
+        }
+    }else if(phase==GY_NET_PHASE_STARTING&&gy_net_app_active()){
         int sec=gy_net_app_countdown_seconds();
         if(net_spectator_label)lv_obj_add_flag(net_spectator_label,LV_OBJ_FLAG_HIDDEN);
         if(net_room_hint){
@@ -406,7 +439,13 @@ static void render(void)
     }
     if(game.outcome)lv_label_set_text(turn_label,outcomes[game.outcome]);
     else if(gy_net_app_active()){
-        if(gy_net_app_local_terminal())lv_label_set_text(turn_label,"对方断线");
+        int reconn=gy_net_app_reconnect_seconds();
+        if(reconn>0){
+            lv_snprintf(value,sizeof(value),"%s 重连中 %ds",
+                gy_net_app_role()==GY_NET_ROLE_HOST?"对方断线":"连接中断",reconn);
+            lv_label_set_text(turn_label,value);
+        }
+        else if(gy_net_app_local_terminal())lv_label_set_text(turn_label,"对方断线");
         else{
             lv_snprintf(value,sizeof(value),"%s回合 %s",game.turn?"蓝方":"红方",
                 gy_net_app_is_spectator()?"旁观":(gy_net_app_local_turn()?"(你)":"(对方)"));
@@ -464,7 +503,14 @@ static void render(void)
     if(game.outcome)status(gy_net_app_active()?"本局结束,即将返回房间":
                                            "本局结束,点右上角返回首页");
     else if(gy_net_app_active()){
-        if(gy_net_app_local_terminal())status("对方断线(本地提示,不是权威结算)");
+        int reconn=gy_net_app_reconnect_seconds();
+        if(reconn>0){
+            lv_snprintf(value,sizeof(value),
+                gy_net_app_role()==GY_NET_ROLE_HOST?"等待对手重连 %ds":"连接中断 重连中 %ds",
+                reconn);
+            status(value);
+        }
+        else if(gy_net_app_local_terminal())status("对方断线(本地提示,不是权威结算)");
         else if(gy_net_app_phase()==GY_NET_PHASE_STARTING)status("双方已准备 3 秒后开始");
         else if(gy_net_app_phase()!=GY_NET_PHASE_PLAYING)status(net_phase_text());
         else if(gy_net_app_is_spectator())status("旁观中 只读");
@@ -1205,6 +1251,7 @@ static void run_test_command(void)
     if(!strcmp(cmd,"swap")){gy_ui_action(GY_UI_NET_SWAP);return;}
     if(!strcmp(cmd,"leave")){gy_ui_action(GY_UI_NET_LEAVE);return;}
     if(!strcmp(cmd,"resign")){gy_net_app_resign();return;}
+    if(!strcmp(cmd,"drop")){gy_net_app_test_drop();return;}
     if(sscanf(cmd,"join %d",&a)==1){gy_ui_action(GY_UI_NET_JOIN0+a);return;}
     if(sscanf(cmd,"watch %d",&a)==1){
         if(gy_net_app_join_index_role(a,GY_NET_ROLE_SPECTATOR)==0){
@@ -1305,6 +1352,10 @@ static void run_test_command(void)
                    ng->outcome,gy_net_app_result(),
                    gy_net_app_join_rejected(),gy_net_app_join_reason(),
                    gy_net_app_countdown_seconds());
+        GY_TEST_LOG("[gy_test] recon peer=%d reconn=%d seatr=%d seatb=%d\n",
+                   gy_net_app_peer_online(),gy_net_app_reconnect_seconds(),
+                   gy_net_app_seat_online(GY_NET_COLOR_RED),
+                   gy_net_app_seat_online(GY_NET_COLOR_BLUE));
         GY_TEST_LOG("[gy_test] end\n");
         return;
     }
@@ -1336,10 +1387,40 @@ void gy_ui_tick(void)
     run_test_command();
     gy_net_app_tick(now);
     if(net_lobby_active)net_lobby_refresh();
+    if(net_room_active&&gy_net_app_local_terminal()){
+        /* 客方在房间页等房主 10s 未果：同样停留 2s 后回大厅。 */
+        if(!net_terminal_at)net_terminal_at=now?now:1;
+        else if((uint32_t)(now-net_terminal_at)>=2000u){
+            net_terminal_at=0;
+            gy_net_app_leave();
+            gy_net_app_lobby_start();
+            show_page(net_lobby_page);
+            return;
+        }
+        net_room_refresh();
+        return;
+    }else if(net_room_active){
+        net_terminal_at=0;
+    }
     if(net_room_active){
         if(gy_net_app_phase()==GY_NET_PHASE_PLAYING){
             show_page(game_page);net_last_rev=UINT32_MAX;net_last_phase=-1;
         }else net_room_refresh();
+    }
+    if(net_game_active&&gy_net_app_local_terminal()){
+        /* 客方 10s 内没等到房主：先显示“对方断线”，停留 2s 后回大厅；
+         * 成功重连会清 local_terminal，不会走这里。 */
+        if(!net_terminal_at)net_terminal_at=now?now:1;
+        else if((uint32_t)(now-net_terminal_at)>=2000u){
+            net_terminal_at=0;
+            gy_net_app_leave();
+            gy_net_app_lobby_start();
+            show_page(net_lobby_page);
+            return;
+        }
+        return;
+    }else if(net_game_active){
+        net_terminal_at=0;
     }
     if(net_game_active&&!gy_net_app_active()){
         if(gy_net_app_join_rejected()||gy_net_app_spectator_lost()){

@@ -137,6 +137,11 @@ int gy_net_room_preview_visible(const GyNetRoom *host, uint8_t viewer_role,
 
 /* 断线/重连：按 token 定位玩家或旁观者。 */
 int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_ms);
+/* 重启后的客方没有旧 token，只能凭稳定的 player_id 在 10s 窗口内回收
+ * 自己原来的席位（颜色不变、ready 清零），而不是变成旁观/新玩家。 */
+int gy_net_room_reclaim(GyNetRoom *host, uint16_t player_id, uint32_t now_ms,
+                        uint32_t *token_out, uint8_t *color_out);
+
 int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
                        uint32_t now_ms, uint8_t *color_out);
 

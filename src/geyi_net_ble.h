@@ -42,7 +42,8 @@ void gy_net_ble_poll(void);
 int  gy_net_ble_host_start(uint32_t room_id, uint8_t players, uint8_t phase,
                            uint8_t spectators, uint8_t max_spectators);
 int  gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
-                            uint8_t max_spectators, int connectable);
+                            uint8_t max_spectators, int connectable,
+                            uint8_t flags);
 void gy_net_ble_host_stop(void);
 
 /* 客户端：扫描房间、连接指定地址、断开。 */

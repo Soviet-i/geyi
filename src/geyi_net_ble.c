@@ -122,7 +122,10 @@ static uint8_t g_client_conn = 0xff;
 static uint8_t g_client_gen;
 static uint8_t g_gen_counter;
 static uint8_t g_client_connecting; /* ble_gap_create_connection 在途 */
+static uint32_t g_client_connect_at;
 static uint8_t g_client_leaving;    /* 已发 LEAVE，当前链路不再可发新消息 */
+static uint8_t g_search_gen;        /* 本次 search 所属链路代际 */
+static uint8_t g_register_gen;      /* 本次 remote svc 注册所属链路代际 */
 static uint8_t g_host_allow_conn = 1; /* 房主还能接受新连接 */
 static uint32_t g_adv_restart_at;
 static uint32_t g_cccd_retry_at;
@@ -147,7 +150,7 @@ static uint8_t  g_search_retry_count;
 static uint8_t g_adv_payload[16];
 static uint8_t g_adv_payload_len;
 static uint8_t g_adv_connectable = 1;
-static uint8_t g_adv_last[4];       /* 已写入协议栈的 players/phase/spectators/max */
+static uint8_t g_adv_last[5];       /* players/phase/spectators/max/flags */
 static uint8_t g_adv_last_valid;
 static uint8_t g_adv_dirty;      /* 广播内容变化，等待状态机允许时写回 */
 static uint32_t g_adv_retry_at;
@@ -230,6 +233,8 @@ static void conn_free(uint8_t conn_idx)
         g_client_conn = 0xff;
         g_client_gen = 0;
         g_client_connecting = 0;
+        g_search_gen = 0;
+        g_register_gen = 0;
         g_rmt_svc = 0;
         g_remote_svc_ok = 0;
         g_cccd_ok = 0;
@@ -432,8 +437,15 @@ static void tx_thread_entry(void *parameter)
             (void)ok;
         } else if (g_client_conn != 0xff && g_remote_svc_ok &&
                    (!item.gen || item.gen == g_client_gen)) {
-            send_bytes(g_client_conn, buf, (uint16_t)n);
-            if (item.close_after) disconnect_if_gen(g_client_conn, item.gen);
+            int sent = send_bytes(g_client_conn, buf, (uint16_t)n);
+            if (item.close_after) {
+                BLE_LOG("client leave sent conn=%d gen=%d ok=%d",
+                        g_client_conn, item.gen, sent);
+                /* write-without-response 后立刻断链会把 LEAVE 丢掉；
+                 * 在 TX 线程等一个连接间隔再断开，UI 不受影响。 */
+                if (sent) rt_thread_mdelay(120);
+                disconnect_if_gen(g_client_conn, item.gen);
+            }
         } else if (item.close_after && item.conn != GY_NET_BLE_BROADCAST_CONN) {
             /* 旧代际的 LEAVE 或发送条件已失效：只断开仍属于该代际的链路，
              * 绝不能按 conn_idx 拆掉复用同一序号的新会话。 */
@@ -496,7 +508,10 @@ void gy_net_ble_client_leave(uint8_t conn, const GyNetMsg *msg)
     g_pending_search_conn = 0xff;
     tx_flush();
     if (conn == 0xff || !msg || !send_queue(conn, msg, 1, gen)) {
+        BLE_LOG("client leave conn=%d gen=%d queue failed", conn, gen);
         if (conn != 0xff) gy_net_ble_disconnect(conn);
+    } else {
+        BLE_LOG("client leave conn=%d gen=%d queued", conn, gen);
     }
 }
 
@@ -535,6 +550,8 @@ void gy_net_ble_client_abort(void)
     g_client_conn = 0xff;
     g_client_gen = 0;
     g_search_started_at = 0;
+    g_search_gen = 0;
+    g_register_gen = 0;
     c_unlock();
     if (unregister_rmt)
         sibles_unregister_remote_svc(rmt_conn, rmt_start, rmt_end, geyi_gattc_event);
@@ -565,11 +582,13 @@ static void adv_mark_applied(void)
     g_adv_last[1] = g_adv_payload[8];
     g_adv_last[2] = g_adv_payload[9];
     g_adv_last[3] = g_adv_payload[10];
+    g_adv_last[4] = g_adv_payload[11];
     g_adv_last_valid = 1;
 }
 
 static void build_adv_payload(uint32_t room_id, uint8_t players, uint8_t phase,
-                              uint8_t spectators, uint8_t max_spectators)
+                              uint8_t spectators, uint8_t max_spectators,
+                              uint8_t flags)
 {
     g_adv_payload[0] = 'G';
     g_adv_payload[1] = 'Y';
@@ -582,7 +601,8 @@ static void build_adv_payload(uint32_t room_id, uint8_t players, uint8_t phase,
     g_adv_payload[8] = phase;
     g_adv_payload[9] = spectators;
     g_adv_payload[10] = max_spectators;
-    g_adv_payload_len = 11;
+    g_adv_payload[11] = flags;
+    g_adv_payload_len = 12;
 }
 
 static void adv_fill_para(sibles_advertising_para_t *para, int connectable)
@@ -734,7 +754,7 @@ int gy_net_ble_host_start(uint32_t room_id, uint8_t players, uint8_t phase,
     g_host_allow_conn = 1;
     g_adv_restart_at = 0;
     g_adv_last_valid = 0;
-    build_adv_payload(room_id, players, phase, spectators, max_spectators);
+    build_adv_payload(room_id, players, phase, spectators, max_spectators, 0);
     BLE_LOG("host_start room=%08x players=%d power=%d",
             (unsigned)room_id, players, g_power_on);
     ret = adv_start(1);
@@ -761,7 +781,7 @@ static int adv_apply_payload(int connectable)
 }
 
 int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
-                           uint8_t max_spectators, int connectable)
+                           uint8_t max_spectators, int connectable, uint8_t flags)
 {
     uint32_t room_id = (uint32_t)g_adv_payload[3] |
         ((uint32_t)g_adv_payload[4] << 8) | ((uint32_t)g_adv_payload[5] << 16) |
@@ -769,9 +789,10 @@ int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
     int mode_changed = (!!connectable != !!g_adv_connectable);
     int payload_changed = !g_adv_last_valid ||
                           g_adv_last[0] != players || g_adv_last[1] != phase ||
-                          g_adv_last[2] != spectators || g_adv_last[3] != max_spectators;
+                          g_adv_last[2] != spectators || g_adv_last[3] != max_spectators ||
+                          g_adv_last[4] != flags;
     g_host_allow_conn = connectable ? 1 : 0;
-    build_adv_payload(room_id, players, phase, spectators, max_spectators);
+    build_adv_payload(room_id, players, phase, spectators, max_spectators, flags);
     if (payload_changed) g_adv_dirty = 1;
     if (!payload_changed && !mode_changed && !g_adv_dirty &&
         g_adv_active && g_adv_started)
@@ -848,6 +869,13 @@ int gy_net_ble_connect(const uint8_t addr[6], uint8_t addr_type)
 {
     ble_gap_connection_create_param_t p;
     if (!addr) return -1;
+    if (g_client_connecting &&
+        (uint32_t)(rt_tick_get() - g_client_connect_at) < 3000u)
+        return -1;   /* 上一次连接还在途，等它完成/失败 */
+    if (g_client_connecting) {
+        ble_gap_cancel_create_connection();
+        g_client_connecting = 0;
+    }
     if (g_client_conn != 0xff) {
         /* 上一条链路还在异步关闭：先断开，下一 tick 重试。 */
         gy_net_ble_disconnect(g_client_conn);
@@ -873,6 +901,7 @@ int gy_net_ble_connect(const uint8_t addr[6], uint8_t addr_type)
     g_mode = 2;
     g_client_leaving = 0;
     g_client_connecting = 1;
+    g_client_connect_at = rt_tick_get();
     g_client_gen = 0;
     if (ble_gap_create_connection(&p) != HL_ERR_NO_ERROR) {
         g_client_connecting = 0;
@@ -1046,7 +1075,7 @@ static void parse_adv(const ble_gap_ext_adv_report_ind_t *ind)
         uint8_t len = p[0];
         uint8_t type = p[1];
         if (len == 0 || len + 1 > left) break;
-        if (type == 0xFF && len >= 1 + 2 + 11) {
+        if (type == 0xFF && len >= 1 + 2 + 12) {
             const uint8_t *d = p + 2;
             uint16_t company = (uint16_t)(d[0] | ((uint16_t)d[1] << 8));
             if (company == SIG_SIFLI_COMPANY_ID && d[2] == 'G' && d[3] == 'Y' &&
@@ -1058,6 +1087,7 @@ static void parse_adv(const ble_gap_ext_adv_report_ind_t *ind)
                 adv.phase = d[10];
                 adv.spectators = d[11];
                 adv.max_spectators = d[12];
+                adv.flags = d[13];
                 push_adv(ind, &adv);
                 return;
             }
@@ -1076,7 +1106,12 @@ static int geyi_gattc_event(uint16_t event_id, uint8_t *data, uint16_t len)
     } else if (event_id == SIBLES_REGISTER_REMOTE_SVC_RSP) {
         sibles_register_remote_svc_rsp_t *rsp = (sibles_register_remote_svc_rsp_t *)data;
         BLE_LOG("remote svc registered conn=%d status=%d", rsp->conn_idx, rsp->status);
-        if (rsp->conn_idx != g_client_conn || !g_remote_svc_ok) return 0;
+        if (rsp->conn_idx != g_client_conn || !g_remote_svc_ok ||
+            !g_register_gen || g_register_gen != g_client_gen) {
+            BLE_LOG("ignore stale register rsp conn=%d gen=%d",
+                    rsp->conn_idx, g_register_gen);
+            return 0;
+        }
         if (rsp->status == 0 && g_tx_cccd_hdl) {
             sibles_write_remote_value_t v;
             uint8_t cccd[2] = {1, 0};
@@ -1160,6 +1195,8 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
                 g_client_gen = c->gen;
                 g_client_connecting = 0;
                 g_client_leaving = 0;
+                g_search_gen = 0;
+                g_register_gen = 0;
             } else if (g_mode == 1 && g_adv_inited) {
                 /* 连接会停掉可连接广播；第一个客人连上后还要接受第二个
                  * 玩家/旁观者，50ms 后由 poll 重启广播。 */
@@ -1216,6 +1253,7 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         uint8_t *p;
         if (g_mode != 2 || g_client_conn == 0xff ||
             rsp->conn_idx != g_client_conn ||
+            !g_search_gen || g_search_gen != g_client_gen ||
             (g_search_started_at &&
              (uint32_t)(rt_tick_get() - g_search_started_at) > 3000u)) {
             BLE_LOG("ignore stale search conn=%d", rsp->conn_idx);
@@ -1257,6 +1295,7 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             g_rmt_start_hdl = g_rmt_end_hdl = 0;
             g_rmt_conn = 0xff;
         }
+        g_register_gen = g_client_gen;
         g_rmt_svc = sibles_register_remote_svc(rsp->conn_idx, rsp->svc->hdl_start,
                                                rsp->svc->hdl_end, geyi_gattc_event);
         if (g_rmt_svc != SIBLES_ERROR_REMOTE_HANDLE) {
@@ -1315,6 +1354,7 @@ void gy_net_ble_poll(void)
         g_pending_search_conn = 0xff;
         BLE_LOG("search start conn=%d", conn);
         g_search_started_at = rt_tick_get();
+        g_search_gen = g_client_gen;
         sibles_search_service(conn, ATT_UUID_128_LEN, (uint8_t *)g_svc_uuid);
     }
     if (g_pending_scan && (int32_t)(rt_tick_get() - g_scan_retry_at) >= 0) {

@@ -270,7 +270,9 @@ int gy_net_room_set_ready(GyNetRoom *host, uint8_t color, int ready, uint32_t no
     s->ready = (uint8_t)ready;
     host->now_ms = now_ms;
     sync_ready(host);
-    if (host->view.host_ready && host->view.guest_ready) {
+    if (host->view.host_ready && host->view.guest_ready &&
+        host->seats[host->view.host_color].connected &&
+        host->seats[host->view.guest_color].connected) {
         host->view.phase = GY_NET_PHASE_STARTING;
         host->view.phase_since_ms = now_ms;
     } else if (host->view.phase == GY_NET_PHASE_STARTING) {
@@ -294,9 +296,19 @@ int gy_net_room_swap_seats(GyNetRoom *host)
     if (!color_valid(old_host) || !color_valid(old_guest) ||
         host->seats[old_host].ready || host->seats[old_guest].ready)
         return GY_NET_ERR_STATE;
+    /* 断线保留期间不能换座：否则 seat_disconnect_ms 与席位颜色错位，
+     * 掉线席位会永远不被 WAIT tick 释放，reclaim 也会绕过 10s。 */
+    if ((host->seats[old_host].token && !host->seats[old_host].connected) ||
+        (host->seats[old_guest].token && !host->seats[old_guest].connected))
+        return GY_NET_ERR_STATE;
     tmp = host->seats[old_host];
     host->seats[old_host] = host->seats[old_guest];
     host->seats[old_guest] = tmp;
+    {
+        uint32_t tmp_ms = host->seat_disconnect_ms[old_host];
+        host->seat_disconnect_ms[old_host] = host->seat_disconnect_ms[old_guest];
+        host->seat_disconnect_ms[old_guest] = tmp_ms;
+    }
     host->seats[old_host].color = old_host;
     host->seats[old_guest].color = old_guest;
     host->view.host_color = old_guest;
@@ -316,8 +328,8 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
 
     if (room->view.phase == GY_NET_PHASE_STARTING) {
         if (!room->seats[room->view.guest_color].connected) {
-            /* 倒计时中断线没有可恢复对局：立即释放席位，不能留 2/2。 */
-            release_guest(room);
+            /* 倒计时中断线：取消开局回 WAIT，但保留席位 10s 等重连；
+             * 超时由 WAIT 分支释放。不要立即抹成 1/2。 */
             room->view.phase = GY_NET_PHASE_WAIT;
             room->view.phase_since_ms = now_ms;
             sync_ready(room);
@@ -572,17 +584,14 @@ int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_m
     if (!host || !token) return GY_NET_ERR_ARG;
     for (i = 0; i < 2; ++i) {
         if (host->seats[i].token == token && host->seats[i].connected) {
-            /* 等待阶段还没有对局可恢复，直接释放席位；否则大厅会继续
-             * 显示 2/2 直到 10 s 重连窗口结束，和实际可加入状态矛盾。 */
-            if ((host->view.phase == GY_NET_PHASE_WAIT ||
-                 host->view.phase == GY_NET_PHASE_RESULT) &&
-                i == host->view.guest_color) {
-                release_guest(host);
-                host->view.seq++;
-                return GY_NET_OK;
-            }
+            /* 链路断开（不是显式 LEAVE）一律保留席位 10s：房间页/对局页
+             * 要显示“断线重连中”，重启或网络恢复后可以回到原席位。
+             * 显式 LEAVE 走 gy_net_room_leave_token，仍然立即释放。 */
             host->seats[i].connected = 0;
+            host->seats[i].ready = 0;      /* 断线后不能保留“已准备” */
             host->seat_disconnect_ms[i] = now_ms;
+            sync_ready(host);
+            host->view.seq++;
             return GY_NET_OK;
         }
     }
@@ -601,6 +610,34 @@ int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_m
     return GY_NET_ERR_TOKEN;
 }
 
+int gy_net_room_reclaim(GyNetRoom *host, uint16_t player_id, uint32_t now_ms,
+                        uint32_t *token_out, uint8_t *color_out)
+{
+    int i;
+    if (!host || !token_out || !color_out || !player_id) return GY_NET_ERR_ARG;
+    if (host->view.phase == GY_NET_PHASE_CLOSED) return GY_NET_ERR_STATE;
+    for (i = 0; i < 2; ++i) {
+        GyNetSeat *s = &host->seats[i];
+        if (i == host->view.host_color) continue;   /* 房主席位不回收 */
+        if (!s->token || s->connected || s->player_id != player_id) continue;
+        if (host->seat_disconnect_ms[i] &&
+            (uint32_t)(now_ms - host->seat_disconnect_ms[i]) >= GY_NET_RECONNECT_MS)
+            continue;
+        s->token = make_token(host);
+        s->connected = 1;
+        s->ready = 0;                 /* 重启方必须重新准备 */
+        host->seat_disconnect_ms[i] = 0;
+        if (i == host->view.guest_color)
+            host->view.guest_id = player_id;
+        sync_ready(host);
+        host->view.seq++;
+        *token_out = s->token;
+        *color_out = (uint8_t)i;
+        return GY_NET_OK;
+    }
+    return GY_NET_ERR_TOKEN;
+}
+
 int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
                        uint32_t now_ms, uint8_t *color_out)
 {
@@ -610,11 +647,13 @@ int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
         if (host->seats[i].token != token) continue;
         if (host->seats[i].connected) return GY_NET_ERR_TOKEN;
         if (host->seat_disconnect_ms[i] &&
-            (uint32_t)(now_ms - host->seat_disconnect_ms[i]) > GY_NET_RECONNECT_MS)
+            (uint32_t)(now_ms - host->seat_disconnect_ms[i]) >= GY_NET_RECONNECT_MS)
             return GY_NET_ERR_TOKEN;
         host->seats[i].connected = 1;
+        host->seats[i].ready = 0;
         host->seats[i].last_seq = last_seq;
         host->seat_disconnect_ms[i] = 0;
+        sync_ready(host);
         *color_out = (uint8_t)i;
         return GY_NET_OK;
     }
@@ -622,7 +661,7 @@ int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
         if (host->spectators[i].token != token) continue;
         if (host->spectators[i].connected) return GY_NET_ERR_TOKEN;
         if (host->spectator_disconnect_ms[i] &&
-            (uint32_t)(now_ms - host->spectator_disconnect_ms[i]) > GY_NET_RECONNECT_MS)
+            (uint32_t)(now_ms - host->spectator_disconnect_ms[i]) >= GY_NET_RECONNECT_MS)
             return GY_NET_ERR_TOKEN;
         host->spectators[i].connected = 1;
         host->spectators[i].last_seq = last_seq;
