@@ -393,6 +393,14 @@ def test_resign_sync(a: Board, b: Board) -> None:
     # 房主认输：双方回房后，客人的 READY 必须仍能到达房主。
     a.send("gy_net resign")
     wait_state(a, lambda s: s.get("phase") == "3", 4, "host resign result")
+    # 身份标签必须按座位关系显示：房主红方输 -> (对方)，客方蓝方赢 -> (你)。
+    va, vb = a.view(timeout=3), b.view(timeout=3)
+    require(va is not None and "蓝方胜" in va.get("turn", "") and
+            "(对方)" in va.get("turn", ""), f"host resign label wrong: {va}")
+    require(vb is not None and "蓝方胜" in vb.get("turn", "") and
+            "(你)" in vb.get("turn", ""), f"guest resign label wrong: {vb}")
+    require(va is not None and "蓝方胜" in va.get("result", ""),
+            f"host result sub wrong: {va}")
     wait_state(a, lambda s: s.get("phase") == "0", 7, "host result back room")
     wait_state(b, lambda s: s.get("phase") == "0", 7, "guest result back room")
     a.send("gy_net ready")
@@ -404,6 +412,11 @@ def test_resign_sync(a: Board, b: Board) -> None:
     # 房客认输：同样要能继续同步准备。
     b.send("gy_net resign")
     wait_state(b, lambda s: s.get("phase") == "3", 4, "guest resign result")
+    va, vb = a.view(timeout=3), b.view(timeout=3)
+    require(va is not None and "红方胜" in va.get("turn", "") and
+            "(你)" in va.get("turn", ""), f"host guest-resign label wrong: {va}")
+    require(vb is not None and "红方胜" in vb.get("turn", "") and
+            "(对方)" in vb.get("turn", ""), f"guest resign label wrong: {vb}")
     wait_state(a, lambda s: s.get("phase") == "0", 7, "host back after guest resign")
     wait_state(b, lambda s: s.get("phase") == "0", 7, "guest back after guest resign")
     a.send("gy_net ready")
@@ -681,6 +694,10 @@ def test_reboot_timeouts(a: Board, b: Board) -> None:
     reboot_board(b)
     sa = wait_state(a, lambda s: s.get("phase") == "3", 20, "PLAYING disconnect result")
     require(sa.get("result") == "1", f"host should win by disconnect: {sa}")
+    va = a.view(timeout=3)
+    require(va is not None and "红方胜" in va.get("turn", "") and
+            "(你)" in va.get("turn", ""),
+            f"timeout result identity wrong: {va}")
     sa = wait_state(a, lambda s: s.get("phase") == "0" and s.get("players") == "1",
                     7, "PLAYING result back to room")
     a.send("gy_net leave")

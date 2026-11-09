@@ -683,6 +683,27 @@ static int test_starting_disconnect_releases_seat(void)
     return 0;
 }
 
+static int test_side_relation_identity(void)
+{
+    CHECK(setup_host(0x2025) == 0);
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_RED) == 1);
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_BLUE) == 0);
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_NONE) == -1);
+
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_SPECTATOR;
+    g.local_color = GY_NET_COLOR_NONE;
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_RED) == -1);
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_RED) == 0);
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_BLUE) == 1);
+    gy_net_app_leave();
+    CHECK(gy_net_app_side_relation(GY_NET_COLOR_BLUE) == -1);
+    return 0;
+}
+
 static int test_expired_seat_not_spectator(void)
 {
     GyNetJoinReq j;
@@ -740,6 +761,7 @@ int main(void)
     if (test_two_guests_one_leaves()) return 25;
     if (test_starting_disconnect_releases_seat()) return 26;
     if (test_expired_seat_not_spectator()) return 28;
+    if (test_side_relation_identity()) return 29;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
