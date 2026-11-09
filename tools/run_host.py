@@ -20,6 +20,14 @@ def run(args, **kw):
         raise SystemExit(result.returncode)
     return result.stdout
 
+# New Chinese UI literals must be added to the generated CN16 subset first.
+font_check = subprocess.run([sys.executable, str(root/'tools'/'check_desktop_font.py')],
+                            cwd=root, text=True, encoding='utf-8', errors='replace',
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print(font_check.stdout)
+if font_check.returncode:
+    raise SystemExit(font_check.returncode)
+
 cc = os.environ.get('CC') or shutil.which('gcc') or shutil.which('clang')
 targets = [
     ('geyi-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_geyi.c']),
@@ -27,6 +35,11 @@ targets = [
     ('geyi-config-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'src/geyi_config.c', 'tests/test_config.c']),
     ('geyi-param-ui-tests', ['src/geyi_game.c', 'src/geyi_config.c', 'src/geyi_param_ui.c', 'tests/test_param_ui.c']),
     ('geyi-ai-tests', ['src/geyi_game.c', 'src/geyi_ai.c', 'tests/test_ai.c']),
+    ('geyi-net-tests', ['src/geyi_game.c', 'src/geyi_net_proto.c', 'src/geyi_net_room.c',
+                        'src/geyi_net_link.c', 'tests/test_net.c']),
+    ('geyi-net-app-tests', ['src/geyi_game.c', 'src/geyi_config.c',
+                            'src/geyi_net_proto.c', 'src/geyi_net_room.c',
+                            'src/geyi_net_link.c', 'tests/test_net_app.c']),
     ('geyi-balance-tests', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tests/test_balance.c']),
     ('geyi-balance-scan', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tools/geyi_balance_scan.c']),
     ('geyi-ai-bench', ['src/geyi_game.c', 'src/geyi_ai.c', 'tools/geyi_ai_bench.c']),

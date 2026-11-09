@@ -38,8 +38,8 @@ if '--check' in sys.argv:
     print('READ-ONLY preflight passed; no serial open, flashing or reboot performed.')
     raise SystemExit(0)
 print('Close other serial monitors. Put the board flat and keep USB connected.')
-print('After calibration: test touch, then tilt UP/RIGHT/DOWN/LEFT and SHORT-tap KEY1.')
-print('KEY1 is power-multiplexed: DO NOT hold it. KEY2 cancels or enters placement.')
+print('After calibration: test touch, then tilt UP/RIGHT/DOWN/LEFT and SHORT-tap KEY2.')
+print('KEY1 is power/download: do not use it as a game key. KEY2 confirms or enters/leaves placement.')
 if input('Type FLASH to flash and capture 120 seconds; anything else cancels: ').strip()!='FLASH':raise SystemExit('Cancelled')
 stamp=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y%m%d_%H%M%S')
 folder=root/'evidence/board'/stamp

@@ -86,7 +86,9 @@ fail:
     if(configured){write_register(bus,0x10,old_acc);write_register(bus,0x12,old_ctrl);}
 }
 typedef struct {int raw,stable,armed;uint32_t since;} Button;
-static Button confirm_key,cancel_key;
+/* Only KEY2 (PA43) is a game key. PA34 is the power/download key and must
+ * not be configured, read, or debounced by the game input path. */
+static Button key2_button;
 static int pressed(Button *b,int raw,uint32_t now)
 {
     raw=!!raw;if(raw!=b->raw){b->raw=raw;b->since=now;}
@@ -99,7 +101,7 @@ int gy_board_start(void)
 {
     rt_thread_t thread;
     if(rt_mutex_init(&motion_lock,"gy_motion",RT_IPC_FLAG_PRIO)!=RT_EOK)return -1;
-    /* KEY1 is a power/download multiplexed input: preserve BSP pin settings. */
+    /* KEY2 only. PA34 stays untouched: it is the power/download key. */
     HAL_PIN_Set(PAD_PA43,GPIO_A43,PIN_NOPULL,1);rt_pin_mode(43,PIN_MODE_INPUT);
     gy_input_reset(&input);
     thread=rt_thread_create("gy_imu",sample_thread,RT_NULL,4096,18,10);
@@ -109,22 +111,30 @@ int gy_board_start(void)
 void gy_board_poll(void)
 {
     static uint32_t last_motion_log;
-    Motion m;uint32_t now=milliseconds();GyInputEvent event;int available[4],d,placing;
-    int key=rt_pin_read(34),confirm=pressed(&confirm_key,key,now),cancel=pressed(&cancel_key,rt_pin_read(43),now);
+    Motion m;uint32_t now=milliseconds();GyInputEvent event;int available[4],d,placing,key2;
     const GyGame *game=gy_ui_game();
     if(!gy_ui_is_playing()){
         gy_input_reset(&input);previous_column=-1;previous_place=0;
         return;
     }
     rt_mutex_take(&motion_lock,RT_WAITING_FOREVER);m=shared;rt_mutex_release(&motion_lock);
+    key2=pressed(&key2_button,rt_pin_read(43),now);
     if(m.valid&&(uint32_t)(now-last_motion_log)>=1000){
         last_motion_log=now;
-        rt_kprintf("[geyi:motion] x=%d y=%d key1=%d revision=%u\n",m.x,m.y,key,game->revision);
+        rt_kprintf("[geyi:motion] x=%d y=%d key2=%d revision=%u\n",m.x,m.y,key2,game->revision);
     }
-    if(cancel){
-        gy_ui_action(gy_ui_has_preview()||gy_ui_is_placing()?GY_UI_CANCEL:GY_UI_PLACE);
+    /* KEY2 is the only game key; PA34 (KEY1/power) is never read.
+     * Semantics live in gy_ui_key2() so the desktop test can exercise the
+     * same decision without RT-Thread. */
+    if(key2){
+        int was_placing=gy_ui_is_placing();
+        gy_ui_key2();
+        rt_kprintf("[geyi:key] KEY2 was_placing=%d now_placing=%d revision=%u turn=%d\n",
+                   was_placing,gy_ui_is_placing(),gy_ui_game()->revision,gy_ui_game()->turn);
         reset_input();previous_column=-1;
-        rt_kprintf("[geyi:key] KEY2 placing=%d\n",gy_ui_is_placing());
+        last_revision=gy_ui_game()->revision;
+        previous_place=gy_ui_is_placing();
+        return;
     }
     placing=gy_ui_is_placing();
     if(game->revision!=last_revision||placing!=previous_place){
@@ -140,16 +150,16 @@ void gy_board_poll(void)
             if(size<GY_SIZE_MIN||size>GY_SIZE_MAX)size=6;
             col=(m.x+3000)*size/6001;if(col<0)col=0;if(col>=size)col=size-1;
             if(col!=previous_column){previous_column=col;gy_ui_cell(col,game->turn?0:size-1);}}
-        if(confirm){gy_ui_action(GY_UI_CONFIRM);rt_kprintf("[geyi:key] place confirm revision=%u\n",gy_ui_game()->revision);}
         return;
     }
     for(d=0;d<4;++d)available[d]=gy_eligible_count(game,d);
-    event=gy_input_update(&input,m.x,m.y,key,now,available);
+    /* Pass key=0: the tilt state machine must never consume PA34 (KEY1). */
+    event=gy_input_update(&input,m.x,m.y,0,now,available);
     if(event.events&GY_INPUT_CANCEL)gy_ui_action(GY_UI_CANCEL);
     if(event.events&GY_INPUT_SELECT){
         gy_ui_tilt_select(event.direction,event.count);
         rt_kprintf("[geyi:tilt] x=%d y=%d dir=%d count=%d preview=%d\n",m.x,m.y,event.direction,event.count,gy_ui_has_preview());
     }
-    if(event.events&GY_INPUT_CONFIRM){gy_ui_action(GY_UI_CONFIRM);rt_kprintf("[geyi:key] confirm revision=%u turn=%d\n",gy_ui_game()->revision,gy_ui_game()->turn);}
+    /* GY_INPUT_CONFIRM is intentionally unused on board: KEY1 is not a game key. */
 }
 #endif

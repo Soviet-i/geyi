@@ -63,7 +63,7 @@
   \draw[flow] (center) -- node[lbl,above=8pt]{倾斜} (arming);
   \draw[flow] (arming) -- node[lbl,above=8pt]{200\,ms} (armed);
   \draw[flow] (armed) -- node[lbl,above=8pt]{选择} (preview);
-  \draw[flow] (preview) -- node[lbl,above=8pt]{按键} (confirm);
+  \draw[flow] (preview) -- node[lbl,above=8pt]{KEY2} (confirm);
   \draw[flow] (confirm) -- node[lbl,above=8pt]{提交} (turnend);
   \draw[flow] (turnend.south) -- (7.0,-1.9) -- (-8.5,-1.9) -- (center.south);
   \node[lbl,below] at (0.0,-1.98) {换手 / 回中 / 取消};

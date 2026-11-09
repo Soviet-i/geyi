@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "geyi_ui.h"
+#include "geyi_net_app.h"
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
 #include "geyi_font_cn16.h"
@@ -61,15 +62,32 @@ static void check(int ok,const char *what)
 static void enter_ai_mode(int human_red)
 {
     gy_ui_action(GY_UI_HOME);
-    click(160,212);click(160,200);
+    click(160,146);click(160,200);
     if(!human_red)click(100,200);
     click(270,372);
+}
+static int key2_tests(void)
+{
+    uint32_t revision;
+    gy_ui_action(GY_UI_HOME);
+    gy_ui_action(GY_UI_SINGLE);
+    check(!gy_ui_is_placing()&&!gy_ui_has_preview(),"KEY2 starts idle");
+    gy_ui_action(GY_UI_UP);
+    check(gy_ui_has_preview(),"KEY2 preview prepared");
+    revision=gy_ui_game()->revision;
+    gy_ui_key2();
+    check(gy_ui_game()->revision==revision+1&&!gy_ui_has_preview(),
+          "KEY2 confirms tilt preview");
+    gy_ui_key2();
+    check(!gy_ui_is_placing(),"KEY2 without coins does not enter placing");
+    gy_ui_action(GY_UI_RESTART);
+    return 0;
 }
 static int param_tests(void)
 {
     gy_ui_action(GY_UI_HOME);
     gy_param_ui_init();
-    click(160,282);
+    click(160,210);
     check(gy_ui_param_active(),"param page opens");
     check(gy_param_ui_mode()==GY_MODE_SINGLE,"param default single");
     check(gy_param_ui_page()==0,"param first page");
@@ -108,7 +126,7 @@ static int param_tests(void)
     check(gy_param_ui_value(GY_P_SIZE)==7,"param single size 7");
     click(283,359);
     check(!gy_ui_param_active(),"param page back home");
-    click(160,212);
+    click(160,146);
     click(160,126);
     check(gy_ui_is_playing(),"single starts after params");
     check(gy_ui_game()->config.size==7,"single applies size 7");
@@ -127,15 +145,45 @@ static int tests(void)
     gy_ui_action(GY_UI_UP);gy_ui_tilt_select(GY_UP,1);gy_ui_action(GY_UI_CONFIRM);
     check(!gy_ui_has_preview()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"menu ignores game input");
     check(gy_ui_take_feedback()==GY_FX_NONE,"menu game actions do not flash");
-    click(160,346);
+    click(160,268);
     check(!gy_ui_is_playing(),"history placeholder disabled");
-    click(160,212);screenshot("modes.bmp");
+    check(gy_ui_corner_clip_count(48)==0,"home corner safe");
+    click(160,323);
+    check(gy_ui_rules_active()&&gy_ui_rules_page()==0,"rules opens on page 1");
+    check(gy_ui_corner_clip_count(48)==0,"rules page 1 corner safe");
+    check(gy_ui_rules_content_bottom()<370,"rules page 1 clears nav");
+    screenshot("rules1.bmp");
+    click(166,398);
+    check(gy_ui_rules_page()==0,"rules previous clamped on first page");
+    click(304,398);
+    check(gy_ui_rules_page()==1,"rules next page 2");
+    check(gy_ui_corner_clip_count(48)==0,"rules page 2 corner safe");
+    check(gy_ui_rules_content_bottom()<370,"rules page 2 clears nav");
+    screenshot("rules2.bmp");
+    click(304,398);
+    check(gy_ui_rules_page()==2,"rules page 3");
+    check(gy_ui_corner_clip_count(48)==0,"rules page 3 corner safe");
+    check(gy_ui_rules_content_bottom()<370,"rules page 3 clears nav");
+    screenshot("rules3.bmp");
+    click(304,398);
+    check(gy_ui_rules_page()==3,"rules reaches last page");
+    check(gy_ui_corner_clip_count(48)==0,"rules last page corner safe");
+    check(gy_ui_rules_content_bottom()<370,"rules last page clears nav");
+    screenshot("rules4.bmp");
+    click(304,398);
+    check(gy_ui_rules_page()==3,"rules next clamped on last page");
+    click(64,398);
+    check(!gy_ui_rules_active(),"rules back returns home");
+    click(160,146);screenshot("modes.bmp");
     click(160,280);
-    check(!gy_ui_is_playing(),"unfinished online mode disabled");
+    check(!gy_ui_is_playing(),"online lobby is not a running game");
+    gy_ui_action(GY_UI_NET_BACK);
+    check(!gy_net_app_is_spectator(),"leaving lobby clears spectator flag");
     click(160,400);check(!gy_ui_is_playing(),"mode back to home");
     check(gy_ai_selftest(),"AI selftest");
-    click(160,212);click(160,126);
+    click(160,146);click(160,126);
     check(gy_ui_is_playing(),"single enters game");screenshot("initial.bmp");
+    check(gy_ui_corner_clip_count(48)==0,"game corner safe");
     check(gy_ui_take_feedback()==GY_FX_CLEAR,"single starts light off");
     {const uint32_t required[]={0x786e,0x8ba4,0x5f00,0x8f93,0x80dc,0x7ea2,0x84dd};
      unsigned i;lv_font_glyph_dsc_t glyph;
@@ -156,8 +204,10 @@ static int tests(void)
     check(gy_ui_take_feedback()==GY_FX_NONE,"duplicate confirm does not flash");
     gy_ui_action(GY_UI_RESIGN);check(gy_ui_game()->outcome==GY_RED_WIN,"resign");screenshot("result.bmp");
     check(gy_ui_take_feedback()==GY_FX_RED,"blue resign selects red winner light");
-    click(240,20);check(!memcmp(&before,gy_ui_game(),sizeof(before)),"mouse restart");
-    check(gy_ui_take_feedback()==GY_FX_CLEAR,"restart clears light");
+    click(330,40);check(!gy_ui_is_playing(),"single result button returns home");
+    check(gy_ui_take_feedback()==GY_FX_CLEAR,"result button clears light");
+    gy_ui_action(GY_UI_SINGLE);
+    check(!gy_ui_game()->outcome&&gy_ui_game()->turn==0,"single restart after home");
     gy_ui_action(GY_UI_RESIGN);check(gy_ui_take_feedback()==GY_FX_BLUE,"red resign selects blue winner light");
     gy_ui_action(GY_UI_RESTART);(void)gy_ui_take_feedback();
     gy_ui_action(GY_UI_PLACE);check(!gy_ui_has_preview(),"no coins cannot place");
@@ -169,8 +219,12 @@ static int tests(void)
                 int x,y=gy_ui_game()->turn?0:5;
                 for(x=0;x<6;++x)if(gy_ui_game()->cells[y][x].kind==GY_EMPTY){
                     uint32_t revision=gy_ui_game()->revision;
-                    gy_ui_action(GY_UI_PLACE);gy_ui_cell(x,y);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
-                    gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->revision==revision+1,"place confirmed");
+                    gy_ui_key2();check(gy_ui_is_placing(),"KEY2 enters placing with coins");
+                    gy_ui_key2();check(!gy_ui_is_placing(),"KEY2 leaves placing without column");
+                    gy_ui_key2();check(gy_ui_is_placing(),"KEY2 re-enters placing");
+                    gy_ui_cell(x,y);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
+                    gy_ui_key2();check(gy_ui_game()->revision==revision+1,"KEY2 confirms placement");
+                    check(!gy_ui_is_placing(),"KEY2 leaves placing after confirm");
                     check(gy_ui_take_feedback()==GY_FX_MOVE,"successful placement flashes");
                     goto placed;
                 }
@@ -186,12 +240,14 @@ done: ;
     gy_ui_action(GY_UI_RESTART);gy_ui_action(GY_UI_MORE);gy_ui_action(GY_UI_UP);
     check(gy_ui_has_preview(),"quantity two preview");
     gy_ui_action(GY_UI_CONFIRM);check(gy_ui_game()->cells[4][1].kind==GY_SOLDIER&&gy_ui_game()->cells[4][4].kind==GY_SOLDIER,"both selected soldiers moved");
-    click(166,20);check(!gy_ui_is_playing()&&!gy_ui_has_preview(),"game back home clears preview");
-    click(160,212);click(160,126);
+    gy_ui_action(GY_UI_UP);check(gy_ui_has_preview(),"preview before result button");
+    gy_ui_action(GY_UI_RESIGN);check(gy_ui_game()->outcome!=0,"resign from preview");
+    click(330,40);check(!gy_ui_is_playing()&&!gy_ui_has_preview(),"result button back home clears preview");
+    click(160,146);click(160,126);
     check(gy_ui_is_playing()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"single re-entry resets game");
     /* REQ-317: prep page defaults, swap, cancel, then human red start. */
     gy_ui_action(GY_UI_HOME);
-    click(160,212);click(160,200);
+    click(160,146);click(160,200);
     check(gy_ui_prep_active()&&gy_ui_prep_human_red(),"prep defaults to human red");
     check(!gy_ui_is_playing(),"prep is not a running game");
     screenshot("ai_prep.bmp");
@@ -203,7 +259,7 @@ done: ;
     click(100,372);
     check(!gy_ui_prep_active()&&!gy_ui_is_playing(),"prep cancel returns to modes");
     gy_ui_action(GY_UI_HOME);
-    click(160,212);click(160,200);
+    click(160,146);click(160,200);
     check(gy_ui_prep_active()&&gy_ui_prep_human_red(),"prep resets default human red");
     click(270,372);
     check(gy_ui_is_playing()&&gy_ui_ai_mode()&&!gy_ui_ai_thinking(),
@@ -269,8 +325,10 @@ done: ;
     check(!gy_ui_is_playing(),"home during AI preview");
     Sleep(600);gy_ui_tick();
     check(!gy_ui_is_playing(),"preview commit cancelled after home");
+    key2_tests();
     param_tests();
     puts("PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board");
+    puts("PASS: KEY2-only confirm/placing state machine (KEY1 untested as game key)");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");
     puts("PASS: TC-313 home/modes/disabled entries/input guard/single re-entry");
     puts("PASS: TC-315 AI modes, AI turn, input guard, stale result discard");

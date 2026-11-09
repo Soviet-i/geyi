@@ -22,6 +22,10 @@
 #include "geyi_ai.h"
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
+#include "geyi_net_proto.h"
+#include "geyi_net_room.h"
+#include "geyi_net_link.h"
+#include "geyi_net_app.h"
 #include "drivers/rt_drv_pwm.h"
 #ifdef GEYI_WITH_LVGL
 #include "geyi_ui.h"
@@ -85,6 +89,9 @@ int main(void)
     rt_kprintf("[geyi:selftest] ai=%s\n", gy_ai_selftest() ? "PASS" : "FAIL");
     {int rc=gy_param_selftest();rt_kprintf("[geyi:selftest] param=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
     {int rc=gy_param_ui_selftest();rt_kprintf("[geyi:selftest] paramui=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
+    {int ok=gy_net_proto_selftest()==0&&gy_net_room_selftest()==0&&
+               gy_net_link_selftest()==0&&gy_net_app_selftest()==0;
+     rt_kprintf("[geyi:selftest] net=%s (protocol/room logic only, BLE not tested)\n",ok?"PASS":"FAIL");}
 
 #ifdef GEYI_WITH_LVGL
     GyLight light={0};uint32_t last_light=UINT32_MAX;
@@ -94,12 +101,13 @@ int main(void)
         rt_kprintf("[geyi:lcd] FAIL initialize\n");
         return -1;
     }
+    gy_net_app_init();
     gy_ui_create();
     rt_kprintf("[geyi:lcd] READY %d x %d\n",(int)lv_display_get_horizontal_resolution(NULL),
                (int)lv_display_get_vertical_resolution(NULL));
     int board_ready=gy_board_start()==0;
     if(!board_ready)rt_kprintf("[geyi:board] FAIL worker start, touch remains available\n");
-    rt_kprintf("[geyi:board] Keep board still ~1 second. KEY1 short=confirm KEY2=cancel/place\n");
+    rt_kprintf("[geyi:board] Keep board still ~1 second. KEY2 short=confirm/place (KEY1 is power)\n");
     while(1){
         if(board_ready)gy_board_poll();
         lv_timer_handler();
