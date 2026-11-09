@@ -361,6 +361,7 @@ def test_stale_room_click(a: Board, b: Board) -> None:
     b.send("gy_net join 0")
     sb = wait_state(b, lambda s: s.get("active") == "0", 8, "stale join returns to lobby")
     require(sb.get("role") != "0", f"stale room made B a host: {sb}")
+    require(sb.get("joinreason") == "1", f"stale join did not report room-not-found: {sb}")
     # The room must be gone from the lobby, and no half-open join may remain.
     wait_state(b, lambda s: int(s.get("rooms", "0")) == 0, 6, "stale room removed")
     sb = b.state()

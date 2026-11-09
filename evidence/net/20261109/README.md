@@ -5,10 +5,10 @@
 
 | 文件 | 内容 | 覆盖 | 不覆盖 |
 |---|---|---|---|
-| `host_test_final.log` | `python tools/run_host.py` | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 250、app 128、平衡 10 断言 | 真实 BLE、桌面 LVGL |
-| `firmware_build_final.log` | `scons --board=sf32lb52-lchspi-ulp` | `main.bin` 1,059,596 B + LCPU `lcpu.bin` 6,384 B | 编译通过不等于联机可用 |
+| `host_test_final.log` | `python tools/run_host.py` | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 272、app 150、平衡 10 断言 | 真实 BLE、桌面 LVGL |
+| `firmware_build_final.log` | `scons --board=sf32lb52-lchspi-ulp` | `main.bin` 1,060,644 B + LCPU `lcpu.bin` 6,384 B | 编译通过不等于联机可用 |
 | `board_suite_final.log` | 最终双板套件 stdout | 9 段全部 PASS；A/B final 均 active=0、rooms=0 | 不是逐像素/触摸证据 |
-| `board/suite_A_COM7_*.log`、`suite_B_COM8_*.log` | 双板串口原始日志 | 各轮套件；`110714` 为最终 PASS 轮 | 失败轮保留，不能只引用 PASS 轮 |
+| `board/suite_A_COM7_*.log`、`suite_B_COM8_*.log` | 双板串口原始日志 | 各轮套件；`112059` 为最终 PASS 轮 | 失败轮保留，不能只引用 PASS 轮 |
 | `board/auto_*_101624.log` | 早期冒烟尝试 | 保留为失败/过渡证据 | 不能写成通过 |
 
 ## 最终 PASS 覆盖

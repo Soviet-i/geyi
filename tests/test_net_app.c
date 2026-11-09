@@ -81,6 +81,7 @@ static int test_swap_ready_and_move_color(void)
     CHECK(host_join_player(1) == 0);
     CHECK(g.conns[0].used == 1);
     CHECK(gy_net_app_swap() == 1);
+    CHECK(g.reack_left == 3);   /* 换座 ACK 需要重发，单包丢失可恢复 */
     CHECK(g.room.view.host_color == GY_NET_COLOR_BLUE);
     CHECK(g.room.view.guest_color == GY_NET_COLOR_RED);
     CHECK(g.conns[0].color == GY_NET_COLOR_RED);   /* 客方 token 跟到红方 */
@@ -243,6 +244,15 @@ static int test_host_leave_closes_and_client_sees_closed(void)
     return 0;
 }
 
+static int test_empty_lobby_index_rejected(void)
+{
+    gy_net_app_init();
+    CHECK(gy_net_app_join_index(0) == -1);
+    CHECK(g.join_rejected == 1);
+    CHECK(g.join_reason == GY_NET_JOIN_REASON_NOT_FOUND);
+    return 0;
+}
+
 static int test_stale_lobby_room_rejected(void)
 {
     gy_net_app_init();
@@ -301,13 +311,64 @@ static int test_guest_takeover_when_state_lost(void)
     g.dropped = 1;
     g.drop_at = 0;
     g.last_rx = 0;
+    /* 链路仍通时不能接管：可能是房主只是慢，接管会变成双房主。 */
+    g.link_down = 0;
     g.now = 3000;
     gy_net_app_tick(3000);
+    CHECK(g.active == 2);
+    CHECK(g.role == GY_NET_ROLE_PLAYER);
+    /* 链路确实断开超过 2.5s 才允许接管。 */
+    g.link_down = 1;
+    g.now = 3001;
+    gy_net_app_tick(3001);
     CHECK(g.active == 1);
     CHECK(g.role == GY_NET_ROLE_HOST);
     CHECK(g.local_color == GY_NET_COLOR_BLUE);
     CHECK(gy_net_app_seat_id(GY_NET_COLOR_BLUE) == 0x2222);
     CHECK(g.room.view.player_count == 1);
+    return 0;
+}
+
+static int test_rejoin_reject_starts_fresh_join(void)
+{
+    GyNetReject r;
+    GyNetMsg m;
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.token = 0x9999;
+    g.room_id = 0x200D;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    g.room.view.phase = GY_NET_PHASE_WAIT;
+    g.room.view.player_count = 2;
+    g.dropped = 1;
+    g.link_down = 0;
+    g.now = 1000;
+    memset(&r, 0, sizeof(r));
+    r.reason = (uint8_t)(-GY_NET_ERR_TOKEN);
+    CHECK(gy_net_pack_reject(&m, &r) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.pending_join == 1);
+    CHECK(g.join_req_role == 2);          /* auto */
+    CHECK(g.local_color == GY_NET_COLOR_NONE);
+    CHECK(g.dropped == 0);
+    CHECK(g.link_down == 0);              /* 链路仍通，不清成断线 */
+    return 0;
+}
+
+static int test_released_conn_cannot_act(void)
+{
+    uint32_t token;
+    CHECK(setup_host(0x200C) == 0);
+    CHECK(host_join_player(1) == 0);
+    token = g.conns[0].token;
+    CHECK(gy_net_room_disconnect_token(&g.room, token, 0) == GY_NET_OK);
+    CHECK(g.room.view.player_count == 1);
+    /* 旧连接还活着但 token 已不在席位：READY 不能落到任何座位。 */
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(g.room.view.host_ready == 0);
+    CHECK(g.room.view.guest_ready == 0);
     return 0;
 }
 
@@ -342,6 +403,9 @@ int main(void)
     if (test_full_player_join_downgrades_to_spectator()) return 10;
     if (test_auto_role_uses_actual_space()) return 11;
     if (test_guest_takeover_when_state_lost()) return 12;
+    if (test_rejoin_reject_starts_fresh_join()) return 15;
+    if (test_released_conn_cannot_act()) return 13;
+    if (test_empty_lobby_index_rejected()) return 14;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }

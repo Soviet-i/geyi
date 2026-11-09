@@ -139,6 +139,15 @@ static int test_snapshot_roundtrip(void)
     CHECK(o.seq == 55 && o.game.config.size == g.config.size &&
           o.game.turn == g.turn && o.game.rng == g.rng);
     CHECK(memcmp(o.game.cells, g.cells, sizeof(g.cells)) == 0);
+
+    /* 越界 outcome/turn 必须在解析层拒绝，UI 才能安全用 outcome 索引。 */
+    s.game.outcome = GY_DRAW + 1;
+    CHECK(gy_net_pack_snapshot(&m, &s) == GY_NET_OK);
+    CHECK(gy_net_unpack_snapshot(&m, &o) == GY_NET_ERR_RANGE);
+    s.game.outcome = GY_PLAYING;
+    s.game.turn = 2;
+    CHECK(gy_net_pack_snapshot(&m, &s) == GY_NET_OK);
+    CHECK(gy_net_unpack_snapshot(&m, &o) == GY_NET_ERR_RANGE);
     return 0;
 }
 
@@ -365,6 +374,21 @@ static int test_room_state_sync(void)
     CHECK(gy_net_room_apply_room_state(&client, &state) == 0);
     state.seq++;
     CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
+    /* 慢到的旧 ROOM_STATE 不能把 phase/seq 拉回 STARTING。 */
+    client.view.seq = 10;
+    client.view.phase = GY_NET_PHASE_PLAYING;
+    state.seq = 5;
+    state.phase = GY_NET_PHASE_STARTING;
+    CHECK(gy_net_room_apply_room_state(&client, &state) == 0);
+    CHECK(client.view.phase == GY_NET_PHASE_PLAYING);
+    CHECK(client.view.seq == 10);
+    {
+        GyNetSnapshot snap;
+        memset(&snap, 0, sizeof(snap));
+        snap.seq = 5;
+        CHECK(gy_net_room_apply_snapshot(&client, &snap) == 0);
+        CHECK(client.view.seq == 10);
+    }
     return 0;
 }
 
@@ -436,6 +460,21 @@ static int test_disconnect_rejoin(void)
     CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
     CHECK(host.view.spectator_count == 0);
     CHECK(gy_net_room_tick(&host, 11001) == 0);
+    return 0;
+}
+
+static int test_host_leave_result_closes(void)
+{
+    GyNetRoom host;
+    uint32_t token = 0;
+
+    gy_net_room_init_host(&host, 1016, 0, 2);
+    CHECK(start_game(&host, &token) == 0);
+    CHECK(gy_net_room_resign(&host, GY_NET_COLOR_RED, 100) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
+    /* 结算后房主回大厅 = 解散，不再把房主转给客人。 */
+    CHECK(gy_net_room_leave(&host, host.view.host_color, 200) == GY_NET_LEAVE_CLOSED);
+    CHECK(host.view.phase == GY_NET_PHASE_CLOSED);
     return 0;
 }
 
@@ -557,6 +596,7 @@ int main(void)
     if (test_preview_privacy()) return 10;
     if (test_disconnect_rejoin()) return 11;
     if (test_room_config_and_promote()) return 12;
+    if (test_host_leave_result_closes()) return 14;
     if (test_starting_disconnect_and_spectator_slot()) return 13;
     if (test_client_host_lost()) return 14;
     if (test_memory_link()) return 14;
