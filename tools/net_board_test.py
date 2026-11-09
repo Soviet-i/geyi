@@ -494,6 +494,9 @@ def main() -> int:
         print("== spectator ==")
         test_spectator(a, b)
 
+        for board in (a, b):
+            require("remote svc register full" not in board.text(),
+                    f"{board.name} leaked GATT remote service slots")
         ok = True
         print("PASS: two-board online suite")
         print("A final:", a.state())

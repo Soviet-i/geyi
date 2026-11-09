@@ -470,6 +470,8 @@ static int test_result_disconnect_releases_guest(void)
 
     gy_net_room_init_host(&host, 1018, 0, 2);
     CHECK(start_game(&host, &token) == 0);
+    gy_net_room_set_player_id(&host, GY_NET_COLOR_BLUE, 0x3333);
+    CHECK(host.view.guest_id == 0x3333);
     CHECK(gy_net_room_resign(&host, GY_NET_COLOR_RED, 100) == GY_NET_OK);
     CHECK(host.view.phase == GY_NET_PHASE_RESULT);
     CHECK(gy_net_room_disconnect_token(&host, token, 200) == GY_NET_OK);
@@ -564,8 +566,8 @@ static int test_starting_disconnect_and_spectator_slot(void)
     CHECK(gy_net_room_disconnect_token(&host, t1, 1000) == GY_NET_OK);
     CHECK(gy_net_room_tick(&host, 3020) == 1);
     CHECK(host.view.phase == GY_NET_PHASE_WAIT);   /* 倒计时中断线不能开局 */
-    CHECK(gy_net_room_tick(&host, 11001) == 1);
-    CHECK(host.view.player_count == 1);            /* 等待期超时只释放席位 */
+    CHECK(host.view.player_count == 1);            /* 立即释放，不留 2/2 */
+    CHECK(gy_net_room_tick(&host, 11001) == 0);
 
     /* 等待阶段旁观断线立即释放槽位，新旁观者可以直接加入。 */
     gy_net_room_init_host(&host, 1015, 0, 1);

@@ -234,6 +234,7 @@ static int test_host_leave_closes_and_client_sees_closed(void)
     s.phase = GY_NET_PHASE_CLOSED;
     s.host_color = GY_NET_COLOR_RED;
     s.guest_color = GY_NET_COLOR_BLUE;
+    s.room_id = g.room_id;
     s.seq = 3;
     CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
     client_process(&m);
@@ -388,6 +389,7 @@ static int test_client_ready_syncs_from_room_state(void)
     s.host_color = GY_NET_COLOR_RED;
     s.guest_color = GY_NET_COLOR_BLUE;
     s.player_count = 2;
+    s.room_id = g.room_id;
     s.seq = 9;
     CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
     client_process(&m);
@@ -439,6 +441,31 @@ static int test_leave_after_resign_releases_seat(void)
     return 0;
 }
 
+static int test_ignore_state_from_other_room(void)
+{
+    GyNetRoomState s;
+    GyNetMsg m;
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.room_id = 0x2013;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    memset(&s, 0, sizeof(s));
+    s.phase = GY_NET_PHASE_STARTING;
+    s.host_color = GY_NET_COLOR_RED;
+    s.guest_color = GY_NET_COLOR_BLUE;
+    s.player_count = 2;
+    s.room_id = 0x9999;      /* 上一房间的迟到状态 */
+    s.seq = 99;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.room.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(g.room.view.room_id == 0x2013);
+    CHECK(g.room.view.seq != 99);
+    return 0;
+}
+
 static int test_client_countdown_from_starting_state(void)
 {
     GyNetRoomState s;
@@ -456,6 +483,7 @@ static int test_client_countdown_from_starting_state(void)
     s.player_count = 2;
     s.host_ready = 1;
     s.guest_ready = 1;
+    s.room_id = g.room_id;
     s.seq = 4;
     g.now = 1000;
     CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
@@ -527,6 +555,7 @@ int main(void)
     if (test_resign_keeps_conn_and_room_loop()) return 18;
     if (test_leave_after_resign_releases_seat()) return 19;
     if (test_client_countdown_from_starting_state()) return 20;
+    if (test_ignore_state_from_other_room()) return 21;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
