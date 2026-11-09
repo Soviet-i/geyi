@@ -89,7 +89,7 @@ design:
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
   # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
-  commit_range: "8dae6a0..192cbe4（feat/req-5xx-net-core；2026-11-09 第四轮首页/规则页/圆角安全区与双板自动验证；封版 tag 记精确 SHA）"
+  commit_range: "8dae6a0..7382df7（feat/req-5xx-net-core；2026-11-09 第四轮首页/规则页/圆角安全区与双板自动验证；封版 tag 记精确 SHA）"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
