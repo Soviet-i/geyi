@@ -75,6 +75,7 @@ typedef struct {
     uint8_t  phase;
     uint8_t  spectators;
     uint8_t  max_spectators;
+    uint8_t  flags;          /* bit0=有玩家席位处于 10s 重连保留 */
 } GyNetAdvRoom;
 
 typedef struct {

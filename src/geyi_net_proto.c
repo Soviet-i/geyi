@@ -143,6 +143,7 @@ int gy_net_pack_adv_room(GyNetMsg *m, const GyNetAdvRoom *v)
     put8(m->payload, &pos, v->phase);
     put8(m->payload, &pos, v->spectators);
     put8(m->payload, &pos, v->max_spectators);
+    put8(m->payload, &pos, v->flags);
     PACK_END(m);
 }
 int gy_net_unpack_adv_room(const GyNetMsg *m, GyNetAdvRoom *v)
@@ -150,12 +151,13 @@ int gy_net_unpack_adv_room(const GyNetMsg *m, GyNetAdvRoom *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_ADV_ROOM, &r, 8); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_ADV_ROOM, &r, 9); if (rc) return rc;
     v->room_id = get32(&r);
     v->players = get8(&r);
     v->phase = get8(&r);
     v->spectators = get8(&r);
     v->max_spectators = get8(&r);
+    v->flags = get8(&r);
     if (unpack_end(&r)) return r.err;
     if (v->players > 2 || v->phase > 4u ||
         v->spectators > 8 || v->max_spectators > 8) return GY_NET_ERR_RANGE;
