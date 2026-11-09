@@ -264,16 +264,16 @@ def test_join_ids_and_ready(a: Board, b: Board) -> None:
             f"only host seat should be ready: {v}")
 
     b.send("gy_net ready")
-    sa = wait_state(a, lambda s: s.get("hready") == "1" and s.get("gready") == "1" and
-                    s.get("phase") == "2", 6, "both ready -> playing")
-    sb = wait_state(b, lambda s: s.get("hready") == "1" and s.get("gready") == "1" and
-                    s.get("phase") == "2", 6, "B sees playing")
-    require(sa.get("rready") == "1" and sa.get("bready") == "1", f"A both ready: {sa}")
-    require(sb.get("rready") == "1" and sb.get("bready") == "1", f"B both ready: {sb}")
-    v = a.view()
-    require(v is not None, "A view after both ready missing")
-    require(view_seat(v, "red")[1] == "已准备" and view_seat(v, "blue")[1] == "已准备",
-            f"both seats should be ready: {v}")
+    # STARTING 的 3 秒窗口很短，先验证倒计时字段确实在 3/2/1 变化。
+    wait_state(a, lambda s: s.get("phase") == "1" and s.get("cd") in ("3", "2", "1"),
+               4, "countdown visible")
+    sa = wait_state(a, lambda s: s.get("phase") == "2", 6, "both ready -> playing")
+    sb = wait_state(b, lambda s: s.get("phase") == "2", 6, "B sees playing")
+    # 开局时 ready 清零，下一局需要重新准备。
+    require(sa.get("hready") == "0" and sa.get("gready") == "0",
+            f"A ready not cleared at start: {sa}")
+    require(sb.get("hready") == "0" and sb.get("gready") == "0",
+            f"B ready not cleared at start: {sb}")
 
 
 def test_full_game(a: Board, b: Board) -> None:
@@ -299,6 +299,19 @@ def test_full_game(a: Board, b: Board) -> None:
     sb = wait_state(b, lambda s: s.get("phase") == "3", 6, "B result")
     require(sa.get("outcome") != "0", f"A result has no winner: {sa}")
     require(sb.get("result") == sa.get("result"), f"result mismatch A={sa} B={sb}")
+
+    # 结算后房间必须保留并回到 WAIT，可以再开一局；不能直接消失。
+    sa = wait_state(a, lambda s: s.get("phase") == "0" and s.get("players") == "2",
+                    7, "A back to room")
+    sb = wait_state(b, lambda s: s.get("phase") == "0" and s.get("players") == "2",
+                    7, "B back to room")
+    require(sa.get("active") == "1" and sb.get("active") == "2", f"room vanished: {sa} {sb}")
+    a.send("gy_net ready")
+    b.send("gy_net ready")
+    sa = wait_state(a, lambda s: s.get("phase") == "2", 8, "A second game")
+    sb = wait_state(b, lambda s: s.get("phase") == "2", 8, "B second game")
+    require(sa.get("players") == "2" and sb.get("players") == "2",
+            f"second game did not start: {sa} {sb}")
 
 
 def test_leave_rejoin_lifecycle(a: Board, b: Board) -> None:
@@ -381,6 +394,11 @@ def test_spectator(a: Board, b: Board) -> None:
                     4, "host sees spectator")
     require(sb.get("role") == "2", f"watch did not become spectator: {sb}")
     require(sa.get("players") == "1", f"spectator occupied a player seat: {sa}")
+    vb = b.view()
+    require(vb is not None and vb.get("readybtn") == "0",
+            f"spectator still shows ready button: {vb}")
+    require(vb is not None and "旁观" in vb.get("hint", ""),
+            f"spectator hint wrong: {vb}")
 
     b.send("gy_net move 0 1")   # must be rejected: spectators are read-only
     time.sleep(0.8)

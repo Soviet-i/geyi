@@ -7,5 +7,5 @@
 == stale room click ==
 == spectator ==
 PASS: two-board online suite
-A final: {'active': '0', 'role': '2', 'phase': '0', 'players': '0', 'spectators': '0', 'seq': '0', 'rooms': '0', 'turn': '0', 'rev': '0', 'local': '255', 'host': '0', 'guest': '0', 'id': 'F33A', 'hostid': '0000', 'guestid': '0000', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0'}
-B final: {'active': '0', 'role': '2', 'phase': '0', 'players': '0', 'spectators': '0', 'seq': '0', 'rooms': '0', 'turn': '0', 'rev': '0', 'local': '255', 'host': '0', 'guest': '0', 'id': '03EA', 'hostid': '0000', 'guestid': '0000', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0'}
+A final: {'active': '0', 'role': '2', 'phase': '0', 'players': '0', 'spectators': '0', 'seq': '0', 'rooms': '0', 'turn': '0', 'rev': '0', 'local': '255', 'host': '0', 'guest': '0', 'id': 'F33A', 'hostid': '0000', 'guestid': '0000', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0'}
+B final: {'active': '0', 'role': '2', 'phase': '0', 'players': '0', 'spectators': '0', 'seq': '0', 'rooms': '0', 'turn': '0', 'rev': '0', 'local': '255', 'host': '0', 'guest': '0', 'id': '03EA', 'hostid': '0000', 'guestid': '0000', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0'}

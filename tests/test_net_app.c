@@ -372,6 +372,48 @@ static int test_released_conn_cannot_act(void)
     return 0;
 }
 
+static int test_client_ready_syncs_from_room_state(void)
+{
+    GyNetRoomState s;
+    GyNetMsg m;
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.local_ready = 1;
+    g.room_id = 0x200F;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    memset(&s, 0, sizeof(s));
+    s.phase = GY_NET_PHASE_PLAYING;
+    s.host_color = GY_NET_COLOR_RED;
+    s.guest_color = GY_NET_COLOR_BLUE;
+    s.player_count = 2;
+    s.seq = 9;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    /* 开局房主清零 ready；客户端不能保留上一局的乐观值。 */
+    CHECK(g.local_ready == 0);
+    return 0;
+}
+
+static int test_countdown_seconds(void)
+{
+    CHECK(setup_host(0x200E) == 0);
+    g.room.view.phase = GY_NET_PHASE_STARTING;
+    g.room.view.phase_since_ms = 1000;
+    g.now = 1000;
+    CHECK(gy_net_app_countdown_seconds() == 3);
+    g.now = 2000;
+    CHECK(gy_net_app_countdown_seconds() == 2);
+    g.now = 3000;
+    CHECK(gy_net_app_countdown_seconds() == 1);
+    g.now = 4000;
+    CHECK(gy_net_app_countdown_seconds() == 1);
+    g.room.view.phase = GY_NET_PHASE_WAIT;
+    CHECK(gy_net_app_countdown_seconds() == 0);
+    return 0;
+}
+
 static int test_join_full_lobby_rule(void)
 {
     int rc;
@@ -406,6 +448,8 @@ int main(void)
     if (test_rejoin_reject_starts_fresh_join()) return 15;
     if (test_released_conn_cannot_act()) return 13;
     if (test_empty_lobby_index_rejected()) return 14;
+    if (test_client_ready_syncs_from_room_state()) return 17;
+    if (test_countdown_seconds()) return 16;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }

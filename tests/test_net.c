@@ -333,11 +333,11 @@ static int test_room_move_and_reject(void)
     CHECK(host.view.phase == GY_NET_PHASE_RESULT);
     CHECK(host.view.result == GY_RED_WIN);
 
-    /* 结算后保留约 10s，然后关闭。 */
-    CHECK(gy_net_room_tick(&host, 14299) == 0);
+    /* 结算弹窗保留约 4s，然后回房间而不是关闭。 */
+    CHECK(gy_net_room_tick(&host, 4300 + GY_NET_RESULT_KEEP_MS - 1) == 0);
     CHECK(host.view.phase == GY_NET_PHASE_RESULT);
-    CHECK(gy_net_room_tick(&host, 14300) == 1);
-    CHECK(host.view.phase == GY_NET_PHASE_CLOSED);
+    CHECK(gy_net_room_tick(&host, 4300 + GY_NET_RESULT_KEEP_MS) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);
     return 0;
 }
 
@@ -460,6 +460,26 @@ static int test_disconnect_rejoin(void)
     CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
     CHECK(host.view.spectator_count == 0);
     CHECK(gy_net_room_tick(&host, 11001) == 0);
+    return 0;
+}
+
+static int test_result_returns_to_room_and_replays(void)
+{
+    GyNetRoom host;
+    uint32_t token = 0;
+
+    gy_net_room_init_host(&host, 1017, 0, 2);
+    CHECK(start_game(&host, &token) == 0);
+    CHECK(gy_net_room_resign(&host, GY_NET_COLOR_RED, 100) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(gy_net_room_tick(&host, 100 + GY_NET_RESULT_KEEP_MS) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);       /* 房间不消失 */
+    CHECK(host.view.host_ready == 0 && host.view.guest_ready == 0);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_RED, 1, 5000) == GY_NET_OK);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_BLUE, 1, 5100) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_STARTING);
+    CHECK(gy_net_room_tick(&host, 8200) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_PLAYING);    /* 第二局可开 */
     return 0;
 }
 
@@ -597,6 +617,7 @@ int main(void)
     if (test_disconnect_rejoin()) return 11;
     if (test_room_config_and_promote()) return 12;
     if (test_host_leave_result_closes()) return 14;
+    if (test_result_returns_to_room_and_replays()) return 16;
     if (test_starting_disconnect_and_spectator_slot()) return 13;
     if (test_client_host_lost()) return 14;
     if (test_memory_link()) return 14;
