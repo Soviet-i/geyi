@@ -53,7 +53,7 @@ static int feed_until(Sim *s, int x, int y, int key, int want, int max_ms)
     return -1;
 }
 
-/* 回中若干周期以解除 latched（输入模块要求先水平） */
+/* 回中若干周期以解除 locked（确认后要求先回中） */
 static void settle_level(Sim *s, int cycles)
 {
     int i;
@@ -141,8 +141,8 @@ static void m_switch_latency(int trials)
             int lat;
             sim_init(&s, 5, pcts[pi], 10, 2);
             if (establish_up(&s, 2000) < 0) continue;
-            /* 切换后方向会重新经过 200ms 稳定窗口才 SELECT */
-            lat = feed_until(&s, ax, -2000, 0, GY_INPUT_SELECT, 2000);
+            /* 切换后方向会重新经过 200ms 稳定窗口；已有预览时发 UPDATE，不是 SELECT */
+            lat = feed_until(&s, ax, -2000, 0, GY_INPUT_SELECT | GY_INPUT_UPDATE, 2000);
             if (lat >= 0) { sum += lat; ++ok; }
         }
         printf("switch_latency,5,dir_pct=%d,%ld,>=200,ms\n",
