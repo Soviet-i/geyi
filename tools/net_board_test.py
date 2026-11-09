@@ -266,7 +266,9 @@ def test_join_ids_and_ready(a: Board, b: Board) -> None:
     b.send("gy_net ready")
     # STARTING 的 3 秒窗口很短，先验证倒计时字段确实在 3/2/1 变化。
     wait_state(a, lambda s: s.get("phase") == "1" and s.get("cd") in ("3", "2", "1"),
-               4, "countdown visible")
+               4, "A countdown visible")
+    wait_state(b, lambda s: s.get("phase") == "1" and s.get("cd") in ("3", "2", "1"),
+               4, "B countdown visible")
     sa = wait_state(a, lambda s: s.get("phase") == "2", 6, "both ready -> playing")
     sb = wait_state(b, lambda s: s.get("phase") == "2", 6, "B sees playing")
     # 开局时 ready 清零，下一局需要重新准备。
@@ -312,6 +314,42 @@ def test_full_game(a: Board, b: Board) -> None:
     sb = wait_state(b, lambda s: s.get("phase") == "2", 8, "B second game")
     require(sa.get("players") == "2" and sb.get("players") == "2",
             f"second game did not start: {sa} {sb}")
+
+
+def test_resign_sync(a: Board, b: Board) -> None:
+    reset(a, b)
+    create_and_join(a, b)
+    a.send("gy_net ready")
+    b.send("gy_net ready")
+    wait_state(a, lambda s: s.get("phase") == "2", 8, "resign game start")
+
+    # 房主认输：双方回房后，客人的 READY 必须仍能到达房主。
+    a.send("gy_net resign")
+    wait_state(a, lambda s: s.get("phase") == "3", 4, "host resign result")
+    wait_state(a, lambda s: s.get("phase") == "0", 7, "host result back room")
+    wait_state(b, lambda s: s.get("phase") == "0", 7, "guest result back room")
+    a.send("gy_net ready")
+    wait_state(b, lambda s: s.get("hready") == "1", 4, "guest sees host ready after resign")
+    b.send("gy_net ready")
+    wait_state(a, lambda s: s.get("gready") == "1", 4, "host sees guest ready after resign")
+    wait_state(a, lambda s: s.get("phase") == "2", 8, "second game after host resign")
+
+    # 房客认输：同样要能继续同步准备。
+    b.send("gy_net resign")
+    wait_state(b, lambda s: s.get("phase") == "3", 4, "guest resign result")
+    wait_state(a, lambda s: s.get("phase") == "0", 7, "host back after guest resign")
+    wait_state(b, lambda s: s.get("phase") == "0", 7, "guest back after guest resign")
+    a.send("gy_net ready")
+    wait_state(b, lambda s: s.get("hready") == "1", 4, "guest sees host ready again")
+    b.send("gy_net ready")
+    wait_state(a, lambda s: s.get("gready") == "1", 4, "host sees guest ready again")
+
+    # 客人退出后房主必须立刻变成 1/2。
+    b.send("gy_net leave")
+    wait_state(a, lambda s: s.get("players") == "1", 4, "host sees guest leave after resign")
+    a.send("gy_net leave")
+    b.send("gy_net lobby")
+    wait_state(b, lambda s: int(s.get("rooms", "0")) == 0, 6, "room closes after resign test")
 
 
 def test_leave_rejoin_lifecycle(a: Board, b: Board) -> None:
@@ -445,6 +483,8 @@ def main() -> int:
         test_join_ids_and_ready(a, b)
         print("== full game ==")
         test_full_game(a, b)
+        print("== resign sync ==")
+        test_resign_sync(a, b)
         print("== leave / rejoin / close ==")
         test_leave_rejoin_lifecycle(a, b)
         print("== host transfer ==")

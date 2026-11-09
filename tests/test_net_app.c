@@ -396,6 +396,80 @@ static int test_client_ready_syncs_from_room_state(void)
     return 0;
 }
 
+static int test_resign_keeps_conn_and_room_loop(void)
+{
+    GyNetLeave l;
+    GyNetMsg m;
+    CHECK(setup_host(0x2010) == 0);
+    CHECK(host_join_player(1) == 0);
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(host_starts() == 0);
+    g.now = 3100;
+    memset(&l, 0, sizeof(l));
+    l.reason = GY_NET_REASON_RESIGN;
+    CHECK(gy_net_pack_leave(&m, &l) == GY_NET_OK);
+    feed_host(1, &m);
+    CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
+    /* 仅认输不能把客人的 ConnMap 丢掉，否则结算后 READY 收不到。 */
+    CHECK(g.conns[0].used == 1);
+    gy_net_app_tick(3100 + GY_NET_RESULT_KEEP_MS);
+    CHECK(g.room.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(g.room.view.guest_ready == 0);
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(g.room.view.guest_ready == 1);   /* 房主收到了客人的 READY */
+    return 0;
+}
+
+static int test_leave_after_resign_releases_seat(void)
+{
+    GyNetLeave l;
+    GyNetMsg m;
+    CHECK(setup_host(0x2011) == 0);
+    CHECK(host_join_player(1) == 0);
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(host_starts() == 0);
+    g.now = 3200;
+    memset(&l, 0, sizeof(l));
+    l.reason = GY_NET_REASON_LEFT;
+    CHECK(gy_net_pack_leave(&m, &l) == GY_NET_OK);
+    feed_host(1, &m);
+    CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(g.room.view.player_count == 1);
+    CHECK(g.conns[0].used == 0);
+    return 0;
+}
+
+static int test_client_countdown_from_starting_state(void)
+{
+    GyNetRoomState s;
+    GyNetMsg m;
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.room_id = 0x2012;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    memset(&s, 0, sizeof(s));
+    s.phase = GY_NET_PHASE_STARTING;
+    s.host_color = GY_NET_COLOR_RED;
+    s.guest_color = GY_NET_COLOR_BLUE;
+    s.player_count = 2;
+    s.host_ready = 1;
+    s.guest_ready = 1;
+    s.seq = 4;
+    g.now = 1000;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.room.view.phase == GY_NET_PHASE_STARTING);
+    CHECK(g.room.view.phase_since_ms == 1000);
+    CHECK(gy_net_app_countdown_seconds() == 3);
+    g.now = 2000;
+    CHECK(gy_net_app_countdown_seconds() == 2);
+    g.now = 3000;
+    CHECK(gy_net_app_countdown_seconds() == 1);
+    return 0;
+}
+
 static int test_countdown_seconds(void)
 {
     CHECK(setup_host(0x200E) == 0);
@@ -450,6 +524,9 @@ int main(void)
     if (test_empty_lobby_index_rejected()) return 14;
     if (test_client_ready_syncs_from_room_state()) return 17;
     if (test_countdown_seconds()) return 16;
+    if (test_resign_keeps_conn_and_room_loop()) return 18;
+    if (test_leave_after_resign_releases_seat()) return 19;
+    if (test_client_countdown_from_starting_state()) return 20;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }

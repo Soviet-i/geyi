@@ -20,6 +20,14 @@ def run(args, **kw):
         raise SystemExit(result.returncode)
     return result.stdout
 
+# New Chinese UI literals must be added to the generated CN16 subset first.
+font_check = subprocess.run([sys.executable, str(root/'tools'/'check_desktop_font.py')],
+                            cwd=root, text=True, encoding='utf-8', errors='replace',
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print(font_check.stdout)
+if font_check.returncode:
+    raise SystemExit(font_check.returncode)
+
 cc = os.environ.get('CC') or shutil.which('gcc') or shutil.which('clang')
 targets = [
     ('geyi-tests', ['src/geyi_game.c', 'src/geyi_input.c', 'tests/test_geyi.c']),
