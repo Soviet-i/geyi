@@ -467,6 +467,90 @@ def test_stale_room_click(a: Board, b: Board) -> None:
     require(sb is not None and sb.get("active") == "0", f"B stuck joining: {sb}")
 
 
+def test_edge_churn(a: Board, b: Board) -> None:
+    """Random-ish user operations must not wedge the host or hide its room.
+
+    Covers the reported failure: guest joins and exits immediately (during the
+    ~1s handshake), back-to-back leave, repeated join/leave, and the host must
+    keep advertising while a guest is connected so a second peer can join.
+    """
+    reset(a, b)
+    a.send("gy_net host")
+    sa = wait_state(a, lambda s: s.get("active") == "1" and s.get("players") == "1",
+                    5, "churn host")
+    require(sa.get("adv") == "1" or wait_state(
+        a, lambda s: s.get("adv") == "1", 3, "host adv").get("adv") == "1",
+        f"host not advertising before join: {sa}")
+    b.send("gy_net lobby")
+    wait_state(b, lambda s: int(s.get("rooms", "0")) >= 1, 8, "churn discover")
+
+    # 1) Join, then leave while JOIN_ACK may still be in flight.
+    for delay in (0.15, 0.35, 0.70):
+        b.send("gy_net join 0")
+        time.sleep(delay)
+        t0 = time.time()
+        b.send("gy_net leave")
+        sb = wait_state(b, lambda s: s.get("active") == "0", 4, "quick leave")
+        sa = wait_state(a, lambda s: s.get("players") == "1" and s.get("phase") == "0",
+                        4, "host releases quick leaver")
+        require(time.time() - t0 < 2.5,
+                f"leave took {time.time()-t0:.2f}s (host/UI blocked)")
+        # Host must answer immediately after the churn.
+        t1 = time.time()
+        sa2 = a.state(timeout=3)
+        require(sa2 is not None and time.time() - t1 < 1.5,
+                f"host unresponsive after guest quick leave: {sa2}")
+        require(sa2.get("active") == "1", f"host lost its room: {sa2}")
+        # Room must reappear in the lobby (advertising restarted).
+        b.send("gy_net lobby")
+        sb = wait_state(b, lambda s: int(s.get("rooms", "0")) >= 1, 5,
+                        "room visible after quick leave")
+
+    # 2) Normal join: JOIN must be sent only after CCCD, and host must keep
+    #    connectable advertising for a second peer/spectator.
+    mark = len(b.lines)
+    b.send("gy_net join 0")
+    sb = wait_state(b, lambda s: s.get("active") == "2" and s.get("local") != "255",
+                    10, "churn join")
+    sa = wait_state(a, lambda s: s.get("players") == "2", 4, "host sees join")
+    time.sleep(0.6)
+    sa = a.state(timeout=3)
+    require(sa is not None and sa.get("adv") == "1",
+            f"host stopped advertising while guest connected: {sa}")
+    with b.lock:
+        seg = b.lines[mark:]
+    cccd = [i for i, line in enumerate(seg) if "cccd write" in line]
+    join = [i for i, line in enumerate(seg) if "join req sent" in line]
+    require(cccd and join, "join/cccd logs missing")
+    require(cccd[-1] < join[-1],
+            "JOIN_REQ was sent before CCCD was ready (ACK can be lost)")
+
+    # 3) Double leave: the second tap must not wedge the first.
+    b.send("gy_net leave")
+    b.send("gy_net leave")
+    wait_state(b, lambda s: s.get("active") == "0", 4, "double leave")
+    wait_state(a, lambda s: s.get("players") == "1", 4, "host after double leave")
+
+    # 4) Repeated join/leave cycles on the same connection index.
+    for i in range(3):
+        b.send("gy_net lobby")
+        wait_state(b, lambda s: int(s.get("rooms", "0")) >= 1, 5, f"rediscover {i}")
+        b.send("gy_net join 0")
+        wait_state(b, lambda s: s.get("active") == "2" and s.get("local") != "255",
+                   10, f"rejoin {i}")
+        wait_state(a, lambda s: s.get("players") == "2", 4, f"host sees rejoin {i}")
+        b.send("gy_net leave")
+        wait_state(b, lambda s: s.get("active") == "0", 4, f"releave {i}")
+        wait_state(a, lambda s: s.get("players") == "1", 4, f"host sees releave {i}")
+
+    sa = a.state(timeout=3)
+    require(sa is not None and sa.get("active") == "1" and sa.get("players") == "1",
+            f"host wedged after churn: {sa}")
+    a.send("gy_net leave")
+    b.send("gy_net lobby")
+    wait_state(b, lambda s: int(s.get("rooms", "0")) == 0, 6, "churn room closed")
+
+
 def test_spectator(a: Board, b: Board) -> None:
     reset(a, b)
     a.send("gy_net host")
@@ -535,6 +619,8 @@ def main() -> int:
         test_full_game(a, b)
         print("== resign sync ==")
         test_resign_sync(a, b)
+        print("== edge churn ==")
+        test_edge_churn(a, b)
         print("== leave / rejoin / close ==")
         test_leave_rejoin_lifecycle(a, b)
         print("== host transfer ==")

@@ -1286,11 +1286,11 @@ static void run_test_command(void)
         const GyGame *ng=gy_net_app_game();
         /* 分三行输出：RT-Thread 控制台单行缓冲约 128 B,整行会被截断。 */
         GY_TEST_LOG("[gy_test] state active=%d role=%d phase=%d players=%d "
-                   "spectators=%d seq=%u rooms=%d turn=%d rev=%u\n",
+                   "spectators=%d seq=%u rooms=%d turn=%d rev=%u adv=%d\n",
                    gy_net_app_active(),gy_net_app_role(),gy_net_app_phase(),
                    gy_net_app_player_count(),gy_net_app_spectator_count(),
                    (unsigned)gy_net_app_seq(),gy_net_app_room_count(),
-                   ng->turn,(unsigned)ng->revision);
+                   ng->turn,(unsigned)ng->revision,gy_net_app_host_adv_active());
         GY_TEST_LOG("[gy_test] info local=%d host=%d guest=%d id=%04X "
                    "hostid=%04X guestid=%04X\n",
                    gy_net_app_local_color(),gy_net_app_host_color(),

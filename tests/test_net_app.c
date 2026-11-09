@@ -13,7 +13,11 @@
 static int checks;
 #define CHECK(x) do { ++checks; if (!(x)) { printf("FAIL line %d: %s\n", __LINE__, #x); return 1; } } while (0)
 
-static void feed_host(uint8_t conn, GyNetMsg *m) { host_process(conn, m); }
+static void feed_host(uint8_t conn, GyNetMsg *m) { host_process(conn, 1, m); }
+static void feed_host_gen(uint8_t conn, uint8_t gen, GyNetMsg *m)
+{
+    host_process(conn, gen, m);
+}
 
 static int setup_host(uint32_t room_id)
 {
@@ -545,6 +549,108 @@ static int test_leave_clears_spectator_flag(void)
     return 0;
 }
 
+static int test_link_gen_reuse_releases_old_session(void)
+{
+    GyNetJoinReq j;
+    GyNetReady r;
+    GyNetMsg m;
+    uint32_t old_token;
+
+    CHECK(setup_host(0x2020) == 0);
+    CHECK(host_join_player(1) == 0);
+    CHECK(g.room.view.player_count == 2);
+    old_token = g.conns[0].token;
+    /* 链路断开：WAIT 立即释放席位，不能留下幽灵客人。 */
+    host_link_down(1, 1);
+    CHECK(g.room.view.player_count == 1);
+    CHECK(g.conns[0].used == 0);
+
+    /* 新链路复用同一个 conn_idx，但代际不同：必须是新会话。 */
+    memset(&j, 0, sizeof(j));
+    j.role = 0;
+    j.player_id = 0x3333;
+    j.room_id = g.room_id;
+    CHECK(gy_net_pack_join_req(&m, &j) == GY_NET_OK);
+    feed_host_gen(1, 2, &m);
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.conns[0].used == 1 && g.conns[0].gen == 2);
+    CHECK(g.conns[0].token != old_token);
+    CHECK(g.room.view.guest_id == 0x3333);
+
+    /* 旧代际的迟到 READY 不能操作新客人。 */
+    r.ready = 1;
+    CHECK(gy_net_pack_ready(&m, &r) == GY_NET_OK);
+    feed_host_gen(1, 1, &m);
+    CHECK(g.room.view.guest_ready == 0);
+    feed_host_gen(1, 2, &m);
+    CHECK(g.room.view.guest_ready == 1);
+    return 0;
+}
+
+static int test_immediate_leave_then_rejoin(void)
+{
+    GyNetLeave l;
+    GyNetMsg m;
+
+    CHECK(setup_host(0x2021) == 0);
+    CHECK(host_join_player(1) == 0);
+    memset(&l, 0, sizeof(l));
+    l.reason = GY_NET_REASON_LEFT;
+    CHECK(gy_net_pack_leave(&m, &l) == GY_NET_OK);
+    feed_host(1, &m);
+    CHECK(g.room.view.player_count == 1);
+    CHECK(g.conns[0].used == 0);
+    /* 同一 conn_idx 的新客人可以正常加入。 */
+    CHECK(host_join_player(1) == 0);
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.conns[0].used == 1);
+    return 0;
+}
+
+static int test_two_guests_one_leaves(void)
+{
+    GyNetLeave l;
+    GyNetMsg m;
+
+    CHECK(setup_host(0x2022) == 0);
+    CHECK(host_join_role(1, 0, 0x1111) == 0);   /* 玩家 */
+    CHECK(host_join_role(2, 0, 0x2222) == 0);   /* 满员 -> 旁观 */
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.room.view.spectator_count == 1);
+
+    memset(&l, 0, sizeof(l));
+    l.reason = GY_NET_REASON_LEFT;
+    CHECK(gy_net_pack_leave(&m, &l) == GY_NET_OK);
+    feed_host(1, &m);
+    CHECK(g.room.view.player_count == 1);
+    CHECK(g.room.view.spectator_count == 1);
+
+    /* 空出的玩家席位可由第三人补齐；原旁观者不受影响。 */
+    CHECK(host_join_role(3, 2, 0x3333) == 0);
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.room.view.spectator_count == 1);
+    {
+        ConnMap *c3 = conn_find(3);
+        CHECK(c3 != NULL && c3->role == GY_NET_ROLE_PLAYER);
+    }
+    return 0;
+}
+
+static int test_starting_disconnect_releases_seat(void)
+{
+    CHECK(setup_host(0x2023) == 0);
+    CHECK(host_join_player(1) == 0);
+    CHECK(gy_net_app_set_ready(1) == 1);
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(g.room.view.phase == GY_NET_PHASE_STARTING);
+    g.now = 1000;
+    host_link_down(1, 1);
+    gy_net_app_tick(1010);
+    CHECK(g.room.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(g.room.view.player_count == 1);
+    return 0;
+}
+
 int main(void)
 {
     if (test_swap_ready_and_move_color()) return 1;
@@ -569,6 +675,10 @@ int main(void)
     if (test_client_countdown_from_starting_state()) return 20;
     if (test_ignore_state_from_other_room()) return 21;
     if (test_leave_clears_spectator_flag()) return 22;
+    if (test_link_gen_reuse_releases_old_session()) return 23;
+    if (test_immediate_leave_then_rejoin()) return 24;
+    if (test_two_guests_one_leaves()) return 25;
+    if (test_starting_disconnect_releases_seat()) return 26;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
