@@ -23,7 +23,7 @@ python tools/net_latency_test.py --port-a COM7 --port-b COM8  # 加入/关房延
 |---|---|---|
 | `test_geyi.c` | 规则核心 `src/geyi_game.c` + 输入 | 初始化/预览/提交/移动顺序/合并/伤害/金币/胜负/确定性重放；26920 断言 |
 | `test_input.c` | 输入状态机 `src/geyi_input.c` | 四向/滞回/稳定窗口/按键消抖/回中/回绕；61 断言 |
-| `test_tilt_ux.c` | 倾斜手势、放兵列、来源仲裁 `src/geyi_input.c` `src/geyi_nav.c` | 1↔2 回弹/6°~4° 回滞/10° 档位/已倾斜开局/固定种子手抖/放兵最近空列/REQ-319 仲裁；239 断言 |
+| `test_tilt_ux.c` | 倾斜手势、放兵列、来源仲裁 `src/geyi_input.c` `src/geyi_nav.c` | 1↔2 回弹/6°~4° 回滞/10° 档位/已倾斜开局/固定种子手抖/放兵最近空列/REQ-319 仲裁；271 断言 |
 | `test_config.c` | 参数 `src/geyi_config.c` | 10 项范围/钳位/三类配置/重置/生成间隔/模拟一致性；2517 断言 |
 | `test_param_ui.c` | 参数页状态 `src/geyi_param_ui.c` | 模式/分页/条目/增减/重置/应用；85 断言 |
 | `test_ai.c` | AI `src/geyi_ai.c` | 合法动作/终局/避免自伤/不读 RNG/剪枝/取消/自对弈；62 断言 |

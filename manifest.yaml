@@ -202,7 +202,7 @@ test_results:
   - test_id: "TC-309/311/319-TILT-UX"
     description: "倾斜手势、放兵列与倾斜/按钮仲裁（软件部分）"
     expected: "1↔2 不闪 0 个兵、6°/4° 回滞、10° 档位、已倾斜开局 250ms 内预览、放兵最近空列、倾斜/按钮互斥"
-    actual: "2026-11-09 运行 tests/test_tilt_ux.c（239 断言）与桌面 LVGL nav_source_tests PASS；固定种子手抖 3000 次 CANCEL=0；桩探针在旧实现复现 16 次 CANCEL 与已倾斜开局无 SELECT。真实板端手感未验证"
+    actual: "2026-11-09 运行 tests/test_tilt_ux.c（271 断言）与桌面 LVGL nav_source_tests PASS；固定种子手抖 600 次 CANCEL=0；桩探针在旧实现复现 16 次 CANCEL 与已倾斜开局无 SELECT。真实板端手感未验证"
     pass: true
     evidence_path: "evidence/measure/20261109/input_bench_v2.csv"
   - test_id: "TC-401~TC-406/TC-409-HOST"
@@ -315,7 +315,7 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 239 断言、桌面 REQ-319 用例、固件 1,085,828 B + LCPU 6,384 B 编译通过；**真实倾斜手感/正确率、放兵选列、屏幕按钮冲突、已倾斜开局仍未上板验证**。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10 与 docs/06 L-03。"
+  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 271 断言、桌面 REQ-319 用例、固件 1,086,060 B + LCPU 6,384 B 编译通过；**真实倾斜手感/正确率、放兵选列、屏幕按钮冲突、已倾斜开局仍未上板验证**。独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 271 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10 与 docs/06 L-03。"
   - "【2026-11-09 当前】REQ-319 倾斜/按钮仲裁：主机 gy_nav 状态机与桌面 LVGL nav_source_tests PASS；真实触摸与板端 IMU 同时操作未验证。倾斜预览中屏幕取消/增减/方向/放兵被忽略、确认可用；按钮预览中倾斜被忽略；回中只取消倾斜预览。"
   - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 281 checks PASS，固件 1,084,932 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
   - "【2026-11-09 当前】首页改为“格弈”并新增 4 页游戏规则（REQ-318/TC-318），对局页移除左上 GEYI、右上按钮与底栏按 R=48 圆角安全区内缩（NFR-UX-06/TC-NF-UX-06）；桌面 LVGL `--test` 与 `gy_ui_corner_clip_count(48)` 在首页/规则 1~4 页/对局页 PASS，证据 evidence/ui/20261109/。固件 1,078,356 B + LCPU 6,384 B 已烧录 COM7/COM8；双板套件新增 rules 段，实际翻 4 页、钳位、corner=0、rbottom<370，完整联机套件 PASS（15:28）。规则页正文已逐字恢复学生原文（含全角标点、10°~60°、KEY2）；KEY1(PA34) 是电源/下载复用键，板端不再读取，KEY2 单键负责确认/进入退出放兵，桌面 KEY2 用例 PASS。**真实圆角屏遮挡、中文标点观感、手指触摸翻页与真实 KEY2 手感仍未目测**，不能写成视觉验收通过。"
@@ -389,12 +389,15 @@ self_review: |
   主机测试、再实现、最后独立 review。先用临时探针在旧 gyi_input.c 上复现：1↔2 边界抖动
   8 次产生 16 次 CANCEL、20° 只能选 1 个、重置后立即倾斜 80 个 5ms 样本无 SELECT。
   重构 gyi_input：6° 进入/4° 退出；数量默认每 10° 一档，N 档放不下时 (6000-600)/N；
-  方向/数量候选稳定 200ms 才发 UPDATE，旧预览保持；启动/重置不置 locked，只有 CONFIRM
-  后要求回中；新增 gy_input_place_column() 把水平倾斜映射到最近己方底线空列；新增
-  gy_nav 纯逻辑仲裁，gy_ui 与 gy_board 接线。tests/test_tilt_ux.c 239 断言、桌面
-  nav_source_tests、run_host 全量 26920/61/239/2517/85/62/10 PASS、联机 380+281 PASS；
-  固件 1,085,828 B + LCPU 6,384 B 编译通过。本机无 VS2022 MSVC，桌面用例改用 MinGW gcc
-  构建 SDK LVGL v9 后运行；tools/build_desktop.py 仍保留 MSVC 路径并已加入 geyi_nav.c。
+  方向/数量候选稳定 200ms 才发 UPDATE，旧预览保持；启动/重置不置 locked，直接喂 key 的
+  调用者 CONFIRM 后锁定到回中；新增 gy_input_place_column() 把水平倾斜映射到最近己方底线空列；新增
+  gy_nav 纯逻辑仲裁，gy_ui 与 gy_board 接线。tests/test_tilt_ux.c 271 断言、桌面
+  nav_source_tests、run_host 全量 26920/61/271/2517/85/62/10 PASS、联机 380+281 PASS；
+  固件 1,086,060 B + LCPU 6,384 B 编译通过。本机无 VS2022 MSVC，桌面用例改用 MinGW gcc
+  构建 SDK LVGL v9 后运行；tools/build_desktop.py 已加入 gcc/clang 回退并包含 geyi_nav.c。
+  独立 review 在主机/桌面通过后仍发现 6 个代码级问题（放兵列无全边界半列回差、locked 在板端
+  为死代码、联机认输清 nav 不清 ready、4°~6° 带内可改向、无兵方向粘滞、同帧 UPDATE+CONFIRM），
+  已逐条修正并补断言（239→271）；板端行为明确为换回合 reset 后若仍倾斜会重新预览。
   未完成：真实倾斜手感/正确率、放兵左右选列、倾斜预览时屏幕取消/增减、屏幕确认单次提交、
   已倾斜开局都未上板；不得写成板端通过。docs/07 §10 记录复现与复测数字，docs/06 L-03
   改为“软件已重构，板端待验证”。
