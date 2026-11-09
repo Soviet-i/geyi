@@ -41,6 +41,7 @@
 typedef struct {
     uint8_t  used;
     uint8_t  conn;       /* 0xff = 已断开，保留 token 等重连 */
+    uint8_t  gen;        /* BLE 链路代际；conn_idx 复用时不认旧会话 */
     uint8_t  role;
     uint8_t  color;
     uint32_t token;
@@ -81,9 +82,13 @@ static struct {
     uint8_t  join_reason;
     uint8_t  join_connected;
     uint8_t  link_down;      /* 客户端 BLE 链路是否断开；接管必须以此为前提 */
+    uint8_t  client_gen;     /* 客户端当前链路代际 */
+    uint32_t unknown_link_at[APP_MAX_CONN]; /* 房主：已连接但尚未 JOIN 的链路起始时刻 */
     uint32_t join_ready_at;
     uint16_t local_player_id;
     uint8_t  pending_move;
+    uint8_t  leaving;        /* 客户端 LEAVE 已交给 TX，等链路关闭 */
+    uint32_t leaving_at;
     uint8_t  local_ready;
     uint8_t  ready_desired;  /* 客方希望设置的 ready */
     uint8_t  ready_pending;  /* 已发 READY，等房主状态确认 */
@@ -225,7 +230,26 @@ static ConnMap *conn_find(uint8_t conn)
         if (g.conns[i].used && g.conns[i].conn == conn) return &g.conns[i];
     return NULL;
 }
-static ConnMap *conn_alloc(uint8_t conn, uint8_t role, uint8_t color, uint32_t token)
+static ConnMap *conn_find_token(uint32_t token)
+{
+    int i;
+    if (!token) return NULL;
+    for (i = 0; i < APP_MAX_CONN; ++i)
+        if (g.conns[i].used && g.conns[i].token == token) return &g.conns[i];
+    return NULL;
+}
+/* token 是否仍属于当前房间的席位/旁观位。用于清理断链后遗留的映射。 */
+static int token_alive(uint32_t token)
+{
+    int i;
+    if (!token) return 0;
+    for (i = 0; i < 2; ++i)
+        if (g.room.seats[i].token == token) return 1;
+    for (i = 0; i < GY_NET_MAX_SPECTATORS; ++i)
+        if (g.room.spectators[i].token == token) return 1;
+    return 0;
+}
+static ConnMap *conn_alloc(uint8_t conn, uint8_t gen, uint8_t role, uint8_t color, uint32_t token)
 {
     int i, slot = -1, stale = -1;
     for (i = 0; i < APP_MAX_CONN; ++i) {
@@ -237,21 +261,29 @@ static ConnMap *conn_alloc(uint8_t conn, uint8_t role, uint8_t color, uint32_t t
     memset(&g.conns[slot], 0, sizeof(g.conns[slot]));
     g.conns[slot].used = 1;
     g.conns[slot].conn = conn;
+    g.conns[slot].gen = gen;
     g.conns[slot].role = role;
     g.conns[slot].color = color;
     g.conns[slot].token = token;
     g.conns[slot].last_rx = g.now;
     return &g.conns[slot];
 }
-#ifdef GEYI_WITH_RTTHREAD
-static int ble_has_conn(uint8_t conn)
+/* 链路断开/被新代际顶替：立即把应用会话标记为断链。
+ * WAIT/RESULT/STARTING 直接释放席位；PLAYING 保留 token 等 REJOIN。 */
+static void host_link_down(uint8_t conn, uint8_t gen)
 {
-    uint8_t i;
-    for (i = 0; i < gy_net_ble_conn_count(); ++i)
-        if (gy_net_ble_conn_at(i) == conn) return 1;
-    return 0;
+    ConnMap *c = conn_find(conn);
+    if (!c || (gen && c->gen != gen)) return;
+    APP_LOG("link down conn=%d gen=%d token=%u", conn, c->gen, (unsigned)c->token);
+    if (c->token)
+        gy_net_room_disconnect_token(&g.room, c->token, g.now);
+    if (g.room.view.phase == GY_NET_PHASE_PLAYING && c->token) {
+        c->conn = 0xff;
+    } else {
+        c->used = 0;
+    }
+    if (conn < APP_MAX_CONN) g.unknown_link_at[conn] = 0;
 }
-#endif
 
 static int host_sync_conns(void)
 {
@@ -259,12 +291,22 @@ static int host_sync_conns(void)
 #ifdef GEYI_WITH_RTTHREAD
     int i;
     for (i = 0; i < APP_MAX_CONN; ++i) {
+        uint8_t cur_gen;
         if (!g.conns[i].used || g.conns[i].conn == 0xff) continue;
-        if (!ble_has_conn(g.conns[i].conn) ||
-            (uint32_t)(g.now - g.conns[i].last_rx) >= 10000u) {
+        cur_gen = gy_net_ble_conn_gen(g.conns[i].conn);
+        if (!cur_gen || cur_gen != g.conns[i].gen) {
+            /* 链路已断，或同一 conn_idx 已被新连接复用：旧会话必须
+             * 立即失效，不能让新客人继承旧 token/席位。 */
+            host_link_down(g.conns[i].conn, g.conns[i].gen);
+            changed = 1;
+            continue;
+        }
+        if ((uint32_t)(g.now - g.conns[i].last_rx) >= 10000u) {
             if (gy_net_room_disconnect_token(&g.room, g.conns[i].token, g.now) == GY_NET_OK)
                 changed = 1;
-            g.conns[i].conn = 0xff;
+            /* 链路还在但 10s 没有任何消息：主动断开，释放连接槽位。 */
+            gy_net_ble_disconnect(g.conns[i].conn);
+            changed = 1;
         }
     }
 #endif
@@ -301,9 +343,30 @@ static void host_phase_change(int old_phase)
     }
 }
 
-static void host_process(uint8_t conn, const GyNetMsg *msg)
+static void host_process(uint8_t conn, uint8_t gen, const GyNetMsg *msg)
 {
     ConnMap *rxconn = conn_find(conn);
+    if (rxconn && rxconn->gen != gen) {
+#ifdef GEYI_WITH_RTTHREAD
+        if (gen == gy_net_ble_conn_gen(conn)) {
+            /* 包来自当前链路，但映射还是旧代际（conn_idx 被复用）：
+             * 旧会话失效，按新会话处理。 */
+            host_link_down(conn, rxconn->gen);
+            rxconn = NULL;
+        } else {
+            /* 旧链路的迟到包：绝不能借此拆掉当前会话。 */
+            return;
+        }
+#else
+        /* 桌面测试没有 BLE：JOIN 视为新会话，其它旧包直接丢弃。 */
+        if (msg->type == GY_NET_JOIN_REQ) {
+            host_link_down(conn, rxconn->gen);
+            rxconn = NULL;
+        } else {
+            return;
+        }
+#endif
+    }
     if (rxconn) rxconn->last_rx = g.now;
     switch (msg->type) {
     case GY_NET_JOIN_REQ: {
@@ -314,7 +377,7 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         if (gy_net_unpack_join_req(msg, &j) != GY_NET_OK) return;
         if (j.room_id != g.room.view.room_id) { send_join_reject(conn, GY_NET_ERR_STATE); return; }
         {
-            ConnMap *existing = conn_find(conn);
+            ConnMap *existing = rxconn;
             if (existing) {
                 uint8_t ec = conn_color(existing);
                 /* 重复 JOIN（ACK 丢失）才直接回 ACK；若旧 player token 已
@@ -354,13 +417,14 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
                 return;
             }
         }
-        if (!conn_alloc(conn, room_role, color, token)) {
+        if (!conn_alloc(conn, gen, room_role, color, token)) {
             gy_net_room_leave_token(&g.room, token, g.now);
             send_join_reject(conn, (uint8_t)(-GY_NET_ERR_FULL));
             broadcast_state();
             host_update_adv();
             return;
         }
+        if (conn < APP_MAX_CONN) g.unknown_link_at[conn] = 0;
         APP_LOG("join accepted color=%d", color);
         send_join_ack(conn, color, token, gy_net_room_seat_id(&g.room, color));
         send_state_to(conn);
@@ -477,8 +541,18 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
             return;
         }
         c = conn_find(conn);
-        if (!c) c = conn_alloc(conn, color == GY_NET_COLOR_NONE ? GY_NET_ROLE_SPECTATOR : GY_NET_ROLE_PLAYER, color, r.token);
-        else { c->token = r.token; c->color = color; c->conn = conn; c->last_rx = g.now; }
+        if (!c) c = conn_find_token(r.token);
+        if (!c) c = conn_alloc(conn, gen,
+                               color == GY_NET_COLOR_NONE ? GY_NET_ROLE_SPECTATOR : GY_NET_ROLE_PLAYER,
+                               color, r.token);
+        else {
+            c->used = 1;
+            c->token = r.token;
+            c->color = color;
+            c->conn = conn;
+            c->gen = gen;
+            c->last_rx = g.now;
+        }
         if (!c) {
             gy_net_room_disconnect_token(&g.room, r.token, g.now);
             send_join_reject(conn, (uint8_t)(-GY_NET_ERR_FULL));
@@ -746,9 +820,9 @@ static void join_fail(uint8_t reason)
     lobby_remove_room(g.room_id);
     memset(&g.room, 0, sizeof(g.room));
 #ifdef GEYI_WITH_RTTHREAD
-    if (gy_net_ble_client_conn() != 0xff)
-        gy_net_ble_disconnect(gy_net_ble_client_conn());
+    gy_net_ble_client_abort();
 #endif
+    g.leaving = 0;
 }
 
 static void lobby_drain(void)
@@ -811,11 +885,26 @@ void gy_net_app_tick(uint32_t now_ms)
     {
         GyNetBleRx rx;
         while (gy_net_ble_recv(&rx)) {
-            if (g.active == 1) host_process(rx.conn, &rx.msg);
-            else if (g.active == 2 &&
-                     rx.conn == gy_net_ble_client_conn()) {
+            if (g.active == 1) {
+                host_process(rx.conn, rx.gen, &rx.msg);
+            } else if (g.active == 2 && rx.conn == gy_net_ble_client_conn()) {
+                uint8_t cur_gen = gy_net_ble_client_gen();
+                if (cur_gen && rx.gen && rx.gen != cur_gen) continue;
+                g.client_gen = rx.gen;
                 client_process(&rx.msg);
             }
+        }
+    }
+#endif
+#ifdef GEYI_WITH_RTTHREAD
+    if (g.leaving) {
+        uint8_t conn = gy_net_ble_client_conn();
+        if (conn == 0xff) {
+            g.leaving = 0;
+        } else if ((uint32_t)(now_ms - g.leaving_at) >= 1500u) {
+            /* TX 队列拥塞/对端无响应：超过 1.5s 直接断，不能留僵尸链路。 */
+            gy_net_ble_client_abort();
+            g.leaving = 0;
         }
     }
 #endif
@@ -830,6 +919,38 @@ void gy_net_app_tick(uint32_t now_ms)
             }
         }
         changed |= host_sync_conns();
+        {
+            /* 断链后保留的 ConnMap 只等 REJOIN；席位已被结算释放的
+             * 陈年映射要清掉，避免 4 个槽位被历史会话占满。 */
+            int ci;
+            for (ci = 0; ci < APP_MAX_CONN; ++ci)
+                if (g.conns[ci].used && g.conns[ci].conn == 0xff &&
+                    !token_alive(g.conns[ci].token))
+                    g.conns[ci].used = 0;
+        }
+#ifdef GEYI_WITH_RTTHREAD
+        {
+            /* 连上但一直不发 JOIN 的链路（客人点了加入又秒退）会占住
+             * 可连接广播，房主的房间从大厅消失。5s 无 JOIN 直接断开。 */
+            uint8_t i, n = gy_net_ble_conn_count();
+            for (i = 0; i < n; ++i) {
+                uint8_t conn = gy_net_ble_conn_at(i);
+                ConnMap *c = conn_find(conn);
+                if (conn >= APP_MAX_CONN) continue;
+                if (c) {
+                    g.unknown_link_at[conn] = 0;
+                    continue;
+                }
+                if (!g.unknown_link_at[conn]) {
+                    g.unknown_link_at[conn] = now_ms;
+                } else if ((uint32_t)(now_ms - g.unknown_link_at[conn]) >= 5000u) {
+                    APP_LOG("drop idle link conn=%d (no join)", conn);
+                    g.unknown_link_at[conn] = now_ms;
+                    gy_net_ble_disconnect(conn);
+                }
+            }
+        }
+#endif
         old_phase = g.room.view.phase;
         changed |= gy_net_room_tick(&g.room, now_ms);
         host_phase_change(old_phase);
@@ -889,7 +1010,9 @@ void gy_net_app_tick(uint32_t now_ms)
             g.join_ready_at = 0;
             g.join_at = now_ms;
         }
-        if (g.pending_join && !g.join_sent && gy_net_ble_write_ready()) {
+        /* 必须等 CCCD 写好再 JOIN：否则房主已分配席位并回 ACK，而客方
+         * 还没订阅 notify，ACK 丢失；客方界面空位、房主却显示 2/2。 */
+        if (g.pending_join && !g.join_sent && gy_net_ble_ready()) {
             GyNetJoinReq j;
             GyNetMsg m;
             j.role = g.join_req_role;
@@ -1070,6 +1193,14 @@ int gy_net_app_connected(void)
 #endif
     return 0;
 }
+int gy_net_app_host_adv_active(void)
+{
+#ifdef GEYI_WITH_RTTHREAD
+    return (g.active == 1) ? gy_net_ble_host_adv_active() : 0;
+#else
+    return 0;
+#endif
+}
 int gy_net_app_local_terminal(void) { return g.room.view.local_terminal; }
 int gy_net_app_join_rejected(void) { return g.join_rejected; }
 int gy_net_app_join_reason(void) { return g.join_reason; }
@@ -1112,9 +1243,10 @@ int gy_net_app_lobby_start(void)
     g.need_fresh_join = 0;
 #ifdef GEYI_WITH_RTTHREAD
     /* 上一次加入失败/被关房时可能还留着一条 BLE 链路；不清掉会让
-     * 对方仍认为有连接、停止广播，自己也扫不到房间。 */
-    if (gy_net_ble_client_conn() != 0xff)
-        gy_net_ble_disconnect(gy_net_ble_client_conn());
+     * 对方仍认为有连接、停止广播，自己也扫不到房间。刚发过 LEAVE
+     * 时交给 TX 线程收尾，不要在这里把 LEAVE 截断。 */
+    if (!g.leaving)
+        gy_net_ble_client_abort();
     gy_net_ble_scan_start();
 #endif
     return 0;
@@ -1150,7 +1282,10 @@ int gy_net_app_create_room(uint32_t room_id)
     gy_net_room_set_player_id(&g.room, g.local_color, g.local_player_id);
     g.token = g.room.seats[g.local_color].token;
     g.last_adv = g.last_hb = g.now;
+    g.leaving = 0;
 #ifdef GEYI_WITH_RTTHREAD
+    /* 切到房主前清掉可能残留的 central 链路，避免 host 广播被占住。 */
+    gy_net_ble_client_abort();
     gy_net_ble_host_start(room_id, g.room.view.player_count, g.room.view.phase,
                           g.room.view.spectator_count, g.room.view.max_spectators);
 #endif
@@ -1282,14 +1417,14 @@ void gy_net_app_leave(void)
             /* 让还在大厅扫描的板子立刻收到 players=0/CLOSED 摘要，
              * 不用等 1.5s TTL，也避免“关房后房间还挂几秒”。 */
             host_update_adv();
-            rt_thread_mdelay(200);
+            rt_thread_mdelay(100);
         }
         {
             uint8_t conns[GY_NET_BLE_MAX_CONN];
             uint8_t i, n = gy_net_ble_conn_count();
             for (i = 0; i < n; ++i) conns[i] = gy_net_ble_conn_at(i);
-            gy_net_ble_flush(300);
-            rt_thread_mdelay(150);
+            gy_net_ble_flush(200);
+            rt_thread_mdelay(50);
             for (i = 0; i < n; ++i) gy_net_ble_disconnect(conns[i]);
         }
         gy_net_ble_host_stop();
@@ -1307,12 +1442,21 @@ void gy_net_app_leave(void)
             GyNetMsg m;
             l.reason = (g.room.view.phase == GY_NET_PHASE_PLAYING)
                        ? GY_NET_REASON_RESIGN : GY_NET_REASON_LEFT;
-            if (gy_net_pack_leave(&m, &l) == GY_NET_OK) send_msg(conn, &m);
-            /* 给 LEAVE 足够时间发出，否则房主只能等 10s 断线窗口。 */
-            gy_net_ble_flush(500);
-            rt_thread_mdelay(100);
-            gy_net_ble_disconnect(conn);
+            if (gy_net_pack_leave(&m, &l) == GY_NET_OK) {
+                /* LEAVE 交给 TX 线程按序发出后再断开；UI 不再阻塞 600ms。 */
+                gy_net_ble_client_leave(conn, &m);
+                g.leaving = 1;
+                g.leaving_at = g.now;
+            } else {
+                gy_net_ble_disconnect(conn);
+            }
+        } else {
+            /* 还在连接/服务发现：取消在途连接，避免离开后才连上。 */
+            gy_net_ble_client_abort();
         }
+    } else {
+        /* 没有活动会话但可能残留上一次的 client 链路：一并清掉。 */
+        gy_net_ble_client_abort();
     }
     gy_net_ble_scan_stop();
 #endif
@@ -1340,7 +1484,9 @@ void gy_net_app_leave(void)
     g.drop_at = 0;
     g.reconnect_at = 0;
     g.rejoin_sent = 0;
+    g.client_gen = 0;
     g.preview_valid[0] = g.preview_valid[1] = 0;
+    memset(g.unknown_link_at, 0, sizeof(g.unknown_link_at));
     memset(&g.room, 0, sizeof(g.room));
     memset(g.conns, 0, sizeof(g.conns));
 }

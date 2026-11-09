@@ -51,6 +51,7 @@ int gy_net_app_seat_occupied(int color);
 int gy_net_app_seat_ready(int color);
 int gy_net_app_seat_id(int color);
 int gy_net_app_connected(void);
+int gy_net_app_host_adv_active(void); /* 房主是否仍在发可连接广播（测试/诊断） */
 int gy_net_app_local_terminal(void);
 int gy_net_app_join_rejected(void);
 int gy_net_app_join_reason(void);   /* GY_NET_JOIN_REASON_* */
