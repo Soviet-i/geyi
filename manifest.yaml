@@ -225,19 +225,19 @@ test_results:
   - test_id: "TC-501~TC-513-HOST"
     description: "联机主机纯逻辑测试（REQ-501~REQ-513 主机段）"
     expected: "net_proto 编解码/版本/seq/截断；net_room 准备/开局/落子/放兵/拒绝/断线/重连/旁观路由；大厅 TTL；内存管道"
-    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-tests 250 checks PASS（协议 v2/UID/等待期即时释放/房主转移/auto 角色）；已覆盖协议、房间状态机、大厅 TTL、内存管道；BLE/UI/双板/容量属物理或桌面段"
+    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-tests 272 checks PASS（协议 v2/UID/等待期即时释放/房主转移/auto 角色）；已覆盖协议、房间状态机、大厅 TTL、内存管道；BLE/UI/双板/容量属物理或桌面段"
     pass: true
     evidence_path: "evidence/net/20261108/host_test_final.log"
   - test_id: "TC-504~TC-511-APP"
     description: "联机 app 路由测试（REQ-504~REQ-511 app 段）"
     expected: "交换红蓝后的 READY/MOVE 颜色、ROOM_STATE 与 SNAPSHOT 同 seq、MOVE_REQ 幂等、对局中 LEAVE 判负、重复 JOIN、满员大厅规则"
-    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-app-tests 128 checks PASS（新增按座位 ready、UID、关房、stale 房间、auto 角色、满员旁观降级）；真实像素/触摸与断线重连仍未执行"
+    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-app-tests 150 checks PASS（新增按座位 ready、UID、关房、stale 房间、auto 角色、满员旁观降级）；真实像素/触摸与断线重连仍未执行"
     pass: true
     evidence_path: "evidence/net/20261108/host_test_final.log"
   - test_id: "FW-BUILD-NET"
     description: "联机 BLE/UI 接入固件编译（REQ-513）"
     expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
-    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,059,596 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/断线重连/容量可用"
+    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,060,644 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/断线重连/容量可用"
     pass: true
     evidence_path: "evidence/net/20261108/firmware_build_final.log"
   - test_id: "TC-513-04-BOOT"
