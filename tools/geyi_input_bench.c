@@ -235,6 +235,35 @@ static void m_hold_boundary(int trials, int step)
     }
 }
 
+/* 手持抖动模型：已选中 UP(约 22 度) 后两轴各加噪声，统计"预览可用时间占比"。
+ * 这在界面上就是"黄色指示点/预览是否稳定存在"，直接对应用户说的
+ * "跳一下就恢复原位置、多数时候没反应"。占比越高越好。 */
+static void m_preview_availability(int trials, int step)
+{
+    static const int pcts[] = {0, 10, 20, 25, 30, 50};
+    static const int samples = 200;          /* 200 x 5ms = 1 秒 */
+    int pi, k;
+    for (pi = 0; pi < (int)(sizeof pcts / sizeof pcts[0]); ++pi) {
+        long shown = 0, total = 0;
+        for (k = 0; k < trials; ++k) {
+            Sim s;
+            int i;
+            sim_init(&s, step, pcts[pi], 10, 2);
+            settle_level(&s, 6);
+            if (feed_until(&s, 0, -2200, 0, GY_INPUT_SELECT, 2000) < 0) continue;
+            for (i = 0; i < samples; ++i) {
+                int x = rnd_range(-2400, 2400);
+                int y = -2200 + rnd_range(-400, 400);
+                sim_feed(&s, x, y, 0);
+                ++total;
+                if (s.in.direction >= 0) ++shown;
+            }
+        }
+        printf("preview_available_bp,%d,dir_pct=%d,%ld,10000,bp\n",
+               step, pcts[pi], total ? shown * 10000 / total : 0);
+    }
+}
+
 int main(int argc, char **argv)
 {
     int trials = 50;
@@ -260,5 +289,6 @@ int main(int argc, char **argv)
     m_false_trigger(trials);
     m_hold_boundary(trials, 5);
     m_hold_boundary(trials, 20);
+    m_preview_availability(trials, 5);
     return 0;
 }

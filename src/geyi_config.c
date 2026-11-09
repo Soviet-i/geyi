@@ -87,7 +87,11 @@ GyParamSet gy_param_default_for(int mode)
     s.merge_reward   = 1;
     s.kill_reward    = 2;
     s.search_depth   = 3;
-    s.dir_buffer     = 10;
+    /* 方向缓冲默认 25%：改造前硬编码 10%，但在手持抖动下预览可用时间只有约 27%，
+     * 表现为"棋子跳一下就回原位、多数时候没反应"。实测 25% 时可用时间约 67%，
+     * 数据见 docs/07 与 tools/geyi_input_bench.c 的 preview_available_bp。
+     * 角度缓冲保持 10%（它管数量档位滞回，调大会让"多选兵"更难）。 */
+    s.dir_buffer     = 25;
     s.angle_buffer   = 10;
     return s;
 }
