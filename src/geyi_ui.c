@@ -1116,7 +1116,9 @@ void gy_ui_create(void)
     root=game_page;
     /* 真机为圆角屏：对局页左上角不再放 GEYI,右上角按钮下移并右缩,避开圆角裁切。 */
     resign_button=button(root,"认输",270,22,96,36,GY_UI_RESIGN);
-    turn_label=text(root,"RED TURN",16,26);money_label=text(root,"",16,50);
+    /* 左上圆角 R=48：回合标签原在 (16,26) 会被圆角裁掉；右移到
+     * 棋盘左边界附近，既避开圆角也不压右上认输按钮。 */
+    turn_label=text(root,"RED TURN",90,24);money_label=text(root,"",16,50);
     for(y=0;y<GY_MAX;++y)for(x=0;x<GY_MAX;++x) {
         lv_obj_t *tile=lv_obj_create(root);tiles[y][x]=tile;
         lv_obj_set_pos(tile,0,0);lv_obj_set_size(tile,1,1);
