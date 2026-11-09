@@ -22,8 +22,8 @@ submission:
 dev_agent:
   tool: "Claude Code"
   model: "DeepSeek"
-  session_log_path: "logs/2026-10-28_claude-code.jsonl.gz"
-  session_log_hash: "586fed171b28dfdd16b11886884a3486169b8ba899fc3aa5df1184b5e33d9743"
+  session_log_path: "logs/2026-11-09_claude-code.jsonl.gz"
+  session_log_hash: "0cad0e9e4c4c9480fd41ddcb08e6ed864408174a89881d8ad3d8a4e23595dd60"
 
 requirements:
   prd_path: "docs/01-需求规格说明.md"
@@ -89,7 +89,7 @@ design:
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
   # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
-  commit_range: "8dae6a0..HEAD（feat/req-5xx-net-core；2026-11-09 第四轮首页/规则页/圆角安全区与双板自动验证；封版 tag 记精确 SHA）"
+  commit_range: "8dae6a0..HEAD（feat/req-5xx-net-core；2026-11-09 第七轮断线重连/对局横幅/身份标签；最终封版以 tag 记精确 SHA）"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
@@ -324,7 +324,6 @@ known_issues:
   - "【2026-11-08 当前】主机覆盖率 76.2%–100%（game 99.5/input 87.0/config 98.5/param_ui 100/ai 89.2/balance 76.2）；桌面 LVGL 与板端不在 CI，需本地执行；CI 结果以远端 run 为准。"
   - "【2026-11-08 当前】10-17 人机视频只覆盖“选择先后手+人机对战”；agent 未解码，不能写成 agent 目测或仪器测量；视频不覆盖 10-18 移动顺序与 10-28 参数集成。"
   - "【2026-11-08 当前】开发日志 2026-11-08 由联机文档基线与本轮补全共用；最终交接前需刷新 new_devlog.py --update 并复核内容。"
-  - "【2026-11-08 当前】会话日志仍是 2026-10-28 快照；最终交接前需重新导出并更新 manifest 的 session_log_path/hash。"
   - "【2026-11-08 当前】training/T0、T1 任务正文缺失，training/progress.md 空白；需向教师索取，不能自行编造。"
   - "【2026-11-08 当前】R-023 在 docs/06 中曾同时用于构建证据与联机容量；构建证据条目已改记 R-023A，历史日志仍写 R-023。"
   - "【历史】以下为 2026-10-28/10-31 的历史快照，部分已被后续提交取代；当前状态以上面条目与 docs/08-验收矩阵.md 为准。"
