@@ -155,11 +155,15 @@ static void net_lobby_refresh(void)
         if(r){
             char text[64];
             const char *phase=r->phase==GY_NET_PHASE_WAIT?"等待中":
-                              r->phase==GY_NET_PHASE_PLAYING?"对战中":"可加入";
+                              r->phase==GY_NET_PHASE_STARTING?"即将开始":
+                              r->phase==GY_NET_PHASE_PLAYING?"对战中":
+                              r->phase==GY_NET_PHASE_RESULT?"结算中":"已关闭";
+            int can_join=r->phase!=GY_NET_PHASE_RESULT&&r->phase!=GY_NET_PHASE_CLOSED;
             lv_snprintf(text,sizeof(text),"房间 %04x  %d/2  %s  观战 %d",
                         (unsigned)r->room_id,(int)r->players,phase,(int)r->spectators);
             lv_label_set_text(label,text);
-            lv_obj_remove_state(net_room_rows[i],LV_STATE_DISABLED);
+            if(can_join)lv_obj_remove_state(net_room_rows[i],LV_STATE_DISABLED);
+            else lv_obj_add_state(net_room_rows[i],LV_STATE_DISABLED);
         }else{
             lv_label_set_text(label,"空房间位");
             lv_obj_add_state(net_room_rows[i],LV_STATE_DISABLED);
@@ -204,10 +208,10 @@ static void net_room_refresh(void)
          * 决定，绝不因为对方准备/自己不是房主而整块变白。 */
         if(net_red_box)
             lv_obj_set_style_bg_color(net_red_box,
-                lv_color_hex(!red_occ?0x4b5563:red_ready?0xf2f5fa:0xff6b7c),0);
+                lv_color_hex(!red_occ?0x4b5563:red_ready?0xffffff:0xff6b7c),0);
         if(net_blue_box)
             lv_obj_set_style_bg_color(net_blue_box,
-                lv_color_hex(!blue_occ?0x4b5563:blue_ready?0xf2f5fa:0x5ba8ff),0);
+                lv_color_hex(!blue_occ?0x4b5563:blue_ready?0xffffff:0x5ba8ff),0);
         if(net_red_name){
             if(!red_occ){
                 lv_label_set_text(net_red_name,"点击交换");

@@ -461,6 +461,9 @@ int gy_net_unpack_snapshot(const GyNetMsg *m, GyNetSnapshot *v)
     v->seq = get32(&r);
     if (v->game.config.hp < 1 || v->game.config.attack < 1 || v->game.config.cost < 1)
         return GY_NET_ERR_RANGE;
+    /* UI 用 outcome 直接索引 4 元素数组；turn 只允许红/蓝。 */
+    if (v->game.turn > 1 || v->game.outcome > (int)GY_DRAW)
+        return GY_NET_ERR_RANGE;
     return unpack_end(&r);
 }
 

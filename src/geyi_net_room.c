@@ -434,6 +434,8 @@ int gy_net_room_apply_snapshot(GyNetRoom *client, const GyNetSnapshot *snapshot)
 {
     if (!client || !snapshot) return GY_NET_ERR_ARG;
     if (snapshot->seq <= client->last_snapshot_seq) return 0;
+    /* 慢到的旧快照不能把已由更新 ROOM_STATE 推进的 seq/阶段拉回去。 */
+    if (snapshot->seq < client->view.seq) return 0;
     client->view.game = snapshot->game;
     client->view.game_valid = 1;
     client->view.seq = snapshot->seq;
@@ -467,6 +469,8 @@ int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
 {
     if (!client || !state) return GY_NET_ERR_ARG;
     if (state->seq <= client->last_room_seq) return 0;
+    /* 慢到的 ROOM_STATE 不能把已从 SNAPSHOT 前进的 phase/seq 拉回去。 */
+    if (state->seq < client->view.seq) return 0;
     if (!color_valid(state->host_color) || !color_valid(state->guest_color) ||
         state->host_color == state->guest_color ||
         state->phase > GY_NET_PHASE_CLOSED) return GY_NET_ERR_RANGE;
@@ -494,6 +498,7 @@ int gy_net_room_apply_result(GyNetRoom *client, const GyNetResult *result)
     if (!client || !result) return GY_NET_ERR_ARG;
     if (result->outcome > GY_DRAW) return GY_NET_ERR_RANGE;
     if (result->seq && result->seq <= client->last_result_seq) return 0;
+    if (result->seq && result->seq < client->view.seq) return 0;
     client->view.phase = GY_NET_PHASE_RESULT;
     client->view.result = result->outcome;
     client->view.result_reason = result->reason;
@@ -619,7 +624,7 @@ int gy_net_room_leave(GyNetRoom *host, uint8_t color, uint32_t now_ms)
      * 会在 TTL 内消失，不会留下可点击的幽灵房间。 */
     {
         GyNetSeat *g = seat_at(host, host->view.guest_color);
-        if (g && g->connected) {
+        if (host->view.phase == GY_NET_PHASE_WAIT && g && g->connected) {
             uint8_t old_host = host->view.host_color;
             uint8_t new_host = host->view.guest_color;
             host->seats[new_host].role = GY_NET_ROLE_HOST;

@@ -135,6 +135,8 @@ static uint8_t g_adv_payload_len;
 static uint8_t g_adv_connectable = 1;
 static uint8_t g_adv_dirty;      /* 广播内容变化，等待状态机允许时写回 */
 static uint32_t g_adv_retry_at;
+static uint32_t g_adv_stopped_at;
+static uint32_t g_adv_start_at;
 
 SIBLES_ADVERTISING_CONTEXT_DECLAR(g_geyi_adv_ctx);
 static uint8_t geyi_adv_event(uint8_t event, void *context, void *data);
@@ -490,10 +492,25 @@ static uint8_t geyi_adv_event(uint8_t event, void *context, void *data)
         uint8_t status = evt ? evt->status : 0;
         g_adv_active = (status == 0) ? 1 : 0;
         g_adv_started = g_adv_active;
+        if (g_adv_active) { g_adv_stopped_at = 0; g_adv_stopping = 0; }
         BLE_LOG("adv started status=%d", status);
+        if (g_adv_active && g_mode == 0) {
+            /* host_stop 与在途 start 竞争：已经关房就立刻再停掉。 */
+            sibles_advertising_stop(g_geyi_adv_ctx);
+            sibles_advertising_delete(g_geyi_adv_ctx);
+            g_adv_active = 0;
+            g_adv_started = 0;
+            g_adv_inited = 0;
+        }
     } else if (event == SIBLES_ADV_EVT_ADV_STOPPED) {
+        if (g_adv_stopping) {
+            /* 旧实例的延迟 STOPPED 事件，不能把新实例标成已停。 */
+            BLE_LOG("adv stopped (stale ignored)");
+            return 0;
+        }
         g_adv_active = 0;
         g_adv_started = 0;
+        g_adv_stopped_at = rt_tick_get();
         BLE_LOG("adv stopped");
         /* config.is_auto_restart=1 已由协议栈负责重启；这里再 start 会
          * 叠加 advertising 实例，最终 Create advertising failed。 */
@@ -513,6 +530,7 @@ static int adv_start(int connectable)
     }
     BLE_LOG("adv_start connectable=%d", connectable);
     g_adv_stopping = 1;
+    g_adv_stopped_at = 0;
     if (g_adv_active) {
         sibles_advertising_stop(g_geyi_adv_ctx);
         g_adv_active = 0;
@@ -532,11 +550,18 @@ static int adv_start(int connectable)
     g_adv_inited = 1;
     ret = sibles_advertising_start(g_geyi_adv_ctx);
     BLE_LOG("adv start ret=%d", ret);
-    if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv start err %d", ret); return -1; }
+    if (ret != SIBLES_ADV_NO_ERR) {
+        g_adv_stopping = 0;
+        sibles_advertising_delete(g_geyi_adv_ctx);
+        g_adv_inited = 0;   /* 下次 host_update 重新 init/start */
+        BLE_LOG("adv start err %d", ret);
+        return -1;
+    }
     g_adv_active = 1;
     g_adv_connectable = (uint8_t)connectable;
     g_adv_dirty = 0;   /* init 已使用当前 g_adv_payload */
-    g_adv_stopping = 0;
+    g_adv_start_at = rt_tick_get();
+    /* 保持 stopping=1 直到 ADV_STARTED，忽略上一实例的延迟 STOPPED。 */
     return 0;
 }
 
@@ -726,21 +751,21 @@ uint16_t gy_net_ble_mtu(uint8_t conn)
 
 int gy_net_ble_local_id(void)
 {
-    static int cached = -1;
+    static int cached;
     bd_addr_t addr;
-    if (cached >= 0) return cached;
+    int id = 0;
+    if (cached > 0) return cached;
     /* 有些批次的 NVDS/公共地址是同一个默认值，两块板会显示相同 #ID。
      * 优先用芯片 UID 派生地址（SDK example/ble/* 同样做法），保证唯一；
-     * UID 不可读时才退回公共地址。只读一次，避免每次 state 都打 UID 日志。 */
+     * UID 不可读时才退回公共地址。成功后缓存，失败不缓存以便稍后重试。 */
     if (bt_mac_addr_generate_via_uid_v2(&addr) == 0)
-        cached = ((int)addr.addr[4] << 8) | addr.addr[5];
+        id = ((int)addr.addr[4] << 8) | addr.addr[5];
     else if (bt_mac_addr_generate_via_uid(&addr) == 0)
-        cached = ((int)addr.addr[4] << 8) | addr.addr[5];
+        id = ((int)addr.addr[4] << 8) | addr.addr[5];
     else if (ble_get_public_address(&addr) == HL_ERR_NO_ERROR)
-        cached = ((int)addr.addr[4] << 8) | addr.addr[5];
-    else
-        cached = 0;
-    return cached;
+        id = ((int)addr.addr[4] << 8) | addr.addr[5];
+    if (id > 0) cached = id;
+    return id;
 }
 
 static uint8_t *ble_get_cb(uint8_t conn_idx, uint8_t idx, uint16_t *len)
@@ -969,6 +994,17 @@ void gy_net_ble_poll(void)
         (int32_t)(rt_tick_get() - g_adv_retry_at) >= 0) {
         g_adv_retry_at = rt_tick_get() + rt_tick_from_millisecond(200);
         adv_apply_payload(g_adv_connectable);
+    }
+    /* is_auto_restart 正常会自行恢复；若 1.5s 后仍停着，主动重建一次。 */
+    if (g_mode == 1 && g_adv_inited && !g_adv_active && g_adv_stopped_at &&
+        (int32_t)(rt_tick_get() - g_adv_stopped_at) >= rt_tick_from_millisecond(1500)) {
+        g_adv_stopped_at = 0;
+        adv_start(g_adv_connectable);
+    }
+    /* start 命令没人回 ADV_STARTED（事件线程异常）：1.5s 后重建。 */
+    if (g_mode == 1 && g_adv_inited && g_adv_active && !g_adv_started &&
+        (int32_t)(rt_tick_get() - g_adv_start_at) >= rt_tick_from_millisecond(1500)) {
+        adv_start(g_adv_connectable);
     }
 }
 
