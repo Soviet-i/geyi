@@ -390,6 +390,8 @@ def test_spectator(a: Board, b: Board) -> None:
     b.send("gy_net leave")
     wait_state(a, lambda s: s.get("spectators") == "0", 4, "host sees spectator leave")
     a.send("gy_net leave")
+    wait_state(b, lambda s: int(s.get("rooms", "0")) == 0, 6,
+               "final closed room disappears")
 
 
 def main() -> int:
