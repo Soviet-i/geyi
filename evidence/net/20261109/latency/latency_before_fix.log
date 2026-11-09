@@ -1,0 +1,5 @@
+discover: 0.60s
+join: 4.07s
+leave_visible: 0.44s
+close_visible: 3.66s
+FAIL: join=4.07s > 2.5s; close_visible=3.66s > 2.0s

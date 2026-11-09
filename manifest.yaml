@@ -16,14 +16,14 @@ submission:
   student_id: "2024211401"
   student_name: "蔡融汉"
   group_id: "G8"
-  milestone: "文档补全分支 docs/req-5xx-gap-fill（基于最新 develop；合并联机文档基线，补 L1–L4/用户交互/历史计时/三图/测试/CI）——不申报新里程碑；联机与历史/计时均未实现"
-  submitted_at: "2026-11-08T18:00:00+08:00"
+  milestone: "M3 功能完成（feat/req-5xx-net-core；联机、游戏规则页与圆角安全区已实现；不申报新里程碑）"
+  submitted_at: "2026-11-09T14:20:00+08:00"
 
 dev_agent:
   tool: "Claude Code"
   model: "DeepSeek"
-  session_log_path: "logs/2026-10-28_claude-code.jsonl.gz"
-  session_log_hash: "586fed171b28dfdd16b11886884a3486169b8ba899fc3aa5df1184b5e33d9743"
+  session_log_path: "logs/2026-11-09_claude-code.jsonl.gz"
+  session_log_hash: "0cad0e9e4c4c9480fd41ddcb08e6ed864408174a89881d8ad3d8a4e23595dd60"
 
 requirements:
   prd_path: "docs/01-需求规格说明.md"
@@ -89,7 +89,7 @@ design:
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
   # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
-  commit_range: "8f23712..HEAD（docs/req-5xx-gap-fill；2026-11-08 文档补全与审查修正；封版 tag 记精确 SHA）"
+  commit_range: "8dae6a0..HEAD（feat/req-5xx-net-core；2026-11-09 第七轮断线重连/对局横幅/身份标签；最终封版以 tag 记精确 SHA）"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
@@ -128,6 +128,51 @@ physical_verification:
     executed_at: "2026-11-07（学生本人烧录并回传 board_prep_1/2.jpg；精确时刻未单列）"
     evidence_path: "evidence/ui-prep/README.md"
     agent_conclusion: "学生照片显示默认红 AI/蓝玩家、互换后红玩家/蓝 AI；标题/先手后手/图标/文字居中，方框和按钮无裁切。agent 未独立解码点击动作，未测串口/耗时；照片不覆盖 10-28 参数集成与其他页面。"
+  - item: "REQ-513 联机固件单板启动（COM7）"
+    required_action: "烧录联机固件，观察启动自检 core/input/ai/param/paramui/net/light、LCD 初始化与是否 hard fault"
+    executed_at: "2026-11-08（CodeKit MCP 烧录 COM7；修复 STKOF 后复测）"
+    evidence_path: "evidence/net/20261108/board/boardA_COM7_boot_after_stackfix_20261108.log"
+    agent_conclusion: "修复前 1,026,432 B 首次烧录在 net 自检触发 hard fault（SCB_CFSR_UFSR:0x10 STKOF，main 线程 8 KB 栈）；把 net_proto/net_room/net_link 自检大对象改静态存储后重编 1,026,472 B，COM7 启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault。该证据只证明单板启动与自检，不证明 BLE 连接、真实 UI 交互、双板对局或容量 P-02。"
+  - item: "REQ-513 联机固件第二块板启动（COM8）"
+    required_action: "烧录同一联机固件到第二块黄山派，观察启动自检/LCD/是否 hard fault"
+    executed_at: "2026-11-08（CodeKit MCP 烧录 COM8；原板运行 10-15 旧固件）"
+    evidence_path: "evidence/net/20261108/board/boardB_COM8_boot_after_stackfix_20261108.log"
+    agent_conclusion: "COM8 原为 build on Oct 15 2026 的旧固件；烧录 1,026,472 B 后启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault。"
+  - item: "REQ-501/506 双板 BLE 自动冒烟（COM7 房主 + COM8 对手）"
+    required_action: "烧录同一固件，用 tools/net_board_test.py 驱动 A 建房、B 扫描/连接/服务发现/CCCD/加入、双方准备、各走一步"
+    executed_at: "2026-11-08（CodeKit MCP 烧录 COM7/COM8；脚本通过串口 shell 命令模拟 UI 动作）"
+    evidence_path: "evidence/net/20261108/board/auto_A_COM7_20261108_221612.log"
+    agent_conclusion: "PASS：A adv started；B scan started/connected/remote svc registered；B 以蓝方加入，双方 phase=2，A/B seq=6、rev=2、turn 一致。只覆盖两名玩家各一步；真实触摸 UI、旁观、预览私密、断线重连、容量 P-02 仍未执行。"
+  - item: "REQ-501/502/505/506/507 双板完整联机套件（2026-11-09）"
+    required_action: "烧录同一固件，运行 tools/net_board_test.py；覆盖唯一 ID、空位/房间页文本、按座位 ready、完整对局到 RESULT、客方退出/重进、单人关房、双人房主转移、过期房间点击、强制旁观只读"
+    executed_at: "2026-11-09（sftool 烧录 COM7/COM8；脚本通过串口 shell 命令模拟 UI 动作）"
+    evidence_path: "evidence/net/20261109/board_suite_final.log"
+    agent_conclusion: "PASS：A=`F33A`、B=`03EA` 唯一 ID；空位只显示“点击交换”、房主名带 `(房主)`、无 `(对手)`；准备只影响本座位；完整对局到 phase=3 且 A/B result 一致；客方退出后房主立即 1/2、重进仍为玩家；单人房主退出后大厅 rooms=0；双人房主退出后客方 active=1/hostid 变为自己；过期房间点击不接管；旁观 role=2/255 且退出后观战数归零。真实像素居中/右下角、触摸手感、10 s 断线重连、房主掉电、容量 P-02 仍未执行。"
+  - item: "REQ-501/505/506 房间循环、倒计时与延迟（2026-11-09 第二轮）"
+    required_action: "运行 tools/net_latency_test.py 复现并复测加入/关房延迟；双板套件验证 RESULT 后回同一房间开第二局、3/2/1 倒计时、旁观无准备"
+    executed_at: "2026-11-09（sftool 烧录 COM7/COM8；latency 修复前后各测一次，套件复测）"
+    evidence_path: "evidence/net/20261109/latency/latency_after_fix.log"
+    agent_conclusion: "修复前 join=4.07s、close=3.66s（FAIL）；修复连接间隔 0x06/0x08、关房 CLOSED 广播、TTL 1.5s、JOIN 提前发送后 join=1.06s、close=0.41s、leave=0.43s（PASS）。双板套件 PASS：结算 phase 3→0 房间保留、双方再准备开第二局、倒计时 cd=3/2/1、旁观 readybtn=0。绿色/弹窗/真实触摸/像素仍需学生目测；断线重连故障注入/容量未做。"
+  - item: "REQ-505/511/512 认输同步、客方倒计时与 GATT 槽位（2026-11-09 第三轮）"
+    required_action: "双板套件执行房主认输、房客认输、多次加入/退出/旁观；检查双方 READY 同步、客方 cd=3/2/1、房客退出后 1/2、remote service 不再 0xFFFF"
+    executed_at: "2026-11-09（sftool 烧录 COM7/COM8；resign sync 段与 latency 复测）"
+    evidence_path: "evidence/net/20261109/board_suite_final.log"
+    agent_conclusion: "PASS：房主认输、房客认输后回同一房间，双方 READY 均能到达房主；房客退出后房主立即 players=1；A/B 客方倒计时 cd=3/2/1；多轮进出未再出现 remote svc register full；latency join 1.06s/close 0.45s。修复了 ConnMap 被 RESIGN 删除、GATT remote service 未注销、客方倒计时用 0 起算、字体子集未更新。真实触摸单按钮/弹窗/像素未验证；另修客户端 RX 房间绑定、READY/STATE 丢包重发、STARTING 断线立即释放、旁观退出按钮、GATT 0xFFFF 重试、全屏确认遮挡、`?` 字体。"
+  - item: "REQ-501/508/511/512 链路生命周期与异常操作（2026-11-09 第六轮）"
+    required_action: "烧录同一固件，运行 tools/net_board_test.py 的 edge churn 段：客方在 0.15/0.35/0.70s 三个握手窗口加入后立即退出；双击退出；连续 3 次进出；检查房主 1/2、1.5s 内响应、房间重新可见、客人连接期间 adv=1、JOIN 在 CCCD 之后"
+    executed_at: "2026-11-09（sftool 烧录 COM7/COM8；edge churn 段）"
+    evidence_path: "evidence/net/20261109/board_suite_review_final.log"
+    agent_conclusion: "PASS：0.15/0.35/0.70s 秒退后房主均回到 1/2 且 1.5s 内响应，客方回大厅能看到房间；双击退出不卡；连续 3 次 join/leave 后房主仍 active=1/players=1；客人连接期间房主 adv=1（连接后 50ms 重启可连接广播）；客方日志 CCCD 先于 JOIN。latency join=0.98s、leave=0.35s、close=0.41s（本轮最终固件；此前一轮 0.90/0.31/0.18）。旧固件探针日志显示连接后 adv stopped、JOIN 早于 CCCD、客方离房阻塞 600ms（repro_before_fix_join_window.log）。独立 review 后另修异步离房→新房 JOIN 误发旧房主、旧 LEAVE 按 conn_idx 拆新链路、REJOIN 单发丢包、满员广播不恢复、ConnMap live token 驱逐、BLE 第 5 条连接僵尸、promote 未清 client 会话；复测 PASS。脚本化复现未稳定重现“房主按钮完全无响应”，故不写成已复现该卡死；真实手指触摸下的秒退仍建议学生复测。"
+  - item: "REQ-501/503 多连接广播能力（2026-11-09 第六轮）"
+    required_action: "第一个客方保持连接时，用第三台设备/手机扫描房主，确认仍能看到房间并可连接；记录房主 adv=1 与连接数"
+    executed_at: "2026-11-09（PC 作为第三台 BLE 中央，Windows BLE + bleak；板 A 房主、板 B 玩家）"
+    evidence_path: "evidence/net/20261109/pc_ble_third_peer_review.log"
+    agent_conclusion: "third-peer PASS：板 B 已连接时 PC 再连接，房主接受第二条 ACL 并以 auto 加入；房主 players=2/spectators=1/adv=1，PC 收到 JOIN_ACK color=0xff（旁观）；PC LEAVE 后 spectators=0。idle-link PASS：PC 连上不发 JOIN，5s 后房主主动断开，本次新增日志含 drop idle link 且 PC 端确认断开，房间仍 2/2、adv=1。burst PASS：PC 连上立即断开，房主不卡死、房间/广播保持。限制：PC BLE 依赖本机适配器，未纳入 CI；双旁观者/第三块实体板兼容性仍属 P-02 未测。"
+  - item: "REQ-509/510/511 断线重连 10s 窗口（2026-11-09 第七轮）"
+    required_action: "烧录同一固件，运行 tools/net_board_test.py：B 在 WAIT 和 PLAYING 中重启，10s 内从大厅重新加入；B 用 gy_net drop 只断链验证自动 REJOIN；B 重启后不再加入验证 WAIT 10s 释放、PLAYING 10s 判负；观察房间/对局页倒计时与返回页面"
+    executed_at: "2026-11-09（sftool 烧录 COM7/COM8；reboot reclaim WAIT/PLAYING、transient rejoin、reboot timeout 段）"
+    evidence_path: "evidence/net/20261109/board_suite_reconnect_final.log"
+    agent_conclusion: "PASS：B 重启 4.0s 后 WAIT 重新加入同色同 ID，A players=2/peer=1/reconn=0，B 在房间页，A 日志含 join reclaim（不是新玩家）；窗口内点交换被拒绝；PLAYING 重启 4.1s 后重新加入 role=1/local 不变/phase=2/view playing=1，A/B seq 不回退，日志含 join reclaim；transient drop（客方 drop + 房主 drop）B 保持对局页并自动 REJOIN，日志含 rejoin sent；未重连时 WAIT 约 10s 后释放 1/2，PLAYING 约 10s 后 phase=3/result=1，4s 后回 WAIT 1/2。显式 LEAVE 仍立即释放（TX 等 120ms 再断链）。独立 review 后另修换座丢计时器、STARTING ready、10s 边界、满旁观 flags、RESULT 快照、peer 离线冻结操作；另补对局页黄底重连横幅（每秒刷新，view reconn 断言）；主机 380+281、双板 15 段再次 PASS。限制：房主重启房间 RAM-only 必然消失；客方本机 10s local_terminal 回大厅的真实断网未测；旁观者不按 player_id 回收；满旁观容量+第三设备未测；真实触摸/像素与 P-02 容量未测。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -202,10 +247,40 @@ test_results:
     actual: "学生烧录 847,944 B 固件并回传 evidence/ui-prep/board_prep_1.jpg、board_prep_2.jpg；照片显示默认/互换布局与居中符合；点击动作未录屏，串口/耗时未测"
     pass: true
     evidence_path: "evidence/ui-prep/README.md"
-  - test_id: "TC-501~TC-513"
-    description: "联机模块主机内存管道/桌面 LVGL/双板物理测试（REQ-501~REQ-513）"
-    expected: "net_proto 编解码/版本/seq；net_room 准备/开局/落子/拒绝/断线/重连/旁观路由；双板 BLE 发现、同步、预览私密、断线重连与容量"
-    actual: "2026-11-08 仅建立需求/设计/测试文档基线；代码、BLE 配置、烧录与双板验证均未开始，TC-501~TC-513 全部未实现/未执行"
+  - test_id: "TC-501~TC-513-HOST"
+    description: "联机主机纯逻辑测试（REQ-501~REQ-513 主机段）"
+    expected: "net_proto 编解码/版本/seq/截断；net_room 准备/开局/落子/放兵/拒绝/断线/重连/旁观路由；大厅 TTL；内存管道"
+    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-tests 307 checks PASS（协议 v2/UID/等待期即时释放/房主转移/auto 角色/结算回房/第二局/倒计时）；已覆盖协议、房间状态机、大厅 TTL、内存管道；BLE/UI/双板/容量属物理或桌面段"
+    pass: true
+    evidence_path: "evidence/net/20261108/host_test_final.log"
+  - test_id: "TC-504~TC-511-APP"
+    description: "联机 app 路由测试（REQ-504~REQ-511 app 段）"
+    expected: "交换红蓝后的 READY/MOVE 颜色、ROOM_STATE 与 SNAPSHOT 同 seq、MOVE_REQ 幂等、对局中 LEAVE 判负、重复 JOIN、满员大厅规则"
+    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-app-tests 259 checks PASS（按座位 ready、UID、关房、stale 房间、auto 角色、REJOIN 拒绝 fresh JOIN、客户端 ready 同步、倒计时、10s 保留/player_id 回收）；真实像素/触摸与真实断网仍未执行"
+    pass: true
+    evidence_path: "evidence/net/20261108/host_test_final.log"
+  - test_id: "FW-BUILD-NET"
+    description: "联机 BLE/UI 接入固件编译（REQ-513）"
+    expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
+    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,084,932 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/真实断网/容量可用"
+    pass: true
+    evidence_path: "evidence/net/20261108/firmware_build_final.log"
+  - test_id: "TC-513-04-BOOT"
+    description: "联机自检 main 线程栈安全与单板启动（REQ-513/NFR-09）"
+    expected: "8 KB main 线程栈执行 net 自检不 STKOF；烧录后 net=PASS、light=PASS、LCD READY，无 hard fault"
+    actual: "首次烧录 1,026,432 B 在 net 自检 STKOF；net_proto/net_room/net_link 自检大对象改静态后重编，COM7/COM8 两板启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault；随后双板 BLE 自动冒烟通过"
+    pass: true
+    evidence_path: "evidence/net/20261108/board/boardA_COM7_boot_after_stackfix_20261108.log"
+  - test_id: "TC-501-03/TC-506-06-SMOKE"
+    description: "双板 BLE 发现/连接/加入/准备/落子自动冒烟"
+    expected: "A 建房广播、B 扫描连接、服务发现/CCCD、B 以蓝方加入、双方准备 PLAYING、双向落子 seq 同步"
+    actual: "2026-11-08 运行 tools/net_board_test.py PASS：A adv started、B scan started/connected/remote svc registered；B 蓝方 phase=2，A/B seq=6、rev=2、turn 一致"
+    pass: true
+    evidence_path: "evidence/net/20261108/board/auto_A_COM7_20261108_221612.log"
+  - test_id: "TC-501~TC-513-HW"
+    description: "联机真实 UI/旁观/重连/容量物理测试（REQ-501~REQ-513 剩余段）"
+    expected: "真实触摸 UI 视觉与操作、旁观加入/双方预览、断线重连、房主掉线提示、容量 P-02"
+    actual: "双板自动冒烟已通过；真实触摸 UI 视觉/操作、旁观、预览私密、断线重连、容量 P-02 仍未执行；不得把自动冒烟写成完整联机验收"
     pass: false
     evidence_path: "docs/04-测试报告.md"
   - test_id: "TC-601~TC-606"
@@ -234,16 +309,21 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-08 当前】联机 REQ-501~513、历史/计时 REQ-601~606 只有需求/设计/测试文档基线；代码、proj.conf BLE 配置、编译、烧录、双板验证均未开始，所有相关 TC 未实现/未执行。"
-  - "【2026-11-08 当前】当前板端证据来自历史构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；文档分支未改固件源码、未重编/烧录，不能把旧构建写成当前 HEAD 通过。"
+  - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 281 checks PASS，固件 1,084,932 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
+  - "【2026-11-09 当前】首页改为“格弈”并新增 4 页游戏规则（REQ-318/TC-318），对局页移除左上 GEYI、右上按钮与底栏按 R=48 圆角安全区内缩（NFR-UX-06/TC-NF-UX-06）；桌面 LVGL `--test` 与 `gy_ui_corner_clip_count(48)` 在首页/规则 1~4 页/对局页 PASS，证据 evidence/ui/20261109/。固件 1,078,356 B + LCPU 6,384 B 已烧录 COM7/COM8；双板套件新增 rules 段，实际翻 4 页、钳位、corner=0、rbottom<370，完整联机套件 PASS（15:28）。规则页正文已逐字恢复学生原文（含全角标点、10°~60°、KEY2）；KEY1(PA34) 是电源/下载复用键，板端不再读取，KEY2 单键负责确认/进入退出放兵，桌面 KEY2 用例 PASS。**真实圆角屏遮挡、中文标点观感、手指触摸翻页与真实 KEY2 手感仍未目测**，不能写成视觉验收通过。"
+  - "【2026-11-09 当前】联机固件首次 STKOF、AddLCPU/GATT 自锁/UUID/索引 0/JOIN 重发已修复；后续修连接间隔 120–160ms 导致的 4s 加入卡顿、关房 TTL、结算后 CLOSED、客方 ready 残留、RESIGN 删除 ConnMap、GATT remote service 槽位泄漏、客方倒计时恒 1s、CN16 字库未更新；第六轮修 conn_idx 复用无代际、离开不取消在途连接、连接后停播导致房间消失、JOIN 早于 CCCD、离房阻塞 UI。失败与修复日志在 evidence/net/20261108/board/ 与 evidence/net/20261109/（repro_before_fix_join_window.log）。"
+  - "【2026-11-09 当前】第七轮断线重连独立 review 后修：断线保留期间禁止换座并同步计时器、STARTING 断线清 ready/双方 connected 才开局、reclaim/rejoin 10s 边界统一 >=、reclaim 超时先释放过期席位、adv flags bit0 标记保留席位并保持 connectable、RESULT 不发 SNAPSHOT、peer 离线冻结到场方操作、客方房间页 10s 终局回大厅。满旁观容量+第三设备回收、真实断网下客方房间页回大厅、`player_id` 回收安全边界未实测。"
+  - "【2026-11-09 当前】对局页/结算身份标签已改为按座位颜色（side_relation）：红房主看到“红方回合(你)/蓝方回合(对方)”，认输或断线超时显示“红/蓝方胜(你/对方)”；修复了 RESULT 时 local_turn 恒 0 导致的“红方回合(对方)”身份错乱。双板主机/客方认输、PLAYING 超时 view 断言 PASS；真实像素/触摸未目测。"
+  - "【2026-11-09 当前】双板套件覆盖完整对局/结算回房/第二局/倒计时/旁观只读/edge churn；未覆盖真实触摸弹窗操作、学生手动“加入后立刻返回”复测、真实断网下客方 10s `local_terminal` 回大厅、房主重启（RAM-only 房间消失）、旁观者 player_id 回收、双方预览叠加、第三块实体板/手机兼容性、双旁观者模式切换、P-02 容量；双板 reboot/transient 段已覆盖客方重启与链路瞬断，但依赖本次两块板环境。延迟只在本次双板环境测得，不宣称所有环境。"
+  - "【2026-11-08 当前】历史板端证据来自旧构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；当前联机固件 1,056,484 B + LCPU 6,384 B，已完成双板自动冒烟但未做完整 UI/旁观/重连验收。"
   - "【2026-11-08 当前】REQ-407/410 参数生效只验证了启动自检，TC-406 板端段（SPAWN=3、size=5/7、缓冲 0/50、AI 层数 6）未执行。"
   - "【2026-11-08 当前】TC-303-05 单兵板端、REQ-316 的 500ms/单次提交/取消、串口 ai=PASS、倾斜正确率/真实延迟、390×450 帧率、AI 板端耗时/栈、24h soak 仍缺。"
   - "【2026-11-08 当前】历史/计时 ADR-0010 为 RAM-only 提议，待学生确认；若要求持久化，需先评估 NOR 占用/掉电写入/寿命并另立 ADR。"
   - "【2026-11-08 当前】联机 P-02 最大 BLE 并发连接数、连接态广播、全量快照包长/吞吐未实测；旁观容量 K 未定；双板验证需两块板同时在线。"
+  - "【2026-11-08 当前】BLE 分片只有有序重组，没有 ACK/重传；单片丢失时客户端要等下一次动作快照或重连才能恢复。发送已移到独立 TX 线程，但该限制仍需在双板吞吐测试中评估。"
   - "【2026-11-08 当前】主机覆盖率 76.2%–100%（game 99.5/input 87.0/config 98.5/param_ui 100/ai 89.2/balance 76.2）；桌面 LVGL 与板端不在 CI，需本地执行；CI 结果以远端 run 为准。"
   - "【2026-11-08 当前】10-17 人机视频只覆盖“选择先后手+人机对战”；agent 未解码，不能写成 agent 目测或仪器测量；视频不覆盖 10-18 移动顺序与 10-28 参数集成。"
   - "【2026-11-08 当前】开发日志 2026-11-08 由联机文档基线与本轮补全共用；最终交接前需刷新 new_devlog.py --update 并复核内容。"
-  - "【2026-11-08 当前】会话日志仍是 2026-10-28 快照；最终交接前需重新导出并更新 manifest 的 session_log_path/hash。"
   - "【2026-11-08 当前】training/T0、T1 任务正文缺失，training/progress.md 空白；需向教师索取，不能自行编造。"
   - "【2026-11-08 当前】R-023 在 docs/06 中曾同时用于构建证据与联机容量；构建证据条目已改记 R-023A，历史日志仍写 R-023。"
   - "【历史】以下为 2026-10-28/10-31 的历史快照，部分已被后续提交取代；当前状态以上面条目与 docs/08-验收矩阵.md 为准。"
@@ -270,7 +350,25 @@ self_review: |
   未完成/不确定：联机与历史/计时代码未写、未烧录、未双板验证；ADR-0010 待学生确认；
   参数生效/TC-303-05/串口 ai=PASS/倾斜正确率/帧率/AI 板端耗时/栈/24h soak 仍缺；
   当前板端证据是历史构建；CI 结果以远端 run 为准；会话日志仍是 10-28 快照。
-  关键决策仍由学生拍板；本轮未改固件源码，未把文档基线写成实现。
+  关键决策仍由学生拍板；文档分支未改固件源码，未把文档基线写成实现。
+
+  2026-11-08 联机实现：新建 feat/req-5xx-net-core，新增 src/geyi_net_proto.c/.h、
+  src/geyi_net_room.c/.h、src/geyi_net_link.c/.h（内存管道）、src/geyi_net_ble.c/.h
+  （自定义 GATT/广播/扫描/分片/CCCD）、src/geyi_net_app.c/.h（联机应用层）与
+  大厅/房间/对局/旁观 UI；tests/test_net.c 242 checks + tests/test_net_app.c 70 checks；
+  main.c 启动自检增加 net=PASS。
+  python tools/run_host.py 全部通过；proj.conf 按 SDK 例程启用 BLE/GATT/连接管理器/FlashDB；
+  PowerShell export.ps1 + scons 编译成功，main.bin 1,026,432 B。
+  2026-11-08 学生首次真机烧录发现 net 自检 STKOF：main 线程栈 8 KB，而
+  gy_net_link_selftest 的 GyNetMemoryLink 约 25 KB；协议/房间自检也分别约 5.4/3.7 KB。
+  三个自检的大对象改为函数内静态存储，重编 main.bin 1,026,472 B；CodeKit MCP 分别烧录
+  COM7/COM8，两板均启动 net=PASS、light=PASS、LCD READY 390×450，无 hard fault。
+  2026-11-08 双板 BLE bring-up：按官方 BLE 例程加 AddLCPU（LCPU 6,384 B）；
+  GATT 注册从 BLE 事件回调移到主线程，修复自锁；修正服务 UUID 字节序、远端服务索引 0、
+  JOIN 重发（1s）与加入超时（5s→12s）。新增 tools/net_board_test.py：
+  `python tools/net_board_test.py --port-a COM7 --port-b COM8` PASS，A/B 进入 PLAYING、
+  各走一步并同步到 seq 6。tests/test_net.c 增至 253 checks，main.bin 1,056,484 B。
+  真实触摸 UI 视觉/操作、旁观、预览私密、断线重连、容量 P-02 仍未执行；不得写成完整联机验收。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
@@ -303,4 +401,6 @@ human_checkpoints:
   - decision_point: "历史/计时是否持久化"
     student_confirmation: "尚未拍板；ADR-0010 暂记为“RAM-only 提议”，需学生确认重启清空是否可接受。"
   - decision_point: "联机范围与双板止损"
-    student_confirmation: "尚未拍板；当前只立文档基线，代码/双板验证未开始，需学生决定联机是否必达及止损日期。"
+    student_confirmation: "学生 2026-11-08 要求先写测试再实现；agent 已实现主机纯逻辑、BLE 传输与 UI（253 + app 70 checks PASS、固件 1,056,484 B + LCPU 6,384 B），并完成双板 BLE 自动冒烟；真实 UI/旁观/重连/容量未执行。联机是否必达、双板排期与止损日期仍需学生拍板。"
+  - decision_point: "联机主机实现边界"
+    student_confirmation: "学生要求“写相关测试，写完测试后规划具体实现方案并实现”；agent 按纯逻辑优先实现 net_proto/net_room/net_link 内存管道，未擅自改 proj.conf 或伪造 BLE/双板结果。是否继续 BLE 绑定与 UI 由学生决定。"

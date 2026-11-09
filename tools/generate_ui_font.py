@@ -1,6 +1,7 @@
 """Generate reproducible Geyi UI CN16 from the SDK's OFL-licensed Source Han font.
 
-Only CJK glyphs used by UI literals are embedded. ASCII/icons use SDK fallback.
+All non-ASCII glyphs used by UI literals (CJK + punctuation) are embedded;
+ASCII and icons use the SDK fallback.
 Run with --check to verify the generated C resource, not to modify it.
 """
 from pathlib import Path
@@ -17,7 +18,7 @@ source=sdk/'external/lvgl_v9/scripts/built_in_font/SourceHanSansSC-Normal.otf'
 # UI 字面量 + 参数名（gy_param_name 的表在 geyi_config.c）。
 sources=[root/'src/geyi_ui.c',root/'src/geyi_config.c']
 text=''.join(''.join(re.findall(r'"([^"\n]*)"',p.read_text(encoding='utf-8'))) for p in sources)
-characters=sorted({c for c in text if '\u4e00'<=c<='\u9fff'})
+characters=sorted({c for c in text if ord(c)>127})
 font=ImageFont.truetype(str(source),16)
 notdef=font.getmask(chr(0x10ffff))
 missing=[c for c in characters if font.getmask(c).size==notdef.size and bytes(font.getmask(c))==bytes(notdef)]
@@ -40,7 +41,7 @@ lines=[
 ' * Copyright 2014-2021 Adobe. See assets/fonts/OFL-SourceHanSansSC.txt.',
 ' * SDK source: external/lvgl_v9/scripts/built_in_font/SourceHanSansSC-Normal.otf',
 ' * source_sha256: '+hashlib.sha256(source.read_bytes()).hexdigest(),
-' * CJK: '+''.join(characters),
+' * Glyphs: '+''.join(characters),
 ' * Primary derivative name: Geyi UI CN16. */',
 '#ifdef GEYI_WITH_LVGL',
 '#include "geyi_font_cn16.h"',
@@ -65,7 +66,7 @@ content='\n'.join(lines)
 target=root/'src/geyi_font_cn16.c'
 if '--check' in sys.argv:
     if not target.exists() or target.read_text(encoding='utf-8')!=content:raise SystemExit('Font resource is stale; regenerate first.')
-    print('Generated font consistency PASS:',len(characters),'CJK glyphs,',len(bitmap),'bitmap bytes')
+    print('Generated font consistency PASS:',len(characters),'non-ASCII glyphs,',len(bitmap),'bitmap bytes')
 else:
     target.write_text(content,encoding='utf-8')
-    print('Generated:',len(characters),'CJK glyphs,',len(bitmap),'bitmap bytes')
+    print('Generated:',len(characters),'non-ASCII glyphs,',len(bitmap),'bitmap bytes')
