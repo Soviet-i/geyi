@@ -1081,7 +1081,12 @@ int gy_net_app_local_turn(void)
     if (g.room.view.phase != GY_NET_PHASE_PLAYING || !g.room.view.game_valid) return 0;
     return g.room.view.game.turn == g.local_color;
 }
-int gy_net_app_is_spectator(void) { return g.role == GY_NET_ROLE_SPECTATOR; }
+int gy_net_app_is_spectator(void)
+{
+    /* 离房后 role 保留为 SPECTATOR 只用于清理；没有活动会话时不能把
+     * 单机/人机页面误判成旁观，否则确认按钮会被永久禁用。 */
+    return g.active && g.role == GY_NET_ROLE_SPECTATOR;
+}
 int gy_net_app_pending_move(void) { return g.pending_move ? 1 : 0; }
 const GyGame *gy_net_app_game(void) { return &g.room.view.game; }
 

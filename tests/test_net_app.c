@@ -533,6 +533,18 @@ static int test_join_full_lobby_rule(void)
     return 0;
 }
 
+static int test_leave_clears_spectator_flag(void)
+{
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_SPECTATOR;
+    CHECK(gy_net_app_is_spectator() == 1);
+    gy_net_app_leave();
+    CHECK(g.active == 0);
+    CHECK(gy_net_app_is_spectator() == 0);
+    return 0;
+}
+
 int main(void)
 {
     if (test_swap_ready_and_move_color()) return 1;
@@ -556,6 +568,7 @@ int main(void)
     if (test_leave_after_resign_releases_seat()) return 19;
     if (test_client_countdown_from_starting_state()) return 20;
     if (test_ignore_state_from_other_room()) return 21;
+    if (test_leave_clears_spectator_flag()) return 22;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
