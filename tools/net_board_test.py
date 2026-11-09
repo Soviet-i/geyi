@@ -129,6 +129,7 @@ class Board:
         end = time.time() + timeout
         out: dict[str, str] = {}
         pat = re.compile(r"\[gy_test\] view (\w+)=(.*)")
+        ui_pat = re.compile(r"\[gy_test\] ui (.+)")
         while time.time() < end:
             with self.lock:
                 lines = self.lines[before:]
@@ -136,6 +137,9 @@ class Board:
                 m = pat.search(line)
                 if m:
                     out[m.group(1)] = m.group(2).strip()
+                m = ui_pat.search(line)
+                if m:
+                    out.update(re.findall(r"(\w+)=([^\s]+)", m.group(1)))
                 if "[gy_test] end" in line:
                     return out
             time.sleep(0.05)
@@ -216,6 +220,50 @@ def test_boot_and_ids(a: Board, b: Board) -> None:
 def view_seat(v: dict[str, str], key: str) -> tuple[str, str]:
     name, _, state = v.get(key, "").partition("|")
     return name, state
+
+
+def test_rules_ui(a: Board, b: Board) -> None:
+    """REQ-318 / NFR-UX-06: real-board rules pages and corner-safe layout."""
+    for board in (a, b):
+        board.send("gy_net home")
+    time.sleep(0.6)
+    for board in (a, b):
+        v = board.view()
+        require(v is not None, f"{board.name} home view missing")
+        require(v.get("rules") == "0" and v.get("corner") == "0",
+                f"{board.name} home not corner-safe: {v}")
+    a.send("gy_net rules")
+    time.sleep(0.3)
+    v = a.view()
+    require(v is not None and v.get("rules") == "1" and v.get("page") == "0",
+            f"A rules did not open on page 0: {v}")
+    require(v.get("corner") == "0" and int(v.get("rbottom", "9999")) < 370,
+            f"A rules page 0 clipped/overlaps nav: {v}")
+    for expected in (1, 2, 3):
+        a.send("gy_net rulesnext")
+        time.sleep(0.25)
+        v = a.view()
+        require(v is not None and v.get("page") == str(expected),
+                f"A rules next expected {expected}: {v}")
+        require(v.get("corner") == "0" and int(v.get("rbottom", "9999")) < 370,
+                f"A rules page {expected} clipped/overlaps nav: {v}")
+    a.send("gy_net rulesnext")
+    time.sleep(0.2)
+    v = a.view()
+    require(v is not None and v.get("page") == "3", f"A rules next not clamped: {v}")
+    a.send("gy_net rulesprev")
+    time.sleep(0.2)
+    v = a.view()
+    require(v is not None and v.get("page") == "2", f"A rules prev failed: {v}")
+    for _ in range(3):
+        a.send("gy_net rulesprev")
+        time.sleep(0.15)
+    v = a.view()
+    require(v is not None and v.get("page") == "0", f"A rules prev not clamped: {v}")
+    a.send("gy_net rulesback")
+    time.sleep(0.25)
+    v = a.view()
+    require(v is not None and v.get("rules") == "0", f"A rules back failed: {v}")
 
 
 def test_empty_seat_ui(a: Board, b: Board) -> None:
@@ -477,6 +525,8 @@ def main() -> int:
 
         print("== boot / unique ID ==")
         test_boot_and_ids(a, b)
+        print("== rules / safe area ==")
+        test_rules_ui(a, b)
         print("== empty seat UI ==")
         test_empty_seat_ui(a, b)
         print("== join / ready ==")
