@@ -82,6 +82,21 @@ class Board:
             time.sleep(0.1)
         return False
 
+    def mark(self) -> int:
+        with self.lock:
+            return len(self.lines)
+
+    def wait_for_since(self, needle: str, mark: int, timeout: float = 10.0) -> bool:
+        """Wait for a line that appeared after `mark` (post-reboot, not history)."""
+        end = time.time() + timeout
+        while time.time() < end:
+            with self.lock:
+                lines = self.lines[mark:]
+            if any(needle in line for line in lines):
+                return True
+            time.sleep(0.1)
+        return False
+
     def send(self, command: str) -> None:
         self.ser.write((command + "\n").encode())
         self.ser.flush()
@@ -91,7 +106,7 @@ class Board:
         before = len(self.lines)
         self.send("gy_net state")
         end = time.time() + timeout
-        pat = re.compile(r"\[gy_test\] (?:state|info|ready) (.+)")
+        pat = re.compile(r"\[gy_test\] (?:state|info|ready|recon) (.+)")
         merged: dict[str, str] = {}
         while time.time() < end:
             with self.lock:
@@ -467,6 +482,200 @@ def test_stale_room_click(a: Board, b: Board) -> None:
     require(sb is not None and sb.get("active") == "0", f"B stuck joining: {sb}")
 
 
+def reboot_board(board: Board, timeout: float = 20.0) -> float:
+    """Reboot a board over msh and wait for the *new* UI-ready line."""
+    mark = board.mark()
+    t0 = time.time()
+    board.send("reboot")
+    require(board.wait_for_since("Keep board still", mark, timeout),
+            f"{board.name} did not boot after reboot")
+    time.sleep(1.2)   # let LVGL/UI command loop settle
+    return time.time() - t0
+
+
+def lobby_and_join(board: Board, timeout: float = 6.0) -> dict[str, str]:
+    """After a reboot the scan command may race UI init; retry lobby+join."""
+    last = None
+    for _ in range(5):
+        board.send("gy_net lobby")
+        try:
+            wait_state(board, lambda s: int(s.get("rooms", "0")) >= 1, 3.5,
+                       "discover after reboot")
+            board.send("gy_net join 0")
+            return wait_state(board,
+                              lambda s: s.get("active") == "2" and
+                              s.get("local") != "255", 10, "rejoin after reboot")
+        except SystemExit:
+            last = board.state(timeout=2)
+            time.sleep(0.5)
+    raise SystemExit(f"FAIL: {board.name} could not rejoin after reboot; last={last}")
+
+
+def test_reboot_reclaim_wait(a: Board, b: Board) -> None:
+    """B reboots in the room; host keeps the seat 10s; B returns to the room."""
+    reset(a, b)
+    create_and_join(a, b)
+    sb = b.state(timeout=3)
+    require(sb is not None, "B state before reboot missing")
+    old_local, old_id = sb["local"], sb["id"]
+
+    amark = a.mark()
+    t0 = time.time()
+    boot = reboot_board(b)
+    print(f"B rebooted in {boot:.1f}s")
+    # Host must show the 10s reconnect window and the guest seat offline.
+    sa = wait_state(a, lambda s: s.get("peer") == "0" and
+                    int(s.get("reconn", "0")) > 0, 8, "host reconnect window")
+    require(sa.get("players") == "2" and sa.get("guestid") == f"{int(old_id,16):04X}",
+            f"host lost the reserved seat: {sa}")
+    require(sa.get("seatb") == "0", f"offline seat still online: {sa}")
+    # 断线保留期间换座必须被拒绝，否则计时器与颜色错位、席位永不释放。
+    a.send("gy_net swap")
+    time.sleep(0.3)
+    sa = a.state(timeout=3)
+    require(sa is not None and sa.get("host") == "0" and sa.get("guest") == "1",
+            f"host swapped seats while guest was offline: {sa}")
+
+    sb = lobby_and_join(b)
+    require(sb.get("role") == "1", f"rejoined as non-player: {sb}")
+    require(sb.get("local") == old_local, f"color changed after reboot: {sb}")
+    require(sb.get("id") == old_id, f"player id changed after reboot: {sb}")
+    require(sb.get("phase") == "0", f"WAIT room phase changed: {sb}")
+    sbv = b.view(timeout=3)
+    require(sbv is not None and sbv.get("playing") == "0",
+            f"B should be on room page: {sbv}")
+    sa = wait_state(a, lambda s: s.get("players") == "2" and
+                    s.get("peer") == "1" and s.get("reconn") == "0",
+                    5, "host sees reclaimed guest")
+    with a.lock:
+        aseg = a.lines[amark:]
+    require(any("join reclaim" in line for line in aseg),
+            "host did not log join reclaim; B may have joined as a new player")
+    require(int(time.time() - t0) < 12.0,
+            f"reboot+rejoin took {time.time()-t0:.1f}s (budget 12s)")
+    a.send("gy_net leave"); b.send("gy_net leave")
+    time.sleep(1.0)
+
+
+def test_reboot_reclaim_playing(a: Board, b: Board) -> None:
+    """B reboots during PLAYING; within 10s it returns to the game page."""
+    reset(a, b)
+    create_and_join(a, b)
+    a.send("gy_net ready"); b.send("gy_net ready")
+    sa = wait_state(a, lambda s: s.get("phase") == "2", 8, "playing before reboot")
+    sb = wait_state(b, lambda s: s.get("phase") == "2", 8, "B playing")
+    old_local, old_id = sb["local"], sb["id"]
+    old_seq = sa["seq"]
+
+    amark = a.mark()
+    boot = reboot_board(b)
+    print(f"B rebooted during PLAYING in {boot:.1f}s")
+    sa = wait_state(a, lambda s: s.get("phase") == "2" and
+                    s.get("peer") == "0" and int(s.get("reconn", "0")) > 0,
+                    8, "host PLAYING reconnect window")
+    require(sa.get("players") == "2", f"host released PLAYING seat too early: {sa}")
+
+    sb = lobby_and_join(b)
+    require(sb.get("role") == "1" and sb.get("local") == old_local,
+            f"PLAYING rejoin not as original player: {sb}")
+    require(sb.get("phase") == "2", f"PLAYING phase lost after rejoin: {sb}")
+    require(int(sb.get("seq", "0")) >= int(old_seq), f"seq regressed: {sb}")
+    sbv = b.view(timeout=3)
+    require(sbv is not None and sbv.get("playing") == "1",
+            f"B did not return to game page: {sbv}")
+    sa = wait_state(a, lambda s: s.get("players") == "2" and
+                    s.get("peer") == "1" and s.get("reconn") == "0",
+                    5, "host sees PLAYING rejoin")
+    require(sa.get("phase") == "2", f"host left PLAYING: {sa}")
+    with a.lock:
+        aseg = a.lines[amark:]
+    require(any("join reclaim" in line for line in aseg),
+            "host did not log join reclaim in PLAYING")
+    a.send("gy_net leave"); b.send("gy_net leave")
+    time.sleep(1.0)
+
+
+def test_transient_rejoin(a: Board, b: Board) -> None:
+    """Same board, BLE link dropped and restored (no reboot): auto REJOIN."""
+    reset(a, b)
+    create_and_join(a, b)
+    a.send("gy_net ready"); b.send("gy_net ready")
+    sa = wait_state(a, lambda s: s.get("phase") == "2", 8, "transient playing")
+    sb = wait_state(b, lambda s: s.get("phase") == "2", 8, "B transient playing")
+    old_local, old_seq = sb["local"], sb["seq"]
+    mark = b.mark()
+    b.send("gy_net drop")
+
+    # Recovery can be sub-second, so the offline window may be too short to
+    # observe; the REJOIN log and the preserved game state are the proof.
+    time.sleep(0.3)
+    sb = wait_state(b, lambda s: s.get("active") == "2" and
+                    s.get("phase") == "2", 4, "B stays in game")
+    sa = wait_state(a, lambda s: s.get("players") == "2" and
+                    s.get("peer") == "1" and s.get("reconn") == "0",
+                    10, "host sees REJOIN")
+    sb = wait_state(b, lambda s: s.get("active") == "2" and
+                    s.get("peer") == "1" and s.get("local") == old_local and
+                    s.get("phase") == "2", 10, "B REJOIN")
+    require(int(sb.get("seq", "0")) >= int(old_seq), f"B seq regressed: {sb}")
+    sbv = b.view(timeout=3)
+    require(sbv is not None and sbv.get("playing") == "1",
+            f"B did not return to game page after REJOIN: {sbv}")
+    with b.lock:
+        seg = b.lines[mark:]
+    require(any("rejoin sent" in line for line in seg),
+            "B did not send REJOIN after transient drop")
+
+    # Host-side transient: drop the guest link from A; B must reconnect to
+    # A's restarted advertising and REJOIN, without the room/game state moving.
+    mark2 = b.mark()
+    a.send("gy_net drop")
+    time.sleep(0.5)
+    sa = wait_state(a, lambda s: s.get("players") == "2" and
+                    s.get("peer") == "1" and s.get("reconn") == "0" and
+                    s.get("phase") == "2", 10, "host-side transient recovery")
+    sb = wait_state(b, lambda s: s.get("active") == "2" and
+                    s.get("peer") == "1" and s.get("local") == old_local and
+                    s.get("phase") == "2", 10, "B recovers host-side drop")
+    with b.lock:
+        seg2 = b.lines[mark2:]
+    require(any("rejoin sent" in line for line in seg2),
+            "B did not REJOIN after host-side link drop")
+    a.send("gy_net leave"); b.send("gy_net leave")
+    time.sleep(1.0)
+
+
+def test_reboot_timeouts(a: Board, b: Board) -> None:
+    """No reconnect: WAIT releases after 10s; PLAYING judges the guest lost."""
+    # WAIT: 10s after detection the seat is released, room stays 1/2.
+    reset(a, b)
+    create_and_join(a, b)
+    reboot_board(b)
+    sa = wait_state(a, lambda s: s.get("players") == "1" and
+                    s.get("reconn") == "0", 20, "WAIT timeout release")
+    require(sa.get("guestid") == "0000" and sa.get("seatb") == "0",
+            f"WAIT seat not released: {sa}")
+    require(sa.get("phase") == "0", f"WAIT room changed phase: {sa}")
+    b.send("gy_net lobby")
+    wait_state(b, lambda s: int(s.get("rooms", "0")) >= 1, 8,
+               "room still visible after WAIT release")
+    a.send("gy_net leave")
+
+    # PLAYING: no rejoin -> host wins by disconnect, then back to room 1/2.
+    reset(a, b)
+    create_and_join(a, b)
+    a.send("gy_net ready"); b.send("gy_net ready")
+    wait_state(a, lambda s: s.get("phase") == "2", 8, "playing timeout start")
+    reboot_board(b)
+    sa = wait_state(a, lambda s: s.get("phase") == "3", 20, "PLAYING disconnect result")
+    require(sa.get("result") == "1", f"host should win by disconnect: {sa}")
+    sa = wait_state(a, lambda s: s.get("phase") == "0" and s.get("players") == "1",
+                    7, "PLAYING result back to room")
+    a.send("gy_net leave")
+    b.send("gy_net lobby")
+    time.sleep(1.0)
+
+
 def test_edge_churn(a: Board, b: Board) -> None:
     """Random-ish user operations must not wedge the host or hide its room.
 
@@ -484,15 +693,21 @@ def test_edge_churn(a: Board, b: Board) -> None:
     b.send("gy_net lobby")
     wait_state(b, lambda s: int(s.get("rooms", "0")) >= 1, 8, "churn discover")
 
-    # 1) Join, then leave while JOIN_ACK may still be in flight.
+    # 1) Join, then leave while JOIN_ACK may still be in flight. If the LEAVE
+    #    was delivered the host releases immediately; if the app was still in
+    #    the handshake (no LEAVE), the new reconnect window keeps the seat
+    #    offline for 10s. Both are valid; the host must never wedge.
     for delay in (0.15, 0.35, 0.70):
         b.send("gy_net join 0")
         time.sleep(delay)
         t0 = time.time()
         b.send("gy_net leave")
         sb = wait_state(b, lambda s: s.get("active") == "0", 4, "quick leave")
-        sa = wait_state(a, lambda s: s.get("players") == "1" and s.get("phase") == "0",
-                        4, "host releases quick leaver")
+        sa = wait_state(a, lambda s: s.get("phase") == "0" and
+                        (s.get("players") == "1" or
+                         (s.get("players") == "2" and s.get("peer") == "0" and
+                          int(s.get("reconn", "0")) > 0)),
+                        5, "host settles after quick leaver")
         require(time.time() - t0 < 2.5,
                 f"leave took {time.time()-t0:.2f}s (host/UI blocked)")
         # Host must answer immediately after the churn.
@@ -501,6 +716,9 @@ def test_edge_churn(a: Board, b: Board) -> None:
         require(sa2 is not None and time.time() - t1 < 1.5,
                 f"host unresponsive after guest quick leave: {sa2}")
         require(sa2.get("active") == "1", f"host lost its room: {sa2}")
+        if sa2.get("players") == "2":
+            require(sa2.get("seatb") == "0",
+                    f"offline guest seat still marked online: {sa2}")
         # Room must reappear in the lobby (advertising restarted).
         b.send("gy_net lobby")
         sb = wait_state(b, lambda s: int(s.get("rooms", "0")) >= 1, 5,
@@ -621,6 +839,14 @@ def main() -> int:
         test_resign_sync(a, b)
         print("== edge churn ==")
         test_edge_churn(a, b)
+        print("== reboot reclaim (WAIT) ==")
+        test_reboot_reclaim_wait(a, b)
+        print("== reboot reclaim (PLAYING) ==")
+        test_reboot_reclaim_playing(a, b)
+        print("== transient rejoin ==")
+        test_transient_rejoin(a, b)
+        print("== reboot timeout ==")
+        test_reboot_timeouts(a, b)
         print("== leave / rejoin / close ==")
         test_leave_rejoin_lifecycle(a, b)
         print("== host transfer ==")

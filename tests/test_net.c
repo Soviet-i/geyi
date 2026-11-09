@@ -48,7 +48,7 @@ static int test_proto_typed(void)
     int n;
 
     {
-        GyNetAdvRoom v = {123, 2, GY_NET_PHASE_PLAYING, 1, 2}, o;
+        GyNetAdvRoom v = {123, 2, GY_NET_PHASE_PLAYING, 1, 2, 0}, o;
         CHECK(gy_net_pack_adv_room(&m, &v) == GY_NET_OK);
         n = gy_net_proto_encode(&m, buf, (int)sizeof(buf));
         CHECK(n > 0 && gy_net_proto_decode(&m, buf, n) == GY_NET_OK);
@@ -154,8 +154,8 @@ static int test_snapshot_roundtrip(void)
 static int test_lobby(void)
 {
     GyNetLobby lobby;
-    GyNetAdvRoom a = {1, 1, GY_NET_PHASE_WAIT, 0, 2};
-    GyNetAdvRoom b = {2, 2, GY_NET_PHASE_PLAYING, 1, 2};
+    GyNetAdvRoom a = {1, 1, GY_NET_PHASE_WAIT, 0, 2, 0};
+    GyNetAdvRoom b = {2, 2, GY_NET_PHASE_PLAYING, 1, 2, 0};
     GyNetRoomSummary room;
 
     gy_net_lobby_init(&lobby);
@@ -444,15 +444,24 @@ static int test_disconnect_rejoin(void)
     CHECK(host.view.result_reason == GY_NET_REASON_DISCONNECT);
     CHECK(gy_net_room_rejoin(&host, token, 8, 30001, &color) == GY_NET_ERR_TOKEN);
 
-    /* 等待阶段断线立即释放席位（没有可恢复的对局），不判负。 */
+    /* 等待阶段链路断开也保留 10s 席位：房间页显示“断线重连中”，
+     * 超时才释放；显式 LEAVE 仍然立即释放。 */
     gy_net_room_init_host(&host, 1008, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0x2222, 0, &token, &color) == GY_NET_OK);
     CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
-    CHECK(host.view.player_count == 1);
-    CHECK(gy_net_room_tick(&host, 11001) == 0);
+    CHECK(host.view.player_count == 2);          /* 保留席位等重连 */
+    CHECK(host.seats[GY_NET_COLOR_BLUE].connected == 0);
+    CHECK(gy_net_room_tick(&host, 10999) == 0);
+    CHECK(host.view.player_count == 2);
+    CHECK(gy_net_room_rejoin(&host, token, 0, 10999, &color) == GY_NET_OK);
+    CHECK(color == GY_NET_COLOR_BLUE);
+    CHECK(host.view.player_count == 2);
+    CHECK(gy_net_room_disconnect_token(&host, token, 12000) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 22000) == 1);
+    CHECK(host.view.player_count == 1);          /* 10s 超时才释放 */
     CHECK(host.view.phase == GY_NET_PHASE_WAIT);
     CHECK(host.view.result == GY_PLAYING);
-    CHECK(gy_net_room_rejoin(&host, token, 0, 11001, &color) == GY_NET_ERR_TOKEN);
+    CHECK(gy_net_room_rejoin(&host, token, 0, 22001, &color) == GY_NET_ERR_TOKEN);
 
     /* 等待阶段旁观者断线也立即释放，大厅人数不再滞后。 */
     gy_net_room_init_host(&host, 1009, 0, 2);
@@ -475,10 +484,15 @@ static int test_result_disconnect_releases_guest(void)
     CHECK(gy_net_room_resign(&host, GY_NET_COLOR_RED, 100) == GY_NET_OK);
     CHECK(host.view.phase == GY_NET_PHASE_RESULT);
     CHECK(gy_net_room_disconnect_token(&host, token, 200) == GY_NET_OK);
-    /* 结算期客人断线/退出应立即从 2/2 变 1/2，不能拖到下次 tick。 */
+    /* 结算期客人断线保留到 RESULT→WAIT（约 4s，可重连看结果）；
+     * 回 WAIT 时仍未回来才释放。 */
+    CHECK(host.view.player_count == 2);
+    CHECK(host.view.guest_id == 0x3333);
+    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(gy_net_room_tick(&host, 200 + GY_NET_RESULT_KEEP_MS) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);
     CHECK(host.view.player_count == 1);
     CHECK(host.view.guest_id == 0);
-    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
     return 0;
 }
 
@@ -566,8 +580,19 @@ static int test_starting_disconnect_and_spectator_slot(void)
     CHECK(gy_net_room_disconnect_token(&host, t1, 1000) == GY_NET_OK);
     CHECK(gy_net_room_tick(&host, 3020) == 1);
     CHECK(host.view.phase == GY_NET_PHASE_WAIT);   /* 倒计时中断线不能开局 */
-    CHECK(host.view.player_count == 1);            /* 立即释放，不留 2/2 */
-    CHECK(gy_net_room_tick(&host, 11001) == 0);
+    CHECK(host.view.player_count == 2);            /* 保留 10s 等重连 */
+    CHECK(host.view.guest_ready == 0);             /* 断线方 ready 必须清零 */
+    CHECK(gy_net_room_rejoin(&host, t1, 0, 4000, &c1) == GY_NET_OK);
+    CHECK(host.view.guest_ready == 0);             /* REJOIN 后仍需重新准备 */
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_BLUE, 1, 4100) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_STARTING);   /* 双方在线且都准备才开局 */
+    CHECK(gy_net_room_disconnect_token(&host, t1, 4200) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 14200) == 1);   /* STARTING -> WAIT */
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(host.view.player_count == 2);           /* 同 tick 还不释放 */
+    CHECK(gy_net_room_tick(&host, 14201) == 1);   /* 下一次 tick 才释放 */
+    CHECK(host.view.player_count == 1);           /* 10s 超时才释放 */
 
     /* 等待阶段旁观断线立即释放槽位，新旁观者可以直接加入。 */
     gy_net_room_init_host(&host, 1015, 0, 1);
@@ -575,6 +600,61 @@ static int test_starting_disconnect_and_spectator_slot(void)
     CHECK(gy_net_room_disconnect_token(&host, t1, 1000) == GY_NET_OK);
     CHECK(host.view.spectator_count == 0);
     CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, 2000, &t2, &c2) == GY_NET_OK);
+    return 0;
+}
+
+static int test_reclaim_by_player_id(void)
+{
+    GyNetRoom host;
+    uint32_t token = 0, token2 = 0;
+    uint8_t color = GY_NET_COLOR_NONE;
+
+    /* WAIT：断线后 10s 内，同一 player_id 以新 JOIN 回收原席位。 */
+    gy_net_room_init_host(&host, 1019, 0, 2);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0x2222, 0, &token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_RED, 1, 10) == GY_NET_OK);
+    CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_BLUE, 1, 20) == GY_NET_OK);
+    CHECK(host.view.phase == GY_NET_PHASE_STARTING);
+    CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 3020) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(host.view.player_count == 2);
+    CHECK(gy_net_room_reclaim(&host, 0x9999, 5000, &token2, &color) == GY_NET_ERR_TOKEN);
+    CHECK(gy_net_room_reclaim(&host, 0x2222, 5000, &token2, &color) == GY_NET_OK);
+    CHECK(color == GY_NET_COLOR_BLUE);
+    CHECK(token2 != 0 && token2 != token);
+    CHECK(host.seats[GY_NET_COLOR_BLUE].connected == 1);
+    CHECK(host.seats[GY_NET_COLOR_BLUE].ready == 0);   /* 回收后要重新准备 */
+    CHECK(host.view.player_count == 2);
+    CHECK(host.view.guest_id == 0x2222);
+
+    /* 断线保留期间禁止换座：否则计时器与颜色错位，席位永不释放。 */
+    CHECK(gy_net_room_disconnect_token(&host, token2, 6000) == GY_NET_OK);
+    CHECK(gy_net_room_swap_seats(&host) == GY_NET_ERR_STATE);
+    CHECK(gy_net_room_tick(&host, 16000) == 1);
+    CHECK(host.view.player_count == 1);
+    CHECK(gy_net_room_reclaim(&host, 0x2222, 16001, &token2, &color) == GY_NET_ERR_TOKEN);
+
+    /* PLAYING：10s 内回收保持棋局和颜色。 */
+    gy_net_room_init_host(&host, 1020, 0, 2);
+    CHECK(start_game(&host, &token) == 0);
+    gy_net_room_set_player_id(&host, GY_NET_COLOR_BLUE, 0x3333);
+    CHECK(gy_net_room_disconnect_token(&host, token, 5000) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 8000) == 0);
+    CHECK(host.view.phase == GY_NET_PHASE_PLAYING);
+    CHECK(gy_net_room_reclaim(&host, 0x3333, 9000, &token2, &color) == GY_NET_OK);
+    CHECK(color == GY_NET_COLOR_BLUE);
+    CHECK(host.view.phase == GY_NET_PHASE_PLAYING);
+    CHECK(host.view.game_valid == 1);
+
+    /* 超过 10s：PLAYING 已判负，回收必须失败。 */
+    gy_net_room_init_host(&host, 1021, 0, 2);
+    CHECK(start_game(&host, &token) == 0);
+    gy_net_room_set_player_id(&host, GY_NET_COLOR_BLUE, 0x4444);
+    CHECK(gy_net_room_disconnect_token(&host, token, 5000) == GY_NET_OK);
+    CHECK(gy_net_room_tick(&host, 15001) == 1);
+    CHECK(host.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(gy_net_room_reclaim(&host, 0x4444, 16000, &token2, &color) == GY_NET_ERR_TOKEN);
     return 0;
 }
 
@@ -639,6 +719,7 @@ int main(void)
     if (test_result_returns_to_room_and_replays()) return 16;
     if (test_result_disconnect_releases_guest()) return 17;
     if (test_starting_disconnect_and_spectator_slot()) return 13;
+    if (test_reclaim_by_player_id()) return 27;
     if (test_client_host_lost()) return 14;
     if (test_memory_link()) return 14;
     if (test_selftests()) return 15;

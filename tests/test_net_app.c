@@ -369,8 +369,9 @@ static int test_released_conn_cannot_act(void)
     CHECK(host_join_player(1) == 0);
     token = g.conns[0].token;
     CHECK(gy_net_room_disconnect_token(&g.room, token, 0) == GY_NET_OK);
-    CHECK(g.room.view.player_count == 1);
-    /* 旧连接还活着但 token 已不在席位：READY 不能落到任何座位。 */
+    CHECK(g.room.view.player_count == 2);          /* 保留 10s 等重连 */
+    CHECK(g.room.seats[GY_NET_COLOR_BLUE].connected == 0);
+    /* 旧连接还活着但席位已断线：READY 不能落到任何座位。 */
     CHECK(host_ready(1, 1) == 0);
     CHECK(g.room.view.host_ready == 0);
     CHECK(g.room.view.guest_ready == 0);
@@ -531,6 +532,31 @@ static int test_join_full_lobby_rule(void)
     g.rooms[0].spectators = 2;
     g.rooms[0].max_spectators = 2;
     g.rooms[0].phase = GY_NET_PHASE_WAIT;
+    g.rooms[0].flags = 1;   /* adv 标记有玩家席位等待重连 */
+    rc = gy_net_app_join_index(0);
+    /* 摘要满员但可能有“玩家掉线保留 10s”；仍发 auto JOIN 让房主
+     * 决定回收，不能客户端直接判死。 */
+    CHECK(rc == 0);
+    CHECK(g.active == 2 && g.pending_join == 1 && g.join_req_role == 2);
+
+    gy_net_app_init();
+    g.room_count = 1;
+    memset(&g.rooms[0], 0, sizeof(g.rooms[0]));
+    g.rooms[0].room_id = 0x3003;
+    g.rooms[0].players = 2;
+    g.rooms[0].spectators = 2;
+    g.rooms[0].max_spectators = 2;
+    g.rooms[0].phase = GY_NET_PHASE_WAIT;
+    g.rooms[0].flags = 0;   /* 真满员：客户端立即提示 */
+    CHECK(gy_net_app_join_index(0) == -1);
+    CHECK(g.join_rejected == 1 && g.join_reason == GY_NET_JOIN_REASON_FULL);
+
+    gy_net_app_init();
+    g.room_count = 1;
+    memset(&g.rooms[0], 0, sizeof(g.rooms[0]));
+    g.rooms[0].room_id = 0x3002;
+    g.rooms[0].players = 2;
+    g.rooms[0].phase = GY_NET_PHASE_RESULT;   /* 结算中不可加入 */
     rc = gy_net_app_join_index(0);
     CHECK(rc == -1);
     CHECK(g.join_rejected == 1);
@@ -549,7 +575,7 @@ static int test_leave_clears_spectator_flag(void)
     return 0;
 }
 
-static int test_link_gen_reuse_releases_old_session(void)
+static int test_link_gen_reuse_reclaims_seat(void)
 {
     GyNetJoinReq j;
     GyNetReady r;
@@ -557,25 +583,29 @@ static int test_link_gen_reuse_releases_old_session(void)
     uint32_t old_token;
 
     CHECK(setup_host(0x2020) == 0);
-    CHECK(host_join_player(1) == 0);
+    CHECK(host_join_player(1) == 0);              /* player_id=0x2222 */
     CHECK(g.room.view.player_count == 2);
     old_token = g.conns[0].token;
-    /* 链路断开：WAIT 立即释放席位，不能留下幽灵客人。 */
+    /* 链路断开：WAIT 保留席位 10s，等原玩家重连/重启回收。 */
     host_link_down(1, 1);
-    CHECK(g.room.view.player_count == 1);
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.room.seats[GY_NET_COLOR_BLUE].connected == 0);
     CHECK(g.conns[0].used == 0);
 
-    /* 新链路复用同一个 conn_idx，但代际不同：必须是新会话。 */
+    /* 重启后的客方用同一 player_id、新 conn_idx 代际重连：回收原席位。
+     * 大厅入口发 auto(2)，也必须回收，不能被当成显式旁观。 */
     memset(&j, 0, sizeof(j));
-    j.role = 0;
-    j.player_id = 0x3333;
+    j.role = 2;
+    j.player_id = 0x2222;
     j.room_id = g.room_id;
     CHECK(gy_net_pack_join_req(&m, &j) == GY_NET_OK);
     feed_host_gen(1, 2, &m);
     CHECK(g.room.view.player_count == 2);
     CHECK(g.conns[0].used == 1 && g.conns[0].gen == 2);
     CHECK(g.conns[0].token != old_token);
-    CHECK(g.room.view.guest_id == 0x3333);
+    CHECK(g.room.view.guest_id == 0x2222);
+    CHECK(g.room.seats[GY_NET_COLOR_BLUE].connected == 1);
+    CHECK(g.room.seats[GY_NET_COLOR_BLUE].ready == 0);
 
     /* 旧代际的迟到 READY 不能操作新客人。 */
     r.ready = 1;
@@ -647,7 +677,37 @@ static int test_starting_disconnect_releases_seat(void)
     host_link_down(1, 1);
     gy_net_app_tick(1010);
     CHECK(g.room.view.phase == GY_NET_PHASE_WAIT);
-    CHECK(g.room.view.player_count == 1);
+    CHECK(g.room.view.player_count == 2);   /* 保留 10s 等重连 */
+    gy_net_app_tick(11001);
+    CHECK(g.room.view.player_count == 1);   /* 超时释放 */
+    return 0;
+}
+
+static int test_expired_seat_not_spectator(void)
+{
+    GyNetJoinReq j;
+    GyNetMsg m;
+
+    CHECK(setup_host(0x2024) == 0);
+    CHECK(host_join_player(1) == 0);          /* player_id=0x2222 */
+    g.now = 1000;
+    host_link_down(1, 1);                     /* WAIT 保留 10s */
+    CHECK(g.room.view.player_count == 2);
+    /* 10s 已过但还没跑 room tick：JOIN 先到，必须先释放过期席位，
+     * 让客人正常成为玩家，而不是被降级旁观。 */
+    g.now = 11001;
+    memset(&j, 0, sizeof(j));
+    j.role = 2;                                /* auto */
+    j.player_id = 0x2222;
+    j.room_id = g.room_id;
+    CHECK(gy_net_pack_join_req(&m, &j) == GY_NET_OK);
+    feed_host_gen(1, 2, &m);
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.room.view.spectator_count == 0);
+    {
+        ConnMap *c = conn_find(1);
+        CHECK(c != NULL && c->role == GY_NET_ROLE_PLAYER);
+    }
     return 0;
 }
 
@@ -675,10 +735,11 @@ int main(void)
     if (test_client_countdown_from_starting_state()) return 20;
     if (test_ignore_state_from_other_room()) return 21;
     if (test_leave_clears_spectator_flag()) return 22;
-    if (test_link_gen_reuse_releases_old_session()) return 23;
+    if (test_link_gen_reuse_reclaims_seat()) return 23;
     if (test_immediate_leave_then_rejoin()) return 24;
     if (test_two_guests_one_leaves()) return 25;
     if (test_starting_disconnect_releases_seat()) return 26;
+    if (test_expired_seat_not_spectator()) return 28;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
