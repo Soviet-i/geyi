@@ -732,6 +732,8 @@ void gy_ui_action(int a)
     }
     if(a==GY_UI_NET_CONFIRM_YES){
         net_confirm_hide();
+        /* 认输即结束：先清本地预览，避免结果快照到达前还渲染旧预览盘面。 */
+        ready=0;placing=0;place_column=-1;direction=-1;gy_nav_clear(&nav);
         gy_net_app_resign();
         render();
         return;
