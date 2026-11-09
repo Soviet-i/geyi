@@ -571,7 +571,8 @@ int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_m
         if (host->seats[i].token == token && host->seats[i].connected) {
             /* 等待阶段还没有对局可恢复，直接释放席位；否则大厅会继续
              * 显示 2/2 直到 10 s 重连窗口结束，和实际可加入状态矛盾。 */
-            if (host->view.phase == GY_NET_PHASE_WAIT &&
+            if ((host->view.phase == GY_NET_PHASE_WAIT ||
+                 host->view.phase == GY_NET_PHASE_RESULT) &&
                 i == host->view.guest_color) {
                 release_guest(host);
                 host->view.seq++;

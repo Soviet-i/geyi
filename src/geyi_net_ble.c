@@ -122,6 +122,7 @@ static sibles_hdl g_srv;
 static uint16_t g_rmt_svc = 0;
 static uint8_t g_remote_svc_ok;
 static uint16_t g_rmt_start_hdl, g_rmt_end_hdl;
+static uint8_t  g_rmt_conn = 0xff;
 static uint16_t g_rx_val_hdl, g_tx_val_hdl, g_tx_cccd_hdl;
 static uint8_t g_cccd_ok;
 static uint8_t g_adv_active;
@@ -196,17 +197,21 @@ static void conn_free(uint8_t conn_idx)
             memset(&g_conn[i], 0, sizeof(g_conn[i]));
             memset(&g_frag[i], 0, sizeof(g_frag[i]));
         }
+    if (g_rmt_conn == conn_idx && g_rmt_start_hdl && g_rmt_end_hdl) {
+        /* 不注销会占满 SDK 的 remote service 槽位，多次进出房间后
+         * register 返回 0xFFFF，后续所有 JOIN 都写不出去。 */
+        sibles_unregister_remote_svc(conn_idx, g_rmt_start_hdl, g_rmt_end_hdl,
+                                     geyi_gattc_event);
+        g_rmt_conn = 0xff;
+        g_rmt_start_hdl = g_rmt_end_hdl = 0;
+        g_rmt_svc = 0;
+        g_remote_svc_ok = 0;
+        g_cccd_ok = 0;
+    }
     if (g_client_conn == conn_idx) {
-        if (g_rmt_start_hdl && g_rmt_end_hdl) {
-            /* 不注销会占满 SDK 的 remote service 槽位，多次进出房间后
-             * register 返回 0xFFFF，后续所有 JOIN 都写不出去。 */
-            sibles_unregister_remote_svc(conn_idx, g_rmt_start_hdl, g_rmt_end_hdl,
-                                         geyi_gattc_event);
-        }
         g_client_conn = 0xff;
         g_rmt_svc = 0;
         g_remote_svc_ok = 0;
-        g_rmt_start_hdl = g_rmt_end_hdl = 0;
         g_cccd_ok = 0;
     }
     c_unlock();
@@ -853,6 +858,7 @@ static int geyi_gattc_event(uint16_t event_id, uint8_t *data, uint16_t len)
     } else if (event_id == SIBLES_REGISTER_REMOTE_SVC_RSP) {
         sibles_register_remote_svc_rsp_t *rsp = (sibles_register_remote_svc_rsp_t *)data;
         BLE_LOG("remote svc registered conn=%d status=%d", rsp->conn_idx, rsp->status);
+        if (rsp->conn_idx != g_client_conn || !g_remote_svc_ok) return 0;
         if (rsp->status == 0 && g_tx_cccd_hdl) {
             sibles_write_remote_value_t v;
             uint8_t cccd[2] = {1, 0};
@@ -904,7 +910,20 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             c->role = ind->role;
             c->addr_type = ind->peer_addr_type;
             memcpy(c->addr, ind->peer_addr.addr, 6);
-            if (g_mode == 2) g_client_conn = ind->conn_idx;
+            if (g_mode == 2) {
+                /* 新连接不能沿用上一台的 handle/ready 状态。 */
+                if (g_rmt_start_hdl && g_rmt_conn != 0xff) {
+                    sibles_unregister_remote_svc(g_rmt_conn, g_rmt_start_hdl,
+                                                 g_rmt_end_hdl, geyi_gattc_event);
+                }
+                g_rmt_start_hdl = g_rmt_end_hdl = 0;
+                g_rmt_conn = 0xff;
+                g_rmt_svc = 0;
+                g_remote_svc_ok = 0;
+                g_cccd_ok = 0;
+                g_rx_val_hdl = g_tx_val_hdl = g_tx_cccd_hdl = 0;
+                g_client_conn = ind->conn_idx;
+            }
             sibles_exchange_mtu(ind->conn_idx);
             BLE_LOG("connected idx=%d role=%d", ind->conn_idx, ind->role);
             if (g_mode == 2)
@@ -932,6 +951,10 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         sibles_svc_search_rsp_t *rsp = (sibles_svc_search_rsp_t *)data;
         uint8_t i;
         uint8_t *p;
+        if (g_mode == 2 && rsp->conn_idx != g_client_conn) {
+            BLE_LOG("ignore stale search conn=%d", rsp->conn_idx);
+            break;
+        }
         BLE_LOG("search svc result=%d conn=%d chars=%d uuid_len=%d",
                 rsp->result, rsp->conn_idx, rsp->svc ? rsp->svc->char_count : -1,
                 rsp->svc ? rsp->svc->uuid_len : -1);
@@ -962,15 +985,17 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         g_cccd_ok = 0;
         g_remote_svc_ok = 0;
         if (g_rmt_start_hdl && g_rmt_end_hdl) {
-            sibles_unregister_remote_svc(rsp->conn_idx, g_rmt_start_hdl,
+            sibles_unregister_remote_svc(g_rmt_conn, g_rmt_start_hdl,
                                          g_rmt_end_hdl, geyi_gattc_event);
             g_rmt_start_hdl = g_rmt_end_hdl = 0;
+            g_rmt_conn = 0xff;
         }
         g_rmt_svc = sibles_register_remote_svc(rsp->conn_idx, rsp->svc->hdl_start,
                                                rsp->svc->hdl_end, geyi_gattc_event);
         if (g_rmt_svc != SIBLES_ERROR_REMOTE_HANDLE) {
             g_rmt_start_hdl = rsp->svc->hdl_start;
             g_rmt_end_hdl = rsp->svc->hdl_end;
+            g_rmt_conn = rsp->conn_idx;
             g_remote_svc_ok = 1;   /* 返回 0 是合法索引，不能用非零判断 */
         } else {
             BLE_LOG("remote svc register full");

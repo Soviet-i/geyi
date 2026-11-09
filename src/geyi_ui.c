@@ -340,10 +340,8 @@ static void net_confirm_show(int action)
 {
     if(!net_confirm_overlay)return;
     net_confirm_action=action;
-    lv_label_set_text(net_confirm_label,
-        action==1?"认输会让对手获胜，确定？":
-        action==2?"退出房间并返回大厅（对局中判负）？":
-        "退出并返回首页（对局中判负）？");
+    (void)action;
+    lv_label_set_text(net_confirm_label,"认输会让对手获胜，确定？");
     lv_obj_remove_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(net_confirm_overlay);
 }
@@ -590,11 +588,6 @@ void gy_ui_action(int a)
         int act=net_confirm_action;
         net_confirm_hide();
         if(act==1){gy_net_app_resign();render();}
-        else if(act==2){
-            gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);
-        }else if(act==3){
-            gy_net_app_leave();gy_net_app_lobby_stop();show_page(home_page);
-        }
         return;
     }
     if(a==GY_UI_NET){
@@ -636,10 +629,6 @@ void gy_ui_action(int a)
         param_refresh();return;
     }
     if(a==GY_UI_HOME){
-        if(gy_net_app_active()&&net_game_active&&!gy_net_app_is_spectator()&&
-           gy_net_app_phase()==GY_NET_PHASE_PLAYING){
-            net_confirm_show(3);return;
-        }
         if(gy_net_app_active())gy_net_app_leave();
         gy_net_app_lobby_stop();
         ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);return;
@@ -668,8 +657,15 @@ void gy_ui_action(int a)
     if(a==GY_UI_PREP_START){
         ai_side=prep_human_red?1:0;game_mode=GY_MODE_PVE;show_page(game_page);a=GY_UI_RESTART;
     }
-    if(a==GY_UI_RESIGN&&!gy_net_app_active()&&game.outcome){
-        ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);return;
+    if(a==GY_UI_RESIGN&&!gy_net_app_active()){
+        if(game.outcome){ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);}
+        else if(playing){
+            gy_resign(&game);ready=0;placing=0;direction=-1;
+            if(game.outcome)feedback=game.outcome==GY_RED_WIN?GY_FX_RED:
+                game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
+            render();
+        }
+        return;
     }
     if(!playing)return;
     if(gy_net_app_active()&&net_game_active){
@@ -727,7 +723,7 @@ void gy_ui_action(int a)
         ready=0;placing=0;place_column=-1;
         if(game.coins[game.turn]>=game.config.cost)placing=1;
         else {char msg[48];lv_snprintf(msg,sizeof(msg),"需要%d金币才能放置",game.config.cost);status(msg);}
-    } else if(a==GY_UI_RESIGN) {gy_resign(&game);ready=0;placing=0;}
+    }
     if(!old_outcome&&game.outcome)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
     else if(a==GY_UI_CONFIRM&&game.revision!=old_revision)feedback=GY_FX_MOVE;
