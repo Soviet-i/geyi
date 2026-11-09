@@ -6,7 +6,7 @@
 == resign sync ==
 == edge churn ==
 == reboot reclaim (WAIT) ==
-B rebooted in 4.0s
+B rebooted in 3.9s
 == reboot reclaim (PLAYING) ==
 B rebooted during PLAYING in 4.1s
 == transient rejoin ==
