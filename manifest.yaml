@@ -16,8 +16,8 @@ submission:
   student_id: "2024211401"
   student_name: "蔡融汉"
   group_id: "G8"
-  milestone: "文档补全分支 docs/req-5xx-gap-fill（基于最新 develop；合并联机文档基线，补 L1–L4/用户交互/历史计时/三图/测试/CI）——不申报新里程碑；联机与历史/计时均未实现"
-  submitted_at: "2026-11-08T18:00:00+08:00"
+  milestone: "M3 功能完成（feat/req-5xx-net-core；联机、游戏规则页与圆角安全区已实现；不申报新里程碑）"
+  submitted_at: "2026-11-09T14:20:00+08:00"
 
 dev_agent:
   tool: "Claude Code"
@@ -89,7 +89,7 @@ design:
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
   # 以交接时 HEAD 为准；本次文档状态校准提交也包含在范围内
-  commit_range: "2fdf970..HEAD（feat/req-5xx-net-core；2026-11-09 联机房间修复与双板完整套件；封版 tag 记精确 SHA）"
+  commit_range: "8dae6a0..192cbe4（feat/req-5xx-net-core；2026-11-09 第四轮首页/规则页/圆角安全区与双板自动验证；封版 tag 记精确 SHA）"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
