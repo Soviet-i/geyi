@@ -148,6 +148,11 @@ physical_verification:
     executed_at: "2026-11-09（sftool 烧录 COM7/COM8；脚本通过串口 shell 命令模拟 UI 动作）"
     evidence_path: "evidence/net/20261109/board_suite_final.log"
     agent_conclusion: "PASS：A=`F33A`、B=`03EA` 唯一 ID；空位只显示“点击交换”、房主名带 `(房主)`、无 `(对手)`；准备只影响本座位；完整对局到 phase=3 且 A/B result 一致；客方退出后房主立即 1/2、重进仍为玩家；单人房主退出后大厅 rooms=0；双人房主退出后客方 active=1/hostid 变为自己；过期房间点击不接管；旁观 role=2/255 且退出后观战数归零。真实像素居中/右下角、触摸手感、10 s 断线重连、房主掉电、容量 P-02 仍未执行。"
+  - item: "REQ-501/505/506 房间循环、倒计时与延迟（2026-11-09 第二轮）"
+    required_action: "运行 tools/net_latency_test.py 复现并复测加入/关房延迟；双板套件验证 RESULT 后回同一房间开第二局、3/2/1 倒计时、旁观无准备"
+    executed_at: "2026-11-09（sftool 烧录 COM7/COM8；latency 修复前后各测一次，套件复测）"
+    evidence_path: "evidence/net/20261109/latency/latency_after_fix.log"
+    agent_conclusion: "修复前 join=4.07s、close=3.66s（FAIL）；修复连接间隔 0x06/0x08、关房 CLOSED 广播、TTL 1.5s、JOIN 提前发送后 join=1.06s、close=0.41s、leave=0.43s（PASS）。双板套件 PASS：结算 phase 3→0 房间保留、双方再准备开第二局、倒计时 cd=3/2/1、旁观 readybtn=0。绿色/弹窗/真实触摸/像素仍需学生目测；断线重连故障注入/容量未做。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -225,19 +230,19 @@ test_results:
   - test_id: "TC-501~TC-513-HOST"
     description: "联机主机纯逻辑测试（REQ-501~REQ-513 主机段）"
     expected: "net_proto 编解码/版本/seq/截断；net_room 准备/开局/落子/放兵/拒绝/断线/重连/旁观路由；大厅 TTL；内存管道"
-    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-tests 272 checks PASS（协议 v2/UID/等待期即时释放/房主转移/auto 角色）；已覆盖协议、房间状态机、大厅 TTL、内存管道；BLE/UI/双板/容量属物理或桌面段"
+    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-tests 291 checks PASS（协议 v2/UID/等待期即时释放/房主转移/auto 角色/结算回房/第二局/倒计时）；已覆盖协议、房间状态机、大厅 TTL、内存管道；BLE/UI/双板/容量属物理或桌面段"
     pass: true
     evidence_path: "evidence/net/20261108/host_test_final.log"
   - test_id: "TC-504~TC-511-APP"
     description: "联机 app 路由测试（REQ-504~REQ-511 app 段）"
     expected: "交换红蓝后的 READY/MOVE 颜色、ROOM_STATE 与 SNAPSHOT 同 seq、MOVE_REQ 幂等、对局中 LEAVE 判负、重复 JOIN、满员大厅规则"
-    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-app-tests 150 checks PASS（新增按座位 ready、UID、关房、stale 房间、auto 角色、满员旁观降级）；真实像素/触摸与断线重连仍未执行"
+    actual: "2026-11-09 运行 python tools/run_host.py：geyi-net-app-tests 159 checks PASS（按座位 ready、UID、关房、stale 房间、auto 角色、REJOIN 拒绝 fresh JOIN、客户端 ready 同步、倒计时）；真实像素/触摸与断线重连仍未执行"
     pass: true
     evidence_path: "evidence/net/20261108/host_test_final.log"
   - test_id: "FW-BUILD-NET"
     description: "联机 BLE/UI 接入固件编译（REQ-513）"
     expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
-    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,060,644 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/断线重连/容量可用"
+    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,063,356 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/断线重连/容量可用"
     pass: true
     evidence_path: "evidence/net/20261108/firmware_build_final.log"
   - test_id: "TC-513-04-BOOT"
@@ -284,9 +289,9 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-08 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输（自定义 GATT/广播/扫描/分片）、net_app 与大厅/房间/对局/旁观 UI（253 + app 70 checks PASS，固件 1,056,484 B + LCPU 6,384 B）；双方板启动与双板 BLE 自动冒烟通过。真实触摸 UI 视觉/操作、旁观、预览私密、断线重连、容量 P-02 未执行，不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
-  - "【2026-11-08 当前】联机固件首次烧录 STKOF 已修复；BLE bring-up 另修：AddLCPU 生成 LCPU 控制器镜像、GATT 注册从 BLE 事件回调移到主线程、服务 UUID 字节序/远端索引 0/JOIN 重发。失败与修复日志均在 evidence/net/20261108/board/。"
-  - "【2026-11-08 当前】自动冒烟只覆盖两名玩家各一步；真实触摸 UI、旁观者加入/双方预览叠加、断线重连、房主掉线提示、主动退出判负、完整对局/结算、P-02 容量均未执行。"
+  - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（291 + app 159 checks PASS，固件 1,063,356 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间），延迟 join 1.06s、close 0.41s。真实像素/触摸、断线重连、容量 P-02 未执行，不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
+  - "【2026-11-09 当前】联机固件首次 STKOF、AddLCPU/GATT 自锁/UUID/索引 0/JOIN 重发已修复；本轮另修连接间隔 120–160ms 导致的 4s 加入卡顿、关房只靠 3s TTL、结算后 CLOSED 导致无法开第二局、客方 ready 残留。失败与修复日志在 evidence/net/20261108/board/ 与 evidence/net/20261109/。"
+  - "【2026-11-09 当前】双板套件覆盖完整对局/结算回房/第二局/倒计时/旁观只读；未覆盖真实触摸弹窗操作、双方预览叠加、10s 断线重连、房主掉电、双旁观者模式切换、P-02 容量；延迟只在本次双板环境测得，不宣称所有环境。"
   - "【2026-11-08 当前】历史板端证据来自旧构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；当前联机固件 1,056,484 B + LCPU 6,384 B，已完成双板自动冒烟但未做完整 UI/旁观/重连验收。"
   - "【2026-11-08 当前】REQ-407/410 参数生效只验证了启动自检，TC-406 板端段（SPAWN=3、size=5/7、缓冲 0/50、AI 层数 6）未执行。"
   - "【2026-11-08 当前】TC-303-05 单兵板端、REQ-316 的 500ms/单次提交/取消、串口 ai=PASS、倾斜正确率/真实延迟、390×450 帧率、AI 板端耗时/栈、24h soak 仍缺。"
