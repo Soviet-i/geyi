@@ -54,11 +54,7 @@ GyInputEvent gy_input_update(GyInput *s,int x,int y,int key,uint32_t now,const i
         }
     }
     ax=abs(x);ay=abs(y);magnitude=ax>ay?ax:ay;
-    /* 幅度滞回：静止起手用进入门限（10 度），已跟踪某方向时用退出门限（6 度）。
-     * 改造前两者同为 1000，手一抖跌破 10 度就 clear_selection 发 CANCEL，
-     * 预览瞬间消失再重新计 200ms，表现为"棋子跳一下就回原位、多数时候没反应"。
-     * 实际退出还受数量档位滞回影响（count 1→0 约需跌破 7.5 度），两者取更晚发生者。 */
-    if(magnitude<=(s->pending_direction>=0?GY_INPUT_TILT_OFF:GY_INPUT_TILT_ON)) {
+    if(magnitude<=1000) {
         clear_selection(s,&e);s->latched=0;return e;
     }
     if(s->latched) return e;

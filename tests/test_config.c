@@ -60,8 +60,7 @@ static int test_defaults(void)
         CHECK(s.size == 6 && s.hp == 8 && s.attack == 2 && s.cost == 4);
         CHECK(s.merge_reward == 1 && s.kill_reward == 2);
         CHECK(s.spawn_interval == 1);      /* 改造前：每次移动都生成 */
-        CHECK(s.dir_buffer == 25);         /* 2026-11-09 调优：10→25，见 docs/07 的 preview_available_bp */
-        CHECK(s.angle_buffer == 10);       /* 角度缓冲仍为改造前的 10% */
+        CHECK(s.dir_buffer == 10 && s.angle_buffer == 10);  /* 改造前硬编码 10% */
     }
     return 0;
 }
