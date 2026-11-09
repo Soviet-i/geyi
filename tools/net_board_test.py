@@ -219,6 +219,10 @@ def create_and_join(a: Board, b: Board) -> tuple[dict[str, str], dict[str, str]]
             time.sleep(1.0)
     require(joined, "player join failed")
     sa = wait_state(a, lambda s: s.get("players") == "2", 4, "see guest")
+    # JOIN_ACK 与 ROOM_STATE 是两包；等客方应用房主状态后再返回，避免
+    # 测试在 ACK 已到、STATE 还在空中的一帧内读到 hostid=0000。
+    sb = wait_state(b, lambda s: s.get("players") == "2" and
+                    int(s.get("hostid", "0"), 16) != 0, 4, "client state sync")
     return sa, sb
 
 
@@ -574,6 +578,11 @@ def test_reboot_reclaim_playing(a: Board, b: Board) -> None:
                     s.get("peer") == "0" and int(s.get("reconn", "0")) > 0,
                     8, "host PLAYING reconnect window")
     require(sa.get("players") == "2", f"host released PLAYING seat too early: {sa}")
+    va = a.view(timeout=3)
+    require(va is not None and va.get("reconn") == "1",
+            f"game page did not show reconnect banner: {va}")
+    require("重连" in va.get("reconn_text", ""),
+            f"game page reconnect text wrong: {va}")
 
     sb = lobby_and_join(b)
     require(sb.get("role") == "1" and sb.get("local") == old_local,
@@ -587,6 +596,9 @@ def test_reboot_reclaim_playing(a: Board, b: Board) -> None:
                     s.get("peer") == "1" and s.get("reconn") == "0",
                     5, "host sees PLAYING rejoin")
     require(sa.get("phase") == "2", f"host left PLAYING: {sa}")
+    va = a.view(timeout=3)
+    require(va is not None and va.get("reconn") == "0",
+            f"game page reconnect banner stayed after rejoin: {va}")
     with a.lock:
         aseg = a.lines[amark:]
     require(any("join reclaim" in line for line in aseg),
