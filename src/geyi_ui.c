@@ -390,18 +390,38 @@ static void net_room_refresh(void)
     }
 }
 static int net_result_shown=-1;
+static const char *net_side_tag(int color)
+{
+    int rel=gy_net_app_side_relation(color);
+    return rel==1?"(你)":rel==0?"(对方)":"";
+}
+/* 结算文案统一从“座位关系”生成，不能再用 local_turn()：
+ * 它包含 phase/断线门控，RESULT 时恒为 0，会把本机写成“对方”。 */
+static void net_result_text(char *buf,int cap,int result,const char *tail)
+{
+    const char *base=result==GY_RED_WIN?"红方胜":
+                     result==GY_BLUE_WIN?"蓝方胜":
+                     result==GY_DRAW?"平局":"对局结束";
+    int side=result==GY_RED_WIN?GY_NET_COLOR_RED:
+             result==GY_BLUE_WIN?GY_NET_COLOR_BLUE:GY_NET_COLOR_NONE;
+    lv_snprintf(buf,cap,"%s%s%s",base,
+                side==GY_NET_COLOR_NONE?"":net_side_tag(side),
+                tail?tail:"");
+}
 static void net_result_show(int result)
 {
     const char *title=(result==GY_RED_WIN)?"RED WIN":
                        (result==GY_BLUE_WIN)?"BLUE WIN":
                        (result==GY_DRAW)?"DRAW":"GAME OVER";
-    const char *sub=(result==GY_RED_WIN)?"红方获胜,即将返回房间":
-                     (result==GY_BLUE_WIN)?"蓝方获胜,即将返回房间":
-                     (result==GY_DRAW)?"平局,即将返回房间":"即将返回房间";
+    char sub[80];
+    int rel=result==GY_RED_WIN?gy_net_app_side_relation(GY_NET_COLOR_RED):
+            result==GY_BLUE_WIN?gy_net_app_side_relation(GY_NET_COLOR_BLUE):-1;
+    int key=result*4+(rel+1);
+    net_result_text(sub,sizeof(sub),result,",即将返回房间");
     if(!net_result_overlay)return;
-    if(net_result_shown==result &&
+    if(net_result_shown==key &&
        !lv_obj_has_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN))return;
-    net_result_shown=result;
+    net_result_shown=key;
     lv_label_set_text(net_result_title,title);
     lv_label_set_text(net_result_sub,sub);
     if(net_reconn_overlay)lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
@@ -448,6 +468,7 @@ static void render(void)
     const char *outcomes[]={"","红方胜","蓝方胜","平局"};
     const char *dirs[]={"上","右","下","左"};
     int x,y,size=game.config.size;char value[80];
+    int shown_result=gy_net_app_active()?gy_net_app_result():game.outcome;
     if(size<GY_SIZE_MIN||size>GY_SIZE_MAX)size=6;
     if(resign_button){
         lv_obj_t *l=lv_obj_get_child(resign_button,0);
@@ -458,8 +479,13 @@ static void render(void)
         else lbl=game.outcome?"返回首页":"认输";
         if(l)lv_label_set_text(l,lbl);
     }
-    if(game.outcome)lv_label_set_text(turn_label,outcomes[game.outcome]);
-    else if(gy_net_app_active()){
+    {
+        int netres=gy_net_app_active()?gy_net_app_result():game.outcome;
+        if(netres){
+            net_result_text(value,sizeof(value),netres,"");
+            lv_label_set_text(turn_label,value);
+        }
+        else if(gy_net_app_active()){
         int reconn=gy_net_app_reconnect_seconds();
         if(reconn>0){
             lv_snprintf(value,sizeof(value),"%s 重连中 %ds",
@@ -468,16 +494,17 @@ static void render(void)
         }
         else if(gy_net_app_local_terminal())lv_label_set_text(turn_label,"对方断线");
         else{
-            lv_snprintf(value,sizeof(value),"%s回合 %s",game.turn?"蓝方":"红方",
-                gy_net_app_is_spectator()?"旁观":(gy_net_app_local_turn()?"(你)":"(对方)"));
+            lv_snprintf(value,sizeof(value),"%s回合%s",game.turn?"蓝方":"红方",
+                gy_net_app_is_spectator()?"旁观":net_side_tag(game.turn));
             lv_label_set_text(turn_label,value);
         }
-    }else if(ai_side>=0){
+            }else if(ai_side>=0){
         lv_snprintf(value,sizeof(value),"%s回合%s",game.turn?"蓝方":"红方",game.turn==ai_side?"(AI)":"(你)");
         lv_label_set_text(turn_label,value);
     }else lv_label_set_text(turn_label,game.turn?"蓝方回合":"红方回合");
-    lv_obj_set_style_text_color(turn_label,lv_color_hex(game.outcome==GY_DRAW?0xffdc79:
-        color(game.outcome==GY_RED_WIN?0:game.outcome==GY_BLUE_WIN?1:game.turn)),0);
+    }
+    lv_obj_set_style_text_color(turn_label,lv_color_hex(shown_result==GY_DRAW?0xffdc79:
+        color(shown_result==GY_RED_WIN?0:shown_result==GY_BLUE_WIN?1:game.turn)),0);
     lv_snprintf(value,sizeof(value),"红方 %d 金币    蓝方 %d 金币",game.coins[0],game.coins[1]);
     lv_label_set_text(money_label,value);
     {int displayed=ready&&!placing?selected_count:amount;
@@ -525,7 +552,12 @@ static void render(void)
                                            "本局结束,点右上角返回首页");
     else if(gy_net_app_active()){
         int reconn=gy_net_app_reconnect_seconds();
-        if(reconn>0){
+        int netres=gy_net_app_result();
+        if(netres){
+            net_result_text(value,sizeof(value),netres,",即将返回房间");
+            status(value);
+        }
+        else if(reconn>0){
             lv_snprintf(value,sizeof(value),
                 gy_net_app_role()==GY_NET_ROLE_HOST?"等待对手重连 %ds":"连接中断 重连中 %ds",
                 reconn);
@@ -1367,6 +1399,10 @@ static void run_test_command(void)
                    net_reconn_overlay&&!lv_obj_has_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN));
         GY_TEST_LOG("[gy_test] view reconn_text=%s\n",
                    net_reconn_label?lv_label_get_text(net_reconn_label):"");
+        GY_TEST_LOG("[gy_test] view turn=%s\n",
+                   turn_label?lv_label_get_text(turn_label):"");
+        GY_TEST_LOG("[gy_test] view result=%s\n",
+                   net_result_sub?lv_label_get_text(net_result_sub):"");
         GY_TEST_LOG("[gy_test] ui rules=%d page=%d corner=%d rbottom=%d playing=%d\n",
                    gy_ui_rules_active(),gy_ui_rules_page(),
                    gy_ui_corner_clip_count(48),gy_ui_rules_content_bottom(),

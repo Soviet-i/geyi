@@ -58,6 +58,9 @@ int gy_net_app_peer_online(void);
 int gy_net_app_reconnect_seconds(void);
 /* 座位是否在线；房主用本地 seat.connected，客方用本机链路状态。 */
 int gy_net_app_seat_online(int color);
+/* 颜色与“本机”的关系：1=本机座位，0=对方，-1=旁观/无本地座位。
+ * 只描述身份，不随 phase/回合/断线变化；不要拿 local_turn() 当身份用。 */
+int gy_net_app_side_relation(int color);
 int gy_net_app_host_adv_active(void); /* 房主是否仍在发可连接广播（测试/诊断） */
 int gy_net_app_local_terminal(void);
 int gy_net_app_join_rejected(void);

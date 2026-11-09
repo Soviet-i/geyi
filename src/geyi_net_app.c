@@ -1421,6 +1421,12 @@ int gy_net_app_reconnect_seconds(void)
     if (s > 10) s = 10;
     return s;
 }
+int gy_net_app_side_relation(int color)
+{
+    if (!g.active || !color_valid((uint8_t)color)) return -1;
+    if (g.role == GY_NET_ROLE_SPECTATOR || !color_valid(g.local_color)) return -1;
+    return color == g.local_color ? 1 : 0;
+}
 int gy_net_app_seat_online(int color)
 {
     if (!gy_net_app_seat_occupied(color)) return 0;
