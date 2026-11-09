@@ -57,23 +57,26 @@ static int test_proto_typed(void)
               o.spectators == 1 && o.max_spectators == 2);
     }
     {
-        GyNetJoinReq v = {GY_NET_ROLE_PLAYER, 5}, o;
-        GyNetJoinAck a = {GY_NET_COLOR_BLUE, 1, 99, 5, 8}, ao;
+        GyNetJoinReq v = {GY_NET_ROLE_PLAYER, 0xABCD, 5}, o;
+        GyNetJoinAck a = {GY_NET_COLOR_BLUE, 1, 0xABCD, 99, 5, 8}, ao;
         GyNetJoinReject r = {GY_NET_ERR_FULL}, ro;
         CHECK(gy_net_pack_join_req(&m, &v) == GY_NET_OK);
-        CHECK(gy_net_unpack_join_req(&m, &o) == GY_NET_OK && o.role == v.role && o.room_id == 5);
+        CHECK(gy_net_unpack_join_req(&m, &o) == GY_NET_OK && o.role == v.role &&
+              o.player_id == 0xABCD && o.room_id == 5);
         CHECK(gy_net_pack_join_ack(&m, &a) == GY_NET_OK);
-        CHECK(gy_net_unpack_join_ack(&m, &ao) == GY_NET_OK && ao.token == 99 && ao.seq == 8);
+        CHECK(gy_net_unpack_join_ack(&m, &ao) == GY_NET_OK && ao.token == 99 &&
+              ao.player_id == 0xABCD && ao.seq == 8);
         CHECK(gy_net_pack_join_reject(&m, &r) == GY_NET_OK);
         CHECK(gy_net_unpack_join_reject(&m, &ro) == GY_NET_OK &&
               ro.reason == (uint8_t)GY_NET_ERR_FULL);
     }
     {
         GyNetRoomState v = {GY_NET_PHASE_STARTING, GY_NET_COLOR_RED, GY_NET_COLOR_BLUE,
-                            1, 0, 2, 1, 5, 12}, o;
+                            1, 0, 2, 1, 0x1111, 0x2222, 5, 12}, o;
         CHECK(gy_net_pack_room_state(&m, &v) == GY_NET_OK);
         CHECK(gy_net_unpack_room_state(&m, &o) == GY_NET_OK);
         CHECK(o.phase == v.phase && o.host_ready == 1 && o.spectator_count == 1 &&
+              o.host_id == 0x1111 && o.guest_id == 0x2222 &&
               o.room_id == 5 && o.seq == 12);
     }
     {
@@ -173,7 +176,7 @@ static int test_lobby(void)
 static int start_game(GyNetRoom *host, uint32_t *player_token)
 {
     uint8_t color = GY_NET_COLOR_NONE;
-    CHECK(gy_net_room_join(host, GY_NET_ROLE_PLAYER, 0, player_token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_join(host, GY_NET_ROLE_PLAYER, 0, 0, player_token, &color) == GY_NET_OK);
     CHECK(color == GY_NET_COLOR_BLUE);
     CHECK(gy_net_room_set_ready(host, GY_NET_COLOR_RED, 1, 10) == GY_NET_OK);
     CHECK(gy_net_room_set_ready(host, GY_NET_COLOR_BLUE, 1, 20) == GY_NET_OK);
@@ -192,10 +195,10 @@ static int test_room_join_ready_start(void)
     uint8_t c1 = GY_NET_COLOR_NONE, c2 = GY_NET_COLOR_NONE;
 
     gy_net_room_init_host(&host, 1001, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &t1, &c1) == GY_NET_OK);
     CHECK(c1 == GY_NET_COLOR_BLUE && t1 != 0);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t2, &c2) == GY_NET_ERR_FULL);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, &t2, &c2) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &t2, &c2) == GY_NET_ERR_FULL);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, 0, &t2, &c2) == GY_NET_OK);
     CHECK(c2 == GY_NET_COLOR_NONE && t2 != 0);
     CHECK(host.view.spectator_count == 1);
 
@@ -247,7 +250,7 @@ static int test_room_swap_and_leave(void)
 
     gy_net_room_init_host(&host, 1002, 0, 2);
     host_token = host.seats[host.view.host_color].token;
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &t1, &c1) == GY_NET_OK);
     CHECK(gy_net_room_swap_seats(&host) == GY_NET_OK);
     CHECK(host.view.host_color == GY_NET_COLOR_BLUE);
     CHECK(host.view.guest_color == GY_NET_COLOR_RED);
@@ -259,7 +262,8 @@ static int test_room_swap_and_leave(void)
     CHECK(gy_net_room_swap_seats(&host) == GY_NET_ERR_STATE);
 
     gy_net_room_init_host(&host, 1003, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &t1, &c1) == GY_NET_OK);
+    /* 两人房间：房主主动退出要把房主转给客人，房间继续存在。 */
     CHECK(gy_net_room_leave(&host, host.view.host_color, 10) == GY_NET_LEAVE_PROMOTED);
     CHECK(host.view.host_color == GY_NET_COLOR_BLUE && host.view.player_count == 1);
     CHECK(host.view.phase == GY_NET_PHASE_WAIT);
@@ -279,7 +283,7 @@ static int test_room_swap_and_leave(void)
     CHECK(host.seats[GY_NET_COLOR_BLUE].role == GY_NET_ROLE_HOST);
     CHECK(host.seats[GY_NET_COLOR_BLUE].token == host_token);
     CHECK(host.seats[GY_NET_COLOR_RED].token == 0);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 20, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 20, &t1, &c1) == GY_NET_OK);
     CHECK(c1 == GY_NET_COLOR_RED);
     CHECK(host.view.player_count == 2);
     return 0;
@@ -351,7 +355,7 @@ static int test_room_state_sync(void)
     uint8_t color = GY_NET_COLOR_NONE;
 
     gy_net_room_init_host(&host, 1011, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &token, &color) == GY_NET_OK);
     gy_net_room_state(&host, &state);
     gy_net_room_init_client(&client, 1011, 0);
     CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
@@ -372,7 +376,7 @@ static int test_preview_privacy(void)
     uint8_t color = GY_NET_COLOR_NONE;
 
     gy_net_room_init_host(&host, 1006, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &token, &color) == GY_NET_OK);
     memset(&p, 0, sizeof(p));
     p.side = GY_NET_COLOR_RED;
     p.direction = GY_UP;
@@ -416,21 +420,22 @@ static int test_disconnect_rejoin(void)
     CHECK(host.view.result_reason == GY_NET_REASON_DISCONNECT);
     CHECK(gy_net_room_rejoin(&host, token, 8, 30001, &color) == GY_NET_ERR_TOKEN);
 
-    /* 等待阶段断线只释放席位，不判负。 */
+    /* 等待阶段断线立即释放席位（没有可恢复的对局），不判负。 */
     gy_net_room_init_host(&host, 1008, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &token, &color) == GY_NET_OK);
     CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
-    CHECK(gy_net_room_tick(&host, 11001) == 1);
     CHECK(host.view.player_count == 1);
+    CHECK(gy_net_room_tick(&host, 11001) == 0);
     CHECK(host.view.phase == GY_NET_PHASE_WAIT);
     CHECK(host.view.result == GY_PLAYING);
+    CHECK(gy_net_room_rejoin(&host, token, 0, 11001, &color) == GY_NET_ERR_TOKEN);
 
-    /* 旁观者断线不冻结对局，超时移除。 */
+    /* 等待阶段旁观者断线也立即释放，大厅人数不再滞后。 */
     gy_net_room_init_host(&host, 1009, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, &token, &color) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, 0, &token, &color) == GY_NET_OK);
     CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
-    CHECK(gy_net_room_tick(&host, 11001) == 1);
     CHECK(host.view.spectator_count == 0);
+    CHECK(gy_net_room_tick(&host, 11001) == 0);
     return 0;
 }
 
@@ -476,7 +481,7 @@ static int test_starting_disconnect_and_spectator_slot(void)
     uint8_t c1 = GY_NET_COLOR_NONE, c2 = GY_NET_COLOR_NONE;
 
     gy_net_room_init_host(&host, 1014, 0, 2);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &t1, &c1) == GY_NET_OK);
     CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_RED, 1, 10) == GY_NET_OK);
     CHECK(gy_net_room_set_ready(&host, GY_NET_COLOR_BLUE, 1, 20) == GY_NET_OK);
     CHECK(host.view.phase == GY_NET_PHASE_STARTING);
@@ -486,16 +491,12 @@ static int test_starting_disconnect_and_spectator_slot(void)
     CHECK(gy_net_room_tick(&host, 11001) == 1);
     CHECK(host.view.player_count == 1);            /* 等待期超时只释放席位 */
 
-    /* 旁观者 10s 重连窗口内不能被新旁观者顶掉 token。 */
+    /* 等待阶段旁观断线立即释放槽位，新旁观者可以直接加入。 */
     gy_net_room_init_host(&host, 1015, 0, 1);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, &t1, &c1) == GY_NET_OK);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, 0, &t1, &c1) == GY_NET_OK);
     CHECK(gy_net_room_disconnect_token(&host, t1, 1000) == GY_NET_OK);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 2000, &t2, &c2) == GY_NET_ERR_FULL);
-    CHECK(gy_net_room_rejoin(&host, t1, 0, 2000, &c1) == GY_NET_OK);
-    CHECK(c1 == GY_NET_COLOR_NONE);
-    CHECK(gy_net_room_disconnect_token(&host, t1, 3000) == GY_NET_OK);
-    CHECK(gy_net_room_tick(&host, 14000) == 1);
-    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 14001, &t2, &c2) == GY_NET_OK);
+    CHECK(host.view.spectator_count == 0);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, 2000, &t2, &c2) == GY_NET_OK);
     return 0;
 }
 

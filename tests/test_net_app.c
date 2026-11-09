@@ -27,7 +27,22 @@ static int host_join_player(uint8_t conn)
 {
     GyNetJoinReq j;
     GyNetMsg m;
+    memset(&j, 0, sizeof(j));
     j.role = 0;
+    j.player_id = 0x2222;
+    j.room_id = g.room_id;
+    CHECK(gy_net_pack_join_req(&m, &j) == GY_NET_OK);
+    feed_host(conn, &m);
+    return 0;
+}
+
+static int host_join_role(uint8_t conn, uint8_t role, uint16_t player_id)
+{
+    GyNetJoinReq j;
+    GyNetMsg m;
+    memset(&j, 0, sizeof(j));
+    j.role = role;
+    j.player_id = player_id;
     j.room_id = g.room_id;
     CHECK(gy_net_pack_join_req(&m, &j) == GY_NET_OK);
     feed_host(conn, &m);
@@ -173,6 +188,129 @@ static int test_duplicate_join_same_conn(void)
     return 0;
 }
 
+static int test_seat_ready_independent(void)
+{
+    CHECK(setup_host(0x2006) == 0);
+    gy_net_room_set_player_id(&g.room, g.room.view.host_color, 0xAAAA);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_RED) == 0);
+    CHECK(gy_net_app_set_ready(1) == 1);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_RED) == 1);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_BLUE) == 0);
+    CHECK(gy_net_app_host_ready() == 1 && gy_net_app_guest_ready() == 0);
+
+    CHECK(host_join_player(1) == 0);
+    CHECK(gy_net_app_seat_id(GY_NET_COLOR_RED) == 0xAAAA);
+    CHECK(gy_net_app_seat_id(GY_NET_COLOR_BLUE) == 0x2222);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_RED) == 1);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_BLUE) == 0);
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_BLUE) == 1);
+    CHECK(gy_net_app_seat_ready(GY_NET_COLOR_RED) == 1);
+    return 0;
+}
+
+static int test_host_leave_closes_and_client_sees_closed(void)
+{
+    GyNetRoomState s;
+    GyNetMsg m;
+
+    CHECK(setup_host(0x2007) == 0);
+    CHECK(host_join_player(1) == 0);
+    gy_net_app_leave();
+    CHECK(g.active == 0);
+    CHECK(g.room.view.room_id == 0);   /* app 层已清空房间，不能继续被接管 */
+
+    /* 客方收到 CLOSED 后不能接管房间，而是提示“房间不存在”。 */
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.room_id = 0x3007;
+    g.room_count = 1;
+    memset(&g.rooms[0], 0, sizeof(g.rooms[0]));
+    g.rooms[0].room_id = g.room_id;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    memset(&s, 0, sizeof(s));
+    s.phase = GY_NET_PHASE_CLOSED;
+    s.host_color = GY_NET_COLOR_RED;
+    s.guest_color = GY_NET_COLOR_BLUE;
+    s.seq = 3;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.active == 0);
+    CHECK(g.join_rejected == 1);
+    CHECK(g.join_reason == GY_NET_JOIN_REASON_NOT_FOUND);
+    CHECK(g.room_count == 0);
+    return 0;
+}
+
+static int test_stale_lobby_room_rejected(void)
+{
+    gy_net_app_init();
+    g.now = 20000;
+    g.room_count = 1;
+    memset(&g.rooms[0], 0, sizeof(g.rooms[0]));
+    g.rooms[0].room_id = 0x3008;
+    g.rooms[0].players = 1;
+    g.rooms[0].seen_ms = 1000;   /* 19s 前的摘要 */
+    CHECK(gy_net_app_join_index(0) == -1);
+    CHECK(g.join_rejected == 1);
+    CHECK(g.join_reason == GY_NET_JOIN_REASON_NOT_FOUND);
+    CHECK(g.room_count == 0);
+    return 0;
+}
+
+static int test_full_player_join_downgrades_to_spectator(void)
+{
+    CHECK(setup_host(0x2009) == 0);
+    CHECK(host_join_player(1) == 0);
+    CHECK(host_join_player(2) == 0);   /* 房间已满：降级为旁观 */
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.room.view.spectator_count == 1);
+    CHECK(g.conns[1].used == 1);
+    CHECK(g.conns[1].role == GY_NET_ROLE_SPECTATOR);
+    return 0;
+}
+
+static int test_auto_role_uses_actual_space(void)
+{
+    CHECK(setup_host(0x200A) == 0);
+    CHECK(host_join_role(1, 2, 0x3333) == 0);   /* auto：1/2 -> 玩家 */
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.conns[0].role == GY_NET_ROLE_PLAYER);
+    CHECK(host_join_role(2, 2, 0x4444) == 0);   /* auto：满员 -> 旁观 */
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.room.view.spectator_count == 1);
+    CHECK(g.conns[1].role == GY_NET_ROLE_SPECTATOR);
+    return 0;
+}
+
+static int test_guest_takeover_when_state_lost(void)
+{
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.token = 0x7777;
+    g.local_player_id = 0x2222;
+    g.room_id = 0x200B;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    g.room.view.host_color = GY_NET_COLOR_RED;
+    g.room.view.guest_color = GY_NET_COLOR_BLUE;
+    g.room.view.player_count = 2;
+    g.room.view.phase = GY_NET_PHASE_WAIT;
+    g.dropped = 1;
+    g.drop_at = 0;
+    g.last_rx = 0;
+    g.now = 3000;
+    gy_net_app_tick(3000);
+    CHECK(g.active == 1);
+    CHECK(g.role == GY_NET_ROLE_HOST);
+    CHECK(g.local_color == GY_NET_COLOR_BLUE);
+    CHECK(gy_net_app_seat_id(GY_NET_COLOR_BLUE) == 0x2222);
+    CHECK(g.room.view.player_count == 1);
+    return 0;
+}
+
 static int test_join_full_lobby_rule(void)
 {
     int rc;
@@ -198,6 +336,12 @@ int main(void)
     if (test_state_snapshot_same_seq_client()) return 4;
     if (test_duplicate_join_same_conn()) return 5;
     if (test_join_full_lobby_rule()) return 6;
+    if (test_seat_ready_independent()) return 7;
+    if (test_host_leave_closes_and_client_sees_closed()) return 8;
+    if (test_stale_lobby_room_rejected()) return 9;
+    if (test_full_player_join_downgrades_to_spectator()) return 10;
+    if (test_auto_role_uses_actual_space()) return 11;
+    if (test_guest_takeover_when_state_lost()) return 12;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
