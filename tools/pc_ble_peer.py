@@ -50,6 +50,7 @@ class Central:
         self.buf = bytearray()
         self.total = 0
         self.acks: list[tuple[int, bytes]] = []
+        self.disconnected = False
 
     async def find(self):
         found = await BleakScanner.discover(timeout=10, return_adv=True)
@@ -78,7 +79,8 @@ class Central:
                 self.acks.append((msg[3], msg[12:12 + struct.unpack_from("<H", msg, 10)[0]]))
 
     async def connect(self, dev) -> None:
-        self.client = BleakClient(dev)
+        self.client = BleakClient(
+            dev, disconnected_callback=lambda _c: setattr(self, "disconnected", True))
         await self.client.connect()
         await self.client.start_notify(TX, self._notify)
         print("connected, mtu", self.client.mtu_size)
@@ -127,14 +129,19 @@ async def scenario(name: str, a: Board, b: Board) -> None:
         print("A after PC leave:", select(sa, ("players", "spectators", "adv")))
 
     elif name == "idle-link":
+        mark = len(a.lines)
         print("PC connected without JOIN; waiting for host 5s reap...")
         await asyncio.sleep(7.0)
         sa = a.state(timeout=3)
         require(sa is not None and sa.get("active") == "1" and
                 sa.get("players") == "2" and sa.get("adv") == "1",
                 f"host not healthy after idle link: {sa}")
-        require(not c.client.is_connected or "drop idle link" in a.text(),
-                "host did not drop the idle link")
+        with a.lock:
+            new_lines = a.lines[mark:]
+        require(c.disconnected or not c.client.is_connected,
+                "PC link still up; host did not disconnect the idle link")
+        require(any("drop idle link" in line for line in new_lines),
+                "host log did not record drop idle link for this attempt")
         print("idle link dropped; A:", select(sa, ("players", "spectators", "adv")))
         await c.close()
 
