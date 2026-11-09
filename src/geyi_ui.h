@@ -14,12 +14,18 @@ enum { GY_UI_UP, GY_UI_RIGHT, GY_UI_DOWN, GY_UI_LEFT, GY_UI_LESS,
        GY_UI_NET, GY_UI_NET_CREATE, GY_UI_NET_BACK,
        GY_UI_NET_JOIN0, GY_UI_NET_JOIN1, GY_UI_NET_JOIN2, GY_UI_NET_JOIN3,
        GY_UI_NET_JOIN4, GY_UI_NET_READY, GY_UI_NET_SWAP, GY_UI_NET_LEAVE,
-       GY_UI_NET_CONFIRM_YES, GY_UI_NET_CONFIRM_NO };
+       GY_UI_NET_CONFIRM_YES, GY_UI_NET_CONFIRM_NO,
+       GY_UI_RULES, GY_UI_RULES_BACK, GY_UI_RULES_PREV, GY_UI_RULES_NEXT };
 void gy_ui_create(void);
 void gy_ui_action(int action);
 void gy_ui_cell(int column,int row);
 void gy_ui_tick(void);
 const GyGame *gy_ui_game(void);
+int gy_ui_rules_active(void);
+int gy_ui_rules_page(void);
+int gy_ui_rules_content_bottom(void);
+/* 真机屏幕为圆角矩形：统计按钮/文字框越出四角安全区的数量（0 = 通过）。 */
+int gy_ui_corner_clip_count(int radius);
 int gy_ui_has_preview(void);
 int gy_ui_is_placing(void);
 int gy_ui_is_playing(void);
