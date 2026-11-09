@@ -28,10 +28,9 @@ static lv_obj_t *net_spectator_label;
 static lv_obj_t *net_red_box,*net_blue_box,*net_room_hint;
 static lv_obj_t *net_ready_button,*net_leave_button,*place_button,*resign_button;
 static lv_obj_t *net_result_overlay,*net_result_title,*net_result_sub;
-static lv_obj_t *net_confirm_overlay,*net_confirm_label;
+static lv_obj_t *net_confirm_block,*net_confirm_overlay,*net_confirm_label;
 static int net_lobby_active,net_room_active,net_game_active;
 static uint32_t net_last_rev;static int net_last_phase=-1;
-static int net_confirm_action;
 static lv_obj_t *prep_red_label,*prep_blue_label;
 static lv_obj_t *prep_player_icon[2],*prep_ai_icon[2];
 static lv_obj_t *param_mode_buttons[GY_MODE_COUNT];
@@ -87,8 +86,8 @@ static void show_page(lv_obj_t *page)
     net_game_active=page==game_page&&gy_net_app_active();
     if(page!=game_page){
         if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
+        if(net_confirm_block)lv_obj_add_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
         if(net_confirm_overlay)lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
-        net_confirm_action=0;
     }
     ready=0;placing=0;direction=-1;place_column=-1;
 }
@@ -318,6 +317,7 @@ static void net_room_refresh(void)
         }
     }
 }
+static int net_result_shown=-1;
 static void net_result_show(int result)
 {
     const char *title=(result==GY_RED_WIN)?"RED WIN":
@@ -327,6 +327,9 @@ static void net_result_show(int result)
                      (result==GY_BLUE_WIN)?"蓝方获胜，即将返回房间":
                      (result==GY_DRAW)?"平局，即将返回房间":"即将返回房间";
     if(!net_result_overlay)return;
+    if(net_result_shown==result &&
+       !lv_obj_has_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN))return;
+    net_result_shown=result;
     lv_label_set_text(net_result_title,title);
     lv_label_set_text(net_result_sub,sub);
     lv_obj_remove_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
@@ -334,21 +337,21 @@ static void net_result_show(int result)
 }
 static void net_result_hide(void)
 {
+    net_result_shown=-1;
     if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
 }
-static void net_confirm_show(int action)
+static void net_confirm_show(void)
 {
     if(!net_confirm_overlay)return;
-    net_confirm_action=action;
-    (void)action;
-    lv_label_set_text(net_confirm_label,"认输会让对手获胜，确定？");
+    lv_label_set_text(net_confirm_label,"认输会让对手获胜，确定?");
+    if(net_confirm_block)lv_obj_remove_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(net_confirm_overlay);
 }
 static void net_confirm_hide(void)
 {
+    if(net_confirm_block)lv_obj_add_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
     if(net_confirm_overlay)lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
-    net_confirm_action=0;
 }
 static void render(void)
 {
@@ -423,7 +426,8 @@ static void render(void)
                 }
         }
     }
-    if(game.outcome)status("本局结束，即将返回房间");
+    if(game.outcome)status(gy_net_app_active()?"本局结束，即将返回房间":
+                                           "本局结束，点右上角返回首页");
     else if(gy_net_app_active()){
         if(gy_net_app_local_terminal())status("对方断线（本地提示，不是权威结算）");
         else if(gy_net_app_phase()==GY_NET_PHASE_STARTING)status("双方已准备 3 秒后开始");
@@ -585,9 +589,9 @@ void gy_ui_action(int a)
         net_confirm_hide();return;
     }
     if(a==GY_UI_NET_CONFIRM_YES){
-        int act=net_confirm_action;
         net_confirm_hide();
-        if(act==1){gy_net_app_resign();render();}
+        gy_net_app_resign();
+        render();
         return;
     }
     if(a==GY_UI_NET){
@@ -673,7 +677,7 @@ void gy_ui_action(int a)
             if(gy_net_app_is_spectator()){
                 gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);return;
             }
-            if(gy_net_app_phase()==GY_NET_PHASE_PLAYING)net_confirm_show(1);
+            if(gy_net_app_phase()==GY_NET_PHASE_PLAYING)net_confirm_show();
             else {gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);}
             return;
         }
@@ -1010,6 +1014,19 @@ void gy_ui_create(void)
     lv_obj_set_style_text_align(net_result_sub,LV_TEXT_ALIGN_CENTER,0);
     lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
 
+    /* 全屏半透明遮挡：确认弹窗打开时禁止继续操作棋盘/按钮。 */
+    net_confirm_block=lv_obj_create(root);
+    lv_obj_set_size(net_confirm_block,390,450);
+    lv_obj_set_pos(net_confirm_block,0,0);
+    lv_obj_set_style_bg_color(net_confirm_block,lv_color_hex(0x000000),0);
+    lv_obj_set_style_bg_opa(net_confirm_block,LV_OPA_50,0);
+    lv_obj_set_style_border_width(net_confirm_block,0,0);
+    lv_obj_set_style_radius(net_confirm_block,0,0);
+    lv_obj_set_style_pad_all(net_confirm_block,0,0);
+    lv_obj_remove_flag(net_confirm_block,LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(net_confirm_block,LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
+
     /* 退出/认输确认弹窗：一次点击打开，一次确认，不再靠连按。 */
     net_confirm_overlay=lv_obj_create(root);
     lv_obj_set_size(net_confirm_overlay,330,190);
@@ -1240,8 +1257,8 @@ void gy_ui_tick(void)
             else lv_obj_remove_state(place_button,LV_STATE_DISABLED);
         }
         if(resign_button){
-            if(gy_net_app_is_spectator())lv_obj_add_state(resign_button,LV_STATE_DISABLED);
-            else lv_obj_remove_state(resign_button,LV_STATE_DISABLED);
+            /* 旁观者也要能“退出旁观”，不能禁用这个唯一出口。 */
+            lv_obj_remove_state(resign_button,LV_STATE_DISABLED);
         }
         return;
     }

@@ -316,8 +316,11 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
 
     if (room->view.phase == GY_NET_PHASE_STARTING) {
         if (!room->seats[room->view.guest_color].connected) {
+            /* 倒计时中断线没有可恢复对局：立即释放席位，不能留 2/2。 */
+            release_guest(room);
             room->view.phase = GY_NET_PHASE_WAIT;
             room->view.phase_since_ms = now_ms;
+            sync_ready(room);
             room->view.seq++;
             return 1;
         }

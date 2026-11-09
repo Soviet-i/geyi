@@ -41,9 +41,7 @@
 static const uint8_t g_svc_uuid[ATT_UUID_128_LEN] = GY_SVC_UUID;
 static const uint8_t g_rx_uuid[ATT_UUID_128_LEN] = GY_RX_UUID;
 static const uint8_t g_tx_uuid[ATT_UUID_128_LEN] = GY_TX_UUID;
-/* 搜索接口使用可读（MSB-first）顺序；GATT 数据库/空口使用 LSB-first。 */
-static const uint8_t g_svc_uuid_be[ATT_UUID_128_LEN] =
-    {'G','Y','N','E','T','-','R','O','O','M','-','S','V','C','0','1'};
+/* 特征匹配兼容正/反两种顺序；服务搜索与 GATT 数据库统一用 LSB-first。 */
 static const uint8_t g_rx_uuid_be[ATT_UUID_128_LEN] =
     {'G','Y','N','E','T','-','R','X','-','C','H','A','R','0','0','1'};
 static const uint8_t g_tx_uuid_be[ATT_UUID_128_LEN] =
@@ -132,6 +130,10 @@ static uint8_t g_adv_stopping;
 static uint8_t g_scan_active;
 static uint8_t g_pending_host, g_pending_scan;
 static uint32_t g_scan_retry_at;
+static uint32_t g_search_started_at;
+static uint8_t  g_search_retry_conn = 0xff;
+static uint32_t g_search_retry_at;
+static uint8_t  g_search_retry_count;
 static uint8_t g_adv_payload[16];
 static uint8_t g_adv_payload_len;
 static uint8_t g_adv_connectable = 1;
@@ -213,6 +215,8 @@ static void conn_free(uint8_t conn_idx)
         g_rmt_svc = 0;
         g_remote_svc_ok = 0;
         g_cccd_ok = 0;
+        g_search_started_at = 0;
+        g_search_retry_conn = 0xff;
     }
     c_unlock();
 }
@@ -396,6 +400,16 @@ static void tx_thread_entry(void *parameter)
             send_bytes(g_client_conn, buf, (uint16_t)n);
         }
     }
+}
+
+void gy_net_ble_rx_flush(void)
+{
+    q_lock();
+    g_rx_head = g_rx_tail = g_rx_count = 0;
+    q_unlock();
+    c_lock();
+    memset(g_frag, 0, sizeof(g_frag));
+    c_unlock();
 }
 
 int gy_net_ble_send(uint8_t conn, const GyNetMsg *msg)
@@ -922,6 +936,9 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
                 g_remote_svc_ok = 0;
                 g_cccd_ok = 0;
                 g_rx_val_hdl = g_tx_val_hdl = g_tx_cccd_hdl = 0;
+                g_search_started_at = 0;
+                g_search_retry_conn = 0xff;
+                g_search_retry_count = 0;
                 g_client_conn = ind->conn_idx;
             }
             sibles_exchange_mtu(ind->conn_idx);
@@ -951,10 +968,14 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         sibles_svc_search_rsp_t *rsp = (sibles_svc_search_rsp_t *)data;
         uint8_t i;
         uint8_t *p;
-        if (g_mode == 2 && rsp->conn_idx != g_client_conn) {
+        if (g_mode != 2 || g_client_conn == 0xff ||
+            rsp->conn_idx != g_client_conn ||
+            (g_search_started_at &&
+             (uint32_t)(rt_tick_get() - g_search_started_at) > 3000u)) {
             BLE_LOG("ignore stale search conn=%d", rsp->conn_idx);
             break;
         }
+        g_search_started_at = 0;
         BLE_LOG("search svc result=%d conn=%d chars=%d uuid_len=%d",
                 rsp->result, rsp->conn_idx, rsp->svc ? rsp->svc->char_count : -1,
                 rsp->svc ? rsp->svc->uuid_len : -1);
@@ -997,8 +1018,14 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             g_rmt_end_hdl = rsp->svc->hdl_end;
             g_rmt_conn = rsp->conn_idx;
             g_remote_svc_ok = 1;   /* 返回 0 是合法索引，不能用非零判断 */
+            g_search_retry_count = 0;
+        } else if (g_search_retry_count < 3) {
+            g_search_retry_count++;
+            BLE_LOG("remote svc register full retry %d", g_search_retry_count);
+            g_search_retry_conn = rsp->conn_idx;
+            g_search_retry_at = rt_tick_get() + rt_tick_from_millisecond(500);
         } else {
-            BLE_LOG("remote svc register full");
+            BLE_LOG("remote svc register full give up");
         }
         BLE_LOG("chars rx=%d tx=%d cccd=%d rmt=%d hdl=%d-%d", g_rx_val_hdl,
                 g_tx_val_hdl, g_tx_cccd_hdl, g_rmt_svc, rsp->svc->hdl_start,
@@ -1031,10 +1058,17 @@ void gy_net_ble_poll(void)
         ble_service_init();
         BLE_LOG("service init done srv=%d", (int)(uintptr_t)g_srv);
     }
+    if (g_search_retry_conn != 0xff &&
+        (int32_t)(rt_tick_get() - g_search_retry_at) >= 0 &&
+        g_mode == 2 && g_client_conn == g_search_retry_conn) {
+        g_pending_search_conn = g_search_retry_conn;
+        g_search_retry_conn = 0xff;
+    }
     if (g_pending_search_conn != 0xff) {
         uint8_t conn = g_pending_search_conn;
         g_pending_search_conn = 0xff;
         BLE_LOG("search start conn=%d", conn);
+        g_search_started_at = rt_tick_get();
         sibles_search_service(conn, ATT_UUID_128_LEN, (uint8_t *)g_svc_uuid);
     }
     if (g_pending_scan && (int32_t)(rt_tick_get() - g_scan_retry_at) >= 0) {

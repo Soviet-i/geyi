@@ -85,6 +85,11 @@ static struct {
     uint16_t local_player_id;
     uint8_t  pending_move;
     uint8_t  local_ready;
+    uint8_t  ready_desired;  /* 客方希望设置的 ready */
+    uint8_t  ready_pending;  /* 已发 READY，等房主状态确认 */
+    uint8_t  need_fresh_join;/* REJOIN 被拒后等 WAIT 再 auto JOIN */
+    uint32_t ready_at;
+    uint32_t starting_seq;   /* 客方最近一次 STARTING 状态 seq */
     uint8_t  reack_left;     /* 换座后 JOIN_ACK 重发次数，防止单包丢失 */
     uint32_t reack_at;
     int      dir;
@@ -522,6 +527,9 @@ static void promote_self_to_host(uint8_t new_host_color, uint32_t now_ms)
     g.role = GY_NET_ROLE_HOST;
     g.local_color = new_host_color;
     g.local_ready = 0;
+    g.ready_pending = 0;
+    g.ready_desired = 0;
+    g.need_fresh_join = 0;
     g.pending_join = 0;
     g.join_sent = 0;
     g.join_connected = 0;
@@ -541,6 +549,23 @@ static void promote_self_to_host(uint8_t new_host_color, uint32_t now_ms)
             (unsigned)g.local_player_id);
 }
 
+static void start_fresh_join(uint32_t now_ms)
+{
+    g.token = 0;
+    g.local_color = GY_NET_COLOR_NONE;
+    g.pending_join = 1;
+    g.join_sent = 0;
+    g.join_connected = g.link_down ? 0 : 1;
+    g.join_ready_at = 0;
+    g.join_at = now_ms;
+    g.join_req_role = 2;
+    g.dropped = 0;
+    g.drop_at = 0;
+    g.need_fresh_join = 0;
+    g.ready_pending = 0;
+    APP_LOG("fresh auto join");
+}
+
 static void client_process(const GyNetMsg *msg)
 {
     g.last_rx = g.now;
@@ -548,6 +573,8 @@ static void client_process(const GyNetMsg *msg)
     case GY_NET_JOIN_ACK: {
         GyNetJoinAck a;
         if (gy_net_unpack_join_ack(msg, &a) != GY_NET_OK) return;
+        if (a.room_id != g.room_id) return;
+        if (!g.pending_join && g.token && a.token != g.token) return;
         if (a.color != GY_NET_COLOR_NONE &&
             a.color != GY_NET_COLOR_RED && a.color != GY_NET_COLOR_BLUE) return;
         {
@@ -569,6 +596,10 @@ static void client_process(const GyNetMsg *msg)
         g.join_sent = 0;
         g.join_connected = 0;
         g.join_ready_at = 0;
+        g.ready_pending = 0;
+        g.ready_desired = 0;
+        g.need_fresh_join = 0;
+        g.starting_seq = 0;
         g.dropped = 0;
         g.rejoin_sent = 0;
         g.drop_at = 0;
@@ -587,6 +618,7 @@ static void client_process(const GyNetMsg *msg)
     case GY_NET_ROOM_STATE: {
         GyNetRoomState s;
         if (gy_net_unpack_room_state(msg, &s) != GY_NET_OK) return;
+        if (s.room_id != g.room_id) return;
         if (s.phase == GY_NET_PHASE_CLOSED) {
             /* 单房主关房：其他板不能接管，提示房间不存在。 */
             join_fail(GY_NET_JOIN_REASON_NOT_FOUND);
@@ -606,16 +638,26 @@ static void client_process(const GyNetMsg *msg)
             uint8_t old_phase = g.room.view.phase;
             int applied = gy_net_room_apply_room_state(&g.room, &s);
             if (applied && s.phase == GY_NET_PHASE_STARTING &&
-                old_phase != GY_NET_PHASE_STARTING) {
+                (old_phase != GY_NET_PHASE_STARTING ||
+                 s.seq != g.starting_seq)) {
                 /* ROOM_STATE 不带时间戳；客户端从收到 STARTING 的时刻
                  * 本地起算 3/2/1，否则会用 0 起算一直显示 1s。 */
                 g.room.view.phase_since_ms = g.now;
+                g.starting_seq = s.seq;
             }
+            if (s.phase != GY_NET_PHASE_STARTING) g.starting_seq = 0;
         }
         if (color_valid(g.local_color)) {
-            /* 房主每局开始时清零 ready；客户端本地乐观值必须跟着权威
-             * 状态走，否则下一局会把“准备”发成“取消准备”。 */
-            g.local_ready = (g.local_color == s.host_color) ? s.host_ready : s.guest_ready;
+            uint8_t auth = (g.local_color == s.host_color) ? s.host_ready : s.guest_ready;
+            if (g.ready_pending) {
+                if (auth == g.ready_desired) {
+                    g.ready_pending = 0;
+                    g.local_ready = auth;
+                }
+                /* 房主还没收到/没应用：保留乐观值，tick 继续重发。 */
+            } else {
+                g.local_ready = auth;
+            }
         }
         if (g.local_color == GY_NET_COLOR_NONE && s.player_count >= 2 && g.role != GY_NET_ROLE_SPECTATOR)
             g.role = GY_NET_ROLE_SPECTATOR;
@@ -648,19 +690,10 @@ static void client_process(const GyNetMsg *msg)
             /* WAIT 已立即释放旧席位，REJOIN 必然失败；链路还在时用
              * auto 重新 JOIN，绝不能靠接管（否则会与仍活着的房主双主）。 */
             g.rejoin_sent = 0;
+            g.need_fresh_join = 1;
             if (g.role == GY_NET_ROLE_PLAYER &&
                 g.room.view.phase == GY_NET_PHASE_WAIT) {
-                g.token = 0;
-                g.local_color = GY_NET_COLOR_NONE;
-                g.pending_join = 1;
-                g.join_sent = 0;
-                g.join_connected = g.link_down ? 0 : 1;
-                g.join_ready_at = 0;
-                g.join_at = g.now;
-                g.join_req_role = 2;
-                g.dropped = 0;
-                g.drop_at = 0;
-                APP_LOG("rejoin rejected, fresh auto join");
+                start_fresh_join(g.now);
             }
         }
         break;
@@ -779,7 +812,10 @@ void gy_net_app_tick(uint32_t now_ms)
         GyNetBleRx rx;
         while (gy_net_ble_recv(&rx)) {
             if (g.active == 1) host_process(rx.conn, &rx.msg);
-            else if (g.active == 2) client_process(&rx.msg);
+            else if (g.active == 2 &&
+                     rx.conn == gy_net_ble_client_conn()) {
+                client_process(&rx.msg);
+            }
         }
     }
 #endif
@@ -812,6 +848,9 @@ void gy_net_app_tick(uint32_t now_ms)
             g.last_hb = now_ms;
             gy_net_msg_init(&m, GY_NET_HEARTBEAT, g.room.view.seq);
             send_broadcast(&m);
+            /* 周期性重发权威状态：READY/STARTING/RESULT→WAIT 任一包丢失
+             * 都能在 1s 内恢复，而不是永久失步。 */
+            broadcast_state();
         }
         if ((uint32_t)(now_ms - g.last_adv) >= APP_HEARTBEAT_MS) {
             g.last_adv = now_ms;
@@ -834,6 +873,8 @@ void gy_net_app_tick(uint32_t now_ms)
 #ifdef GEYI_WITH_RTTHREAD
         uint8_t conn = gy_net_ble_client_conn();
         g.link_down = (conn == 0xff) ? 1 : 0;
+        if (g.need_fresh_join && g.room.view.phase == GY_NET_PHASE_WAIT)
+            start_fresh_join(now_ms);
         if (g.pending_join && conn == 0xff &&
             (uint32_t)(now_ms - g.reconnect_at) >= 1000u) {
             g.reconnect_at = now_ms;
@@ -931,6 +972,15 @@ void gy_net_app_tick(uint32_t now_ms)
              * 避免房间永远卡在“客人 + 房主已断”。 */
             promote_self_to_host(g.local_color, now_ms);
             return;
+        }
+        if (g.ready_pending) {
+            if (g.room.view.phase != GY_NET_PHASE_WAIT &&
+                g.room.view.phase != GY_NET_PHASE_STARTING) {
+                g.ready_pending = 0;
+            } else if ((uint32_t)(now_ms - g.ready_at) >= 500u) {
+                /* READY 丢包/房主未处理：500ms 重发，直到 ROOM_STATE 确认。 */
+                gy_net_app_set_ready(g.ready_desired);
+            }
         }
         if (gy_net_room_client_host_lost(&g.room, now_ms) &&
             g.role == GY_NET_ROLE_SPECTATOR) {
@@ -1054,6 +1104,7 @@ int gy_net_app_lobby_start(void)
     g.join_sent = 0;
     g.join_connected = 0;
     g.join_ready_at = 0;
+    g.need_fresh_join = 0;
 #ifdef GEYI_WITH_RTTHREAD
     /* 上一次加入失败/被关房时可能还留着一条 BLE 链路；不清掉会让
      * 对方仍认为有连接、停止广播，自己也扫不到房间。 */
@@ -1184,6 +1235,8 @@ int gy_net_app_join_index_role(int index, int role)
 void gy_net_app_leave(void)
 {
 #ifdef GEYI_WITH_RTTHREAD
+    /* 先丢弃上一房间的迟到 RX，避免换房后旧 ROOM_STATE/ACK 污染新会话。 */
+    gy_net_ble_rx_flush();
     if (g.active == 1) {
         int closed = 0;
         if (g.room.view.phase == GY_NET_PHASE_WAIT) {
@@ -1261,6 +1314,8 @@ void gy_net_app_leave(void)
     g.active = 0;
     g.role = GY_NET_ROLE_SPECTATOR;
     g.local_color = GY_NET_COLOR_NONE;
+    g.room_id = 0;
+    g.token = 0;
     g.pending_join = 0;
     g.join_sent = 0;
     g.join_connected = 0;
@@ -1270,6 +1325,10 @@ void gy_net_app_leave(void)
     g.place_col = -1;
     g.last_preview_valid = 0;
     g.local_ready = 0;
+    g.ready_pending = 0;
+    g.ready_desired = 0;
+    g.need_fresh_join = 0;
+    g.starting_seq = 0;
     g.join_rejected = 0;
     g.spectator_lost = 0;
     g.dropped = 0;
@@ -1296,6 +1355,9 @@ int gy_net_app_set_ready(int ready)
         if (gy_net_pack_ready(&m, &r) == GY_NET_OK) {
             send_msg(0xff, &m);
             g.local_ready = r.ready;
+            g.ready_desired = r.ready;
+            g.ready_pending = 1;
+            g.ready_at = g.now;
             return 1;
         }
     }
@@ -1451,5 +1513,10 @@ const GyNetPreview *gy_net_app_preview_at(int side)
 
 int gy_net_app_selftest(void)
 {
-    return gy_net_room_selftest() == 0 ? 0 : -1;
+    if (gy_net_proto_selftest() != 0) return -1;
+    if (gy_net_room_selftest() != 0) return -1;
+#ifdef GEYI_WITH_RTTHREAD
+    if (gy_net_ble_selftest() != 0) return -1;
+#endif
+    return 0;
 }

@@ -67,6 +67,7 @@ void gy_net_ble_flush(uint32_t timeout_ms);
 
 /* 轮询收到的消息/广播摘要。返回 1 表示取到。 */
 int gy_net_ble_recv(GyNetBleRx *out);
+void gy_net_ble_rx_flush(void);   /* 离房/换房时丢弃上一房间的迟到包 */
 int gy_net_ble_adv_recv(GyNetBleAdv *out);
 
 int gy_net_ble_selftest(void);
