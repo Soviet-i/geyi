@@ -397,12 +397,20 @@ static void host_process(uint8_t conn, const GyNetMsg *msg)
         old_phase = g.room.view.phase;
         {
             uint8_t color = conn_color(c);
-            if (g.room.view.phase == GY_NET_PHASE_PLAYING && color_valid(color))
+            int resign_only = (l.reason == GY_NET_REASON_RESIGN);
+            if (g.room.view.phase == GY_NET_PHASE_PLAYING && color_valid(color)) {
                 gy_net_room_resign(&g.room, color, g.now);
-            else
+                if (!resign_only) {
+                    /* 真正离房：释放席位并断开映射。 */
+                    gy_net_room_leave_token(&g.room, c->token, g.now);
+                    c->used = 0;
+                }
+                /* 仅认输：连接和席位保留，结算后还要回同一房间准备。 */
+            } else {
                 gy_net_room_leave_token(&g.room, c->token, g.now);
+                c->used = 0;
+            }
         }
-        c->used = 0;
         broadcast_state();
         host_phase_change(old_phase);
         host_update_adv();
@@ -594,7 +602,16 @@ static void client_process(const GyNetMsg *msg)
             promote_self_to_host(s.host_color, g.now);
             return;
         }
-        gy_net_room_apply_room_state(&g.room, &s);
+        {
+            uint8_t old_phase = g.room.view.phase;
+            int applied = gy_net_room_apply_room_state(&g.room, &s);
+            if (applied && s.phase == GY_NET_PHASE_STARTING &&
+                old_phase != GY_NET_PHASE_STARTING) {
+                /* ROOM_STATE 不带时间戳；客户端从收到 STARTING 的时刻
+                 * 本地起算 3/2/1，否则会用 0 起算一直显示 1s。 */
+                g.room.view.phase_since_ms = g.now;
+            }
+        }
         if (color_valid(g.local_color)) {
             /* 房主每局开始时清零 ready；客户端本地乐观值必须跟着权威
              * 状态走，否则下一局会把“准备”发成“取消准备”。 */

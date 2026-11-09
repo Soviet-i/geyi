@@ -367,6 +367,11 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
             room->seats[room->view.host_color].ready = 0;
             room->seats[room->view.guest_color].ready = 0;
             sync_ready(room);
+            {
+                GyNetSeat *guest = seat_at(room, room->view.guest_color);
+                if (guest && guest->token && !guest->connected)
+                    release_guest(room);
+            }
             room->view.seq++;
             changed = 1;
         }
@@ -629,16 +634,9 @@ int gy_net_room_leave(GyNetRoom *host, uint8_t color, uint32_t now_ms)
     if (!host) return GY_NET_ERR_ARG;
     host->now_ms = now_ms;
     if (color == host->view.guest_color) {
+        /* 只释放席位；RESULT 仍按原节奏走完再回 WAIT，避免“客人一退，
+         * 结算画面直接消失”。 */
         release_guest(host);
-        if (host->view.phase == GY_NET_PHASE_RESULT) {
-            /* 结算期客人离开：房主回房间等待新客人，而不是停在 RESULT。 */
-            host->view.phase = GY_NET_PHASE_WAIT;
-            host->view.phase_since_ms = now_ms;
-            host->view.result = GY_PLAYING;
-            host->view.result_reason = GY_NET_REASON_NORMAL;
-            host->view.game_valid = 0;
-            sync_ready(host);
-        }
         host->view.seq++;
         return GY_NET_LEAVE_RELEASED;
     }

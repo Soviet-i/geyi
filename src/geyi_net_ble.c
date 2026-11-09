@@ -121,6 +121,7 @@ static uint8_t g_client_conn = 0xff;
 static sibles_hdl g_srv;
 static uint16_t g_rmt_svc = 0;
 static uint8_t g_remote_svc_ok;
+static uint16_t g_rmt_start_hdl, g_rmt_end_hdl;
 static uint16_t g_rx_val_hdl, g_tx_val_hdl, g_tx_cccd_hdl;
 static uint8_t g_cccd_ok;
 static uint8_t g_adv_active;
@@ -140,6 +141,7 @@ static uint32_t g_adv_start_at;
 
 SIBLES_ADVERTISING_CONTEXT_DECLAR(g_geyi_adv_ctx);
 static uint8_t geyi_adv_event(uint8_t event, void *context, void *data);
+static int geyi_gattc_event(uint16_t event_id, uint8_t *data, uint16_t len);
 
 static void q_init(void)
 {
@@ -195,9 +197,16 @@ static void conn_free(uint8_t conn_idx)
             memset(&g_frag[i], 0, sizeof(g_frag[i]));
         }
     if (g_client_conn == conn_idx) {
+        if (g_rmt_start_hdl && g_rmt_end_hdl) {
+            /* 不注销会占满 SDK 的 remote service 槽位，多次进出房间后
+             * register 返回 0xFFFF，后续所有 JOIN 都写不出去。 */
+            sibles_unregister_remote_svc(conn_idx, g_rmt_start_hdl, g_rmt_end_hdl,
+                                         geyi_gattc_event);
+        }
         g_client_conn = 0xff;
         g_rmt_svc = 0;
         g_remote_svc_ok = 0;
+        g_rmt_start_hdl = g_rmt_end_hdl = 0;
         g_cccd_ok = 0;
     }
     c_unlock();
@@ -952,9 +961,20 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         }
         g_cccd_ok = 0;
         g_remote_svc_ok = 0;
+        if (g_rmt_start_hdl && g_rmt_end_hdl) {
+            sibles_unregister_remote_svc(rsp->conn_idx, g_rmt_start_hdl,
+                                         g_rmt_end_hdl, geyi_gattc_event);
+            g_rmt_start_hdl = g_rmt_end_hdl = 0;
+        }
         g_rmt_svc = sibles_register_remote_svc(rsp->conn_idx, rsp->svc->hdl_start,
                                                rsp->svc->hdl_end, geyi_gattc_event);
-        g_remote_svc_ok = 1;   /* 返回 0 是合法索引，不能用非零判断 */
+        if (g_rmt_svc != SIBLES_ERROR_REMOTE_HANDLE) {
+            g_rmt_start_hdl = rsp->svc->hdl_start;
+            g_rmt_end_hdl = rsp->svc->hdl_end;
+            g_remote_svc_ok = 1;   /* 返回 0 是合法索引，不能用非零判断 */
+        } else {
+            BLE_LOG("remote svc register full");
+        }
         BLE_LOG("chars rx=%d tx=%d cccd=%d rmt=%d hdl=%d-%d", g_rx_val_hdl,
                 g_tx_val_hdl, g_tx_cccd_hdl, g_rmt_svc, rsp->svc->hdl_start,
                 rsp->svc->hdl_end);
