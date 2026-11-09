@@ -47,6 +47,7 @@ typedef struct {
     uint8_t  color;
     uint8_t  ready;
     uint8_t  connected;
+    uint16_t player_id;        /* 玩家唯一 ID（0 表示未知） */
     uint32_t token;
     uint32_t last_seq;
 } GyNetSeat;
@@ -58,6 +59,8 @@ typedef struct {
     uint8_t  guest_color;
     uint8_t  host_ready;
     uint8_t  guest_ready;
+    uint16_t host_id;
+    uint16_t guest_id;
     uint8_t  player_count;
     uint8_t  spectator_count;
     uint8_t  max_spectators;
@@ -104,9 +107,12 @@ int gy_net_room_set_config(GyNetRoom *room, const GyConfig *config);
 /* 等待阶段房主退出后，客方接管房间：只保留自己的席位并转成房主。 */
 int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32_t now_ms);
 
-/* 房主处理加入：role=PLAYER/SPECTATOR。成功返回 0，并写 token/color。 */
-int gy_net_room_join(GyNetRoom *host, uint8_t role, uint32_t now_ms,
-                     uint32_t *token_out, uint8_t *color_out);
+/* 房主处理加入：role=PLAYER/SPECTATOR。成功返回 0，并写 token/color/player_id。 */
+int gy_net_room_join(GyNetRoom *host, uint8_t role, uint16_t player_id,
+                     uint32_t now_ms, uint32_t *token_out, uint8_t *color_out);
+/* 设置/读取座位玩家 ID；房主创建房间时设置自己的 ID。 */
+void gy_net_room_set_player_id(GyNetRoom *room, uint8_t color, uint16_t player_id);
+uint16_t gy_net_room_seat_id(const GyNetRoom *room, uint8_t color);
 int gy_net_room_set_ready(GyNetRoom *host, uint8_t color, int ready, uint32_t now_ms);
 int gy_net_room_swap_seats(GyNetRoom *host);
 int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms);

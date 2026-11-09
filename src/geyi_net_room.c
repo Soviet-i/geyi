@@ -31,6 +31,25 @@ static uint32_t make_token(GyNetRoom *room)
     return room->next_token;
 }
 
+void gy_net_room_set_player_id(GyNetRoom *room, uint8_t color, uint16_t player_id)
+{
+    GyNetSeat *s;
+    if (!room || !color_valid(color)) return;
+    s = seat_at(room, color);
+    if (!s) return;
+    s->player_id = player_id;
+    if (color == room->view.host_color) room->view.host_id = player_id;
+    if (color == room->view.guest_color) room->view.guest_id = player_id;
+}
+
+uint16_t gy_net_room_seat_id(const GyNetRoom *room, uint8_t color)
+{
+    const GyNetSeat *s;
+    if (!room || !color_valid(color)) return 0;
+    s = seat_at_const(room, color);
+    return s ? s->player_id : 0;
+}
+
 static void sync_ready(GyNetRoom *room)
 {
     const GyNetSeat *h = seat_at_const(room, room->view.host_color);
@@ -50,6 +69,7 @@ static void release_guest(GyNetRoom *room)
     g->color = room->view.guest_color;
     room->view.player_count = room->view.host_color == room->view.guest_color ? 0 : 1;
     room->view.guest_ready = 0;
+    room->view.guest_id = 0;
 }
 
 static void release_spectator(GyNetRoom *room, int index)
@@ -99,6 +119,9 @@ void gy_net_room_init_host(GyNetRoom *room, uint32_t room_id, uint32_t now_ms,
     room->seats[GY_NET_COLOR_RED].connected = 1;
     room->seats[GY_NET_COLOR_RED].token = make_token(room);
     room->seats[GY_NET_COLOR_RED].last_seq = 0;
+    room->seats[GY_NET_COLOR_RED].player_id = 0;
+    room->view.host_id = 0;
+    room->view.guest_id = 0;
     room->seats[GY_NET_COLOR_BLUE].role = GY_NET_ROLE_PLAYER;
     room->seats[GY_NET_COLOR_BLUE].color = GY_NET_COLOR_BLUE;
     room->seats[GY_NET_COLOR_BLUE].connected = 0;
@@ -146,6 +169,8 @@ int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32
     client->view.max_spectators = 2;
     client->view.host_ready = 0;
     client->view.guest_ready = 0;
+    client->view.host_id = 0;   /* 由 app 在接管后写入本机 ID */
+    client->view.guest_id = 0;
     client->view.game_valid = 0;
     client->view.result = GY_PLAYING;
     client->view.result_reason = GY_NET_REASON_NORMAL;
@@ -166,8 +191,8 @@ int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32
     return GY_NET_OK;
 }
 
-int gy_net_room_join(GyNetRoom *host, uint8_t role, uint32_t now_ms,
-                     uint32_t *token_out, uint8_t *color_out)
+int gy_net_room_join(GyNetRoom *host, uint8_t role, uint16_t player_id,
+                     uint32_t now_ms, uint32_t *token_out, uint8_t *color_out)
 {
     uint32_t token;
     if (!host || !token_out || !color_out) return GY_NET_ERR_ARG;
@@ -183,9 +208,11 @@ int gy_net_room_join(GyNetRoom *host, uint8_t role, uint32_t now_ms,
         g->role = GY_NET_ROLE_PLAYER;
         g->color = host->view.guest_color;
         g->connected = 1;
+        g->player_id = player_id;
         g->token = token;
         host->view.player_count = 2;
         host->view.guest_ready = 0;
+        host->view.guest_id = player_id;
         host->view.seq++;
         *token_out = token;
         *color_out = g->color;
@@ -430,6 +457,8 @@ void gy_net_room_state(const GyNetRoom *host, GyNetRoomState *out)
     out->guest_ready = host->view.guest_ready;
     out->player_count = host->view.player_count;
     out->spectator_count = host->view.spectator_count;
+    out->host_id = gy_net_room_seat_id(host, host->view.host_color);
+    out->guest_id = gy_net_room_seat_id(host, host->view.guest_color);
     out->room_id = host->view.room_id;
     out->seq = host->view.seq;
 }
@@ -448,6 +477,10 @@ int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
     client->view.guest_ready = state->guest_ready;
     client->view.player_count = state->player_count;
     client->view.spectator_count = state->spectator_count;
+    client->view.host_id = state->host_id;
+    client->view.guest_id = state->guest_id;
+    client->seats[state->host_color].player_id = state->host_id;
+    client->seats[state->guest_color].player_id = state->guest_id;
     client->view.room_id = state->room_id;
     client->view.seq = state->seq;
     client->last_room_seq = state->seq;
@@ -511,6 +544,14 @@ int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_m
     if (!host || !token) return GY_NET_ERR_ARG;
     for (i = 0; i < 2; ++i) {
         if (host->seats[i].token == token && host->seats[i].connected) {
+            /* 等待阶段还没有对局可恢复，直接释放席位；否则大厅会继续
+             * 显示 2/2 直到 10 s 重连窗口结束，和实际可加入状态矛盾。 */
+            if (host->view.phase == GY_NET_PHASE_WAIT &&
+                i == host->view.guest_color) {
+                release_guest(host);
+                host->view.seq++;
+                return GY_NET_OK;
+            }
             host->seats[i].connected = 0;
             host->seat_disconnect_ms[i] = now_ms;
             return GY_NET_OK;
@@ -518,6 +559,11 @@ int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_m
     }
     for (i = 0; i < GY_NET_MAX_SPECTATORS; ++i) {
         if (host->spectators[i].token == token && host->spectators[i].connected) {
+            if (host->view.phase == GY_NET_PHASE_WAIT) {
+                release_spectator(host, i);
+                host->view.seq++;
+                return GY_NET_OK;
+            }
             host->spectators[i].connected = 0;
             host->spectator_disconnect_ms[i] = now_ms;
             return GY_NET_OK;
@@ -560,7 +606,6 @@ int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
 
 int gy_net_room_leave(GyNetRoom *host, uint8_t color, uint32_t now_ms)
 {
-    GyNetSeat *s;
     if (!host) return GY_NET_ERR_ARG;
     host->now_ms = now_ms;
     if (color == host->view.guest_color) {
@@ -569,27 +614,41 @@ int gy_net_room_leave(GyNetRoom *host, uint8_t color, uint32_t now_ms)
         return GY_NET_LEAVE_RELEASED;
     }
     if (color != host->view.host_color) return GY_NET_ERR_ARG;
-    s = seat_at(host, host->view.guest_color);
-    if (s && s->connected) {
-        uint8_t old_host = host->view.host_color;
-        uint8_t new_host = host->view.guest_color;
-        host->seats[new_host].role = GY_NET_ROLE_HOST;
-        host->seats[old_host].role = GY_NET_ROLE_PLAYER;
-        host->seats[old_host].connected = 0;
-        host->seats[old_host].ready = 0;
-        host->view.host_color = new_host;
-        host->view.guest_color = old_host;
-        host->view.player_count = 1;
-        host->view.phase = GY_NET_PHASE_WAIT;
-        host->view.phase_since_ms = now_ms;
-        sync_ready(host);
-        host->view.seq++;
-        host->role = GY_NET_ROLE_HOST;
-        host->local_color = new_host;
-        host->token = host->seats[new_host].token;
-        return GY_NET_LEAVE_PROMOTED;
+    /* 房主主动退出：有客人时把房主转给客人（房间继续存在）；
+     * 只有房主一人时关房。单房主关房后停止广播，其它板的大厅摘要
+     * 会在 TTL 内消失，不会留下可点击的幽灵房间。 */
+    {
+        GyNetSeat *g = seat_at(host, host->view.guest_color);
+        if (g && g->connected) {
+            uint8_t old_host = host->view.host_color;
+            uint8_t new_host = host->view.guest_color;
+            host->seats[new_host].role = GY_NET_ROLE_HOST;
+            host->seats[old_host].role = GY_NET_ROLE_PLAYER;
+            host->seats[old_host].connected = 0;
+            host->seats[old_host].ready = 0;
+            host->seats[old_host].player_id = 0;
+            host->view.host_color = new_host;
+            host->view.guest_color = old_host;
+            host->view.player_count = 1;
+            host->view.phase = GY_NET_PHASE_WAIT;
+            host->view.phase_since_ms = now_ms;
+            host->view.host_id = host->seats[new_host].player_id;
+            host->view.guest_id = 0;
+            sync_ready(host);
+            host->view.seq++;
+            host->role = GY_NET_ROLE_HOST;
+            host->local_color = new_host;
+            host->token = host->seats[new_host].token;
+            return GY_NET_LEAVE_PROMOTED;
+        }
     }
     host->view.phase = GY_NET_PHASE_CLOSED;
+    host->view.player_count = 0;
+    host->view.spectator_count = 0;
+    host->view.host_ready = 0;
+    host->view.guest_ready = 0;
+    host->view.host_id = 0;
+    host->view.guest_id = 0;
     host->view.seq++;
     return GY_NET_LEAVE_CLOSED;
 }
@@ -712,9 +771,9 @@ int gy_net_room_selftest(void)
     uint8_t c1 = GY_NET_COLOR_NONE, c2 = GY_NET_COLOR_NONE;
 
     gy_net_room_init_host(&host, 1001, 0, 2);
-    if (gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, &t1, &c1) != GY_NET_OK) return -1;
+    if (gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0x1234, 0, &t1, &c1) != GY_NET_OK) return -1;
     if (c1 != GY_NET_COLOR_BLUE || !t1) return -2;
-    if (gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0, &t2, &c2) != GY_NET_OK) return -3;
+    if (gy_net_room_join(&host, GY_NET_ROLE_SPECTATOR, 0x5678, 0, &t2, &c2) != GY_NET_OK) return -3;
     if (c2 != GY_NET_COLOR_NONE) return -4;
     if (gy_net_room_set_ready(&host, GY_NET_COLOR_RED, 1, 10) != GY_NET_OK) return -5;
     if (gy_net_room_set_ready(&host, GY_NET_COLOR_BLUE, 1, 20) != GY_NET_OK) return -6;

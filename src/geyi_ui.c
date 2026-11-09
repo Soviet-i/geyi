@@ -165,8 +165,12 @@ static void net_lobby_refresh(void)
             lv_obj_add_state(net_room_rows[i],LV_STATE_DISABLED);
         }
     }
-    lv_label_set_text(net_lobby_status,gy_net_app_join_rejected()?"观战已满 / 无法加入":
-                      gy_net_app_room_count()?"点击房间加入":"扫描中...");
+    lv_label_set_text(net_lobby_status,
+        gy_net_app_join_rejected()?
+            (gy_net_app_join_reason()==GY_NET_JOIN_REASON_NOT_FOUND?"房间不存在":
+             gy_net_app_join_reason()==GY_NET_JOIN_REASON_FULL?"房间已满":
+             gy_net_app_join_reason()==GY_NET_JOIN_REASON_TIMEOUT?"加入超时":"无法加入"):
+        gy_net_app_room_count()?"点击房间加入":"扫描中...");
 }
 static void net_room_refresh(void)
 {
@@ -176,45 +180,46 @@ static void net_room_refresh(void)
     int local=gy_net_app_local_color();
     if(!net_room_status)return;
     {
-        int local_id=gy_net_app_local_id();
-        lv_snprintf(text,sizeof(text),"%s | %s | #%04X",
+        const char *fail=gy_net_app_join_reason()==GY_NET_JOIN_REASON_NOT_FOUND?"房间不存在":
+                         gy_net_app_join_reason()==GY_NET_JOIN_REASON_FULL?"房间已满":
+                         gy_net_app_join_reason()==GY_NET_JOIN_REASON_TIMEOUT?"加入超时":"加入失败";
+        lv_snprintf(text,sizeof(text),"%s | %s | 本机 #%04X",
                     gy_net_app_phase()==GY_NET_PHASE_CLOSED?"房间已关闭":
                     gy_net_app_spectator_lost()?"已离开旁观":
-                    gy_net_app_join_rejected()||!gy_net_app_active()?"加入失败":
+                    gy_net_app_join_rejected()||!gy_net_app_active()?fail:
                     net_phase_text(),
                     gy_net_app_local_terminal()?"对方断线":
                     gy_net_app_connected()?"已连接":
                     role==GY_NET_ROLE_HOST?"等待对手":"连接中",
-                    (unsigned)local_id);
+                    (unsigned)gy_net_app_local_id());
         lv_label_set_text(net_room_status,text);
     }
     {
-        int hc=gy_net_app_host_color(),gc=gy_net_app_guest_color();
-        int pc=gy_net_app_player_count();
-        int local_id=gy_net_app_local_id();
-        int red_ready=(hc==GY_NET_COLOR_RED)?gy_net_app_host_ready():
-                      (gc==GY_NET_COLOR_RED)?gy_net_app_guest_ready():0;
-        int blue_ready=(hc==GY_NET_COLOR_BLUE)?gy_net_app_host_ready():
-                       (gc==GY_NET_COLOR_BLUE)?gy_net_app_guest_ready():0;
+        int hc=gy_net_app_host_color();
+        int red_ready=gy_net_app_seat_ready(GY_NET_COLOR_RED);
+        int blue_ready=gy_net_app_seat_ready(GY_NET_COLOR_BLUE);
         int red_occ=gy_net_app_seat_occupied(GY_NET_COLOR_RED);
         int blue_occ=gy_net_app_seat_occupied(GY_NET_COLOR_BLUE);
+        /* 准备中的座位统一变白，未准备保持红/蓝；只由该座位自己的 ready
+         * 决定，绝不因为对方准备/自己不是房主而整块变白。 */
         if(net_red_box)
             lv_obj_set_style_bg_color(net_red_box,
-                lv_color_hex(red_occ?0xff6b7c:0x4b5563),0);
+                lv_color_hex(!red_occ?0x4b5563:red_ready?0xf2f5fa:0xff6b7c),0);
         if(net_blue_box)
             lv_obj_set_style_bg_color(net_blue_box,
-                lv_color_hex(blue_occ?0x5ba8ff:0x4b5563),0);
+                lv_color_hex(!blue_occ?0x4b5563:blue_ready?0xf2f5fa:0x5ba8ff),0);
         if(net_red_name){
             if(!red_occ){
                 lv_label_set_text(net_red_name,"点击交换");
                 lv_label_set_text(net_red_state,"");
             }else{
-                if(local==GY_NET_COLOR_RED)
-                    lv_snprintf(text,sizeof(text),"玩家#%04X (%s)",
-                                (unsigned)local_id,role==GY_NET_ROLE_HOST?"房主":"你");
+                int id=gy_net_app_seat_id(GY_NET_COLOR_RED);
+                if(id>0)
+                    lv_snprintf(text,sizeof(text),"玩家#%04X%s",
+                                (unsigned)id,hc==GY_NET_COLOR_RED?"(房主)":"");
                 else
-                    lv_snprintf(text,sizeof(text),"%s (对手)",
-                                hc==GY_NET_COLOR_RED?"房主":"玩家");
+                    lv_snprintf(text,sizeof(text),"玩家%s",
+                                hc==GY_NET_COLOR_RED?"(房主)":"");
                 lv_label_set_text(net_red_name,text);
                 lv_label_set_text(net_red_state,red_ready?"已准备":"未准备");
             }
@@ -228,12 +233,13 @@ static void net_room_refresh(void)
                 lv_label_set_text(net_blue_name,"点击交换");
                 lv_label_set_text(net_blue_state,"");
             }else{
-                if(local==GY_NET_COLOR_BLUE)
-                    lv_snprintf(text,sizeof(text),"玩家#%04X (%s)",
-                                (unsigned)local_id,role==GY_NET_ROLE_HOST?"房主":"你");
+                int id=gy_net_app_seat_id(GY_NET_COLOR_BLUE);
+                if(id>0)
+                    lv_snprintf(text,sizeof(text),"玩家#%04X%s",
+                                (unsigned)id,hc==GY_NET_COLOR_BLUE?"(房主)":"");
                 else
-                    lv_snprintf(text,sizeof(text),"%s (对手)",
-                                hc==GY_NET_COLOR_BLUE?"房主":"玩家");
+                    lv_snprintf(text,sizeof(text),"玩家%s",
+                                hc==GY_NET_COLOR_BLUE?"(房主)":"");
                 lv_label_set_text(net_blue_name,text);
                 lv_label_set_text(net_blue_state,blue_ready?"已准备":"未准备");
             }
@@ -242,7 +248,7 @@ static void net_room_refresh(void)
             lv_obj_set_style_text_color(net_blue_state,
                 lv_color_hex(blue_occ?0x142238:0xe7edf8),0);
         }
-        (void)pc;
+        (void)local;
     }
     if(net_spectator_label){
         lv_snprintf(text,sizeof(text),"观战 %d 人",gy_net_app_spectator_count());
@@ -260,14 +266,9 @@ static void net_room_refresh(void)
     {
         int can=gy_net_app_active()&&role==GY_NET_ROLE_HOST&&phase==GY_NET_PHASE_WAIT&&
                 !gy_net_app_host_ready()&&!gy_net_app_guest_ready();
-        if(net_red_box){
-            if(can)lv_obj_remove_state(net_red_box,LV_STATE_DISABLED);
-            else lv_obj_add_state(net_red_box,LV_STATE_DISABLED);
-        }
-        if(net_blue_box){
-            if(can)lv_obj_remove_state(net_blue_box,LV_STATE_DISABLED);
-            else lv_obj_add_state(net_blue_box,LV_STATE_DISABLED);
-        }
+        /* 不再用 LV_STATE_DISABLED 修饰座位框：按钮主题会把禁用态画成
+         * 灰白色，导致“只有自己准备，双方框都变白”。点击是否有效由
+         * gy_net_app_swap() 自己判断。 */
         if(net_room_hint)
             lv_label_set_text(net_room_hint,can?"点击方框交换先后手（准备前）":
                               role==GY_NET_ROLE_SPECTATOR?"旁观中":
@@ -751,14 +752,16 @@ static lv_obj_t *net_seat_box(lv_obj_t *root,int x,int y,int w,int h,int action,
     lv_obj_set_style_radius(b,10,0);lv_obj_set_style_shadow_width(b,0,0);
     lv_obj_set_style_pad_all(b,0,0);lv_obj_set_style_border_width(b,0,0);
     lv_obj_t *icon=person_icon(b,0,0);
-    lv_obj_align(icon,LV_ALIGN_TOP_MID,0,24);
+    lv_obj_align(icon,LV_ALIGN_TOP_MID,0,22);
     lv_obj_t *name=lv_label_create(b);
-    lv_obj_set_pos(name,6,102);lv_obj_set_width(name,w-12);
+    lv_obj_set_pos(name,6,98);lv_obj_set_width(name,w-12);
     lv_obj_set_style_text_color(name,lv_color_hex(0xe7edf8),0);
-    lv_obj_set_style_text_align(name,LV_TEXT_ALIGN_LEFT,0);
+    lv_obj_set_style_text_align(name,LV_TEXT_ALIGN_CENTER,0);
+    lv_obj_set_style_text_font(name,&geyi_font_cn16,0);
     lv_obj_remove_flag(name,LV_OBJ_FLAG_CLICKABLE);
     lv_obj_t *state=lv_label_create(b);
-    lv_obj_set_pos(state,6,130);lv_obj_set_width(state,w-12);
+    lv_obj_set_width(state,w-16);
+    lv_obj_align(state,LV_ALIGN_BOTTOM_RIGHT,-8,-8);
     lv_obj_set_style_text_color(state,lv_color_hex(0xe7edf8),0);
     lv_obj_set_style_text_align(state,LV_TEXT_ALIGN_RIGHT,0);
     lv_obj_remove_flag(state,LV_OBJ_FLAG_CLICKABLE);
@@ -934,6 +937,12 @@ static void run_test_command(void)
     if(!strcmp(cmd,"swap")){gy_ui_action(GY_UI_NET_SWAP);return;}
     if(!strcmp(cmd,"leave")){gy_ui_action(GY_UI_NET_LEAVE);return;}
     if(sscanf(cmd,"join %d",&a)==1){gy_ui_action(GY_UI_NET_JOIN0+a);return;}
+    if(sscanf(cmd,"watch %d",&a)==1){
+        if(gy_net_app_join_index_role(a,GY_NET_ROLE_SPECTATOR)==0){
+            show_page(net_room_page);net_room_refresh();
+        }else net_lobby_refresh();
+        return;
+    }
     if(sscanf(cmd,"move %d %d",&a,&b)==2){
         GyMove m;m.direction=a;m.count=b;
         if(!gy_net_app_active()||!net_game_active||!gy_net_app_local_turn()){
@@ -958,16 +967,67 @@ static void run_test_command(void)
         GY_TEST_LOG("[gy_test] place sent col=%d\n",a);
         return;
     }
+    if(!strcmp(cmd,"suggest")){
+        const GyGame *ng=gy_net_app_game();
+        int d;
+        if(!gy_net_app_active()||!gy_net_app_local_turn()){
+            GY_TEST_LOG("[gy_test] suggest none active=%d turn=%d\n",
+                       gy_net_app_active(),gy_net_app_local_turn());
+            GY_TEST_LOG("[gy_test] end\n");
+            return;
+        }
+        for(d=0;d<4;++d)if(gy_eligible_count(ng,d)>0){
+            GY_TEST_LOG("[gy_test] suggest move %d 1\n",d);
+            GY_TEST_LOG("[gy_test] end\n");
+            return;
+        }
+        for(d=0;d<ng->config.size;++d){
+            GyGame copy=*ng;
+            if(gy_place(&copy,d)){
+                GY_TEST_LOG("[gy_test] suggest place %d\n",d);
+                GY_TEST_LOG("[gy_test] end\n");
+                return;
+            }
+        }
+        GY_TEST_LOG("[gy_test] suggest none\n");
+        GY_TEST_LOG("[gy_test] end\n");
+        return;
+    }
+    if(!strcmp(cmd,"view")){
+        const char *rs=net_red_state?lv_label_get_text(net_red_state):"";
+        const char *bs=net_blue_state?lv_label_get_text(net_blue_state):"";
+        GY_TEST_LOG("[gy_test] view red=%s|%s\n",
+                   net_red_name?lv_label_get_text(net_red_name):"",rs?rs:"");
+        GY_TEST_LOG("[gy_test] view blue=%s|%s\n",
+                   net_blue_name?lv_label_get_text(net_blue_name):"",bs?bs:"");
+        GY_TEST_LOG("[gy_test] view status=%s\n",
+                   net_room_status?lv_label_get_text(net_room_status):"");
+        GY_TEST_LOG("[gy_test] end\n");
+        return;
+    }
     if(!strcmp(cmd,"state")){
         const GyGame *ng=gy_net_app_game();
-        GY_TEST_LOG("[gy_test] state active=%d role=%d phase=%d players=%d spectators=%d "
-                   "local=%d host=%d guest=%d seq=%u rooms=%d turn=%d rev=%u id=%04X\n",
+        /* 分三行输出：RT-Thread 控制台单行缓冲约 128 B，整行会被截断。 */
+        GY_TEST_LOG("[gy_test] state active=%d role=%d phase=%d players=%d "
+                   "spectators=%d seq=%u rooms=%d turn=%d rev=%u\n",
                    gy_net_app_active(),gy_net_app_role(),gy_net_app_phase(),
                    gy_net_app_player_count(),gy_net_app_spectator_count(),
+                   (unsigned)gy_net_app_seq(),gy_net_app_room_count(),
+                   ng->turn,(unsigned)ng->revision);
+        GY_TEST_LOG("[gy_test] info local=%d host=%d guest=%d id=%04X "
+                   "hostid=%04X guestid=%04X\n",
                    gy_net_app_local_color(),gy_net_app_host_color(),
-                   gy_net_app_guest_color(),(unsigned)gy_net_app_seq(),
-                   gy_net_app_room_count(),ng->turn,(unsigned)ng->revision,
-                   (unsigned)gy_net_app_local_id());
+                   gy_net_app_guest_color(),(unsigned)gy_net_app_local_id(),
+                   (unsigned)gy_net_app_seat_id(GY_NET_COLOR_RED),
+                   (unsigned)gy_net_app_seat_id(GY_NET_COLOR_BLUE));
+        GY_TEST_LOG("[gy_test] ready hready=%d gready=%d rready=%d bready=%d "
+                   "outcome=%d result=%d joinrej=%d joinreason=%d\n",
+                   gy_net_app_host_ready(),gy_net_app_guest_ready(),
+                   gy_net_app_seat_ready(GY_NET_COLOR_RED),
+                   gy_net_app_seat_ready(GY_NET_COLOR_BLUE),
+                   ng->outcome,gy_net_app_result(),
+                   gy_net_app_join_rejected(),gy_net_app_join_reason());
+        GY_TEST_LOG("[gy_test] end\n");
         return;
     }
     GY_TEST_LOG("[gy_test] unknown command '%s'\n",cmd);

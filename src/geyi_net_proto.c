@@ -168,6 +168,7 @@ int gy_net_pack_join_req(GyNetMsg *m, const GyNetJoinReq *v)
     if (!v) return GY_NET_ERR_ARG;
     PACK_BEGIN(m, GY_NET_JOIN_REQ, 0);
     put8(m->payload, &pos, v->role);
+    put16(m->payload, &pos, v->player_id);
     put32(m->payload, &pos, v->room_id);
     PACK_END(m);
 }
@@ -176,11 +177,12 @@ int gy_net_unpack_join_req(const GyNetMsg *m, GyNetJoinReq *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_JOIN_REQ, &r, 5); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_JOIN_REQ, &r, 7); if (rc) return rc;
     v->role = get8(&r);
+    v->player_id = get16(&r);
     v->room_id = get32(&r);
     if (unpack_end(&r)) return r.err;
-    if (v->role > 1) return GY_NET_ERR_RANGE;
+    if (v->role > 2) return GY_NET_ERR_RANGE;
     return GY_NET_OK;
 }
 
@@ -191,6 +193,7 @@ int gy_net_pack_join_ack(GyNetMsg *m, const GyNetJoinAck *v)
     PACK_BEGIN(m, GY_NET_JOIN_ACK, v->seq);
     put8(m->payload, &pos, v->color);
     put8(m->payload, &pos, v->seat);
+    put16(m->payload, &pos, v->player_id);
     put32(m->payload, &pos, v->token);
     put32(m->payload, &pos, v->room_id);
     put32(m->payload, &pos, v->seq);
@@ -201,9 +204,10 @@ int gy_net_unpack_join_ack(const GyNetMsg *m, GyNetJoinAck *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_JOIN_ACK, &r, 14); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_JOIN_ACK, &r, 16); if (rc) return rc;
     v->color = get8(&r);
     v->seat = get8(&r);
+    v->player_id = get16(&r);
     v->token = get32(&r);
     v->room_id = get32(&r);
     v->seq = get32(&r);
@@ -240,6 +244,8 @@ int gy_net_pack_room_state(GyNetMsg *m, const GyNetRoomState *v)
     put8(m->payload, &pos, v->guest_ready);
     put8(m->payload, &pos, v->player_count);
     put8(m->payload, &pos, v->spectator_count);
+    put16(m->payload, &pos, v->host_id);
+    put16(m->payload, &pos, v->guest_id);
     put32(m->payload, &pos, v->room_id);
     put32(m->payload, &pos, v->seq);
     PACK_END(m);
@@ -249,7 +255,7 @@ int gy_net_unpack_room_state(const GyNetMsg *m, GyNetRoomState *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_ROOM_STATE, &r, 15); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_ROOM_STATE, &r, 19); if (rc) return rc;
     v->phase = get8(&r);
     v->host_color = get8(&r);
     v->guest_color = get8(&r);
@@ -257,6 +263,8 @@ int gy_net_unpack_room_state(const GyNetMsg *m, GyNetRoomState *v)
     v->guest_ready = get8(&r);
     v->player_count = get8(&r);
     v->spectator_count = get8(&r);
+    v->host_id = get16(&r);
+    v->guest_id = get16(&r);
     v->room_id = get32(&r);
     v->seq = get32(&r);
     if (unpack_end(&r)) return r.err;

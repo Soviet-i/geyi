@@ -16,6 +16,7 @@
 #include <string.h>
 #include "rtthread.h"
 #include "bf0_ble_gap.h"
+#include "bf0_ble_common.h"
 #include "bf0_sibles.h"
 #include "bf0_sibles_internal.h"
 #include "bf0_sibles_advertising.h"
@@ -124,12 +125,16 @@ static uint16_t g_rx_val_hdl, g_tx_val_hdl, g_tx_cccd_hdl;
 static uint8_t g_cccd_ok;
 static uint8_t g_adv_active;
 static uint8_t g_adv_started;   /* ADV_STARTED 事件已到，才允许 update */
+static uint8_t g_adv_inited;    /* init 成功，协议栈可自动重启广播 */
 static uint8_t g_adv_stopping;
 static uint8_t g_scan_active;
 static uint8_t g_pending_host, g_pending_scan;
+static uint32_t g_scan_retry_at;
 static uint8_t g_adv_payload[16];
 static uint8_t g_adv_payload_len;
 static uint8_t g_adv_connectable = 1;
+static uint8_t g_adv_dirty;      /* 广播内容变化，等待状态机允许时写回 */
+static uint32_t g_adv_retry_at;
 
 SIBLES_ADVERTISING_CONTEXT_DECLAR(g_geyi_adv_ctx);
 static uint8_t geyi_adv_event(uint8_t event, void *context, void *data);
@@ -477,29 +482,21 @@ static void adv_free_para(sibles_advertising_para_t *para)
     para->adv_data.manufacturer_data = RT_NULL;
 }
 
-static int adv_has_space(void)
-{
-    uint8_t players = g_adv_payload[7];
-    uint8_t spectators = g_adv_payload[9];
-    uint8_t max_spectators = g_adv_payload[10];
-    return (players < 2 || spectators < max_spectators) ? 1 : 0;
-}
-
 static uint8_t geyi_adv_event(uint8_t event, void *context, void *data)
 {
-    (void)context; (void)data;
+    (void)context;
     if (event == SIBLES_ADV_EVT_ADV_STARTED) {
-        g_adv_active = 1;
-        g_adv_started = 1;
-        BLE_LOG("adv started");
+        sibles_adv_evt_startted_t *evt = (sibles_adv_evt_startted_t *)data;
+        uint8_t status = evt ? evt->status : 0;
+        g_adv_active = (status == 0) ? 1 : 0;
+        g_adv_started = g_adv_active;
+        BLE_LOG("adv started status=%d", status);
     } else if (event == SIBLES_ADV_EVT_ADV_STOPPED) {
         g_adv_active = 0;
         g_adv_started = 0;
         BLE_LOG("adv stopped");
-        if (!g_adv_stopping && g_mode == 1 && g_adv_connectable && adv_has_space()) {
-            if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
-                g_adv_active = 1;
-        }
+        /* config.is_auto_restart=1 已由协议栈负责重启；这里再 start 会
+         * 叠加 advertising 实例，最终 Create advertising failed。 */
     }
     return 0;
 }
@@ -518,8 +515,12 @@ static int adv_start(int connectable)
     g_adv_stopping = 1;
     if (g_adv_active) {
         sibles_advertising_stop(g_geyi_adv_ctx);
-        sibles_advertising_delete(g_geyi_adv_ctx);
         g_adv_active = 0;
+    }
+    if (g_adv_inited) {
+        sibles_advertising_delete(g_geyi_adv_ctx);
+        g_adv_inited = 0;
+        rt_thread_mdelay(20);   /* 等协议栈释放 adv 实例 */
     }
     g_adv_started = 0;
     memset(&para, 0, sizeof(para));
@@ -528,11 +529,13 @@ static int adv_start(int connectable)
     adv_free_para(&para);
     BLE_LOG("adv init ret=%d", ret);
     if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv init err %d", ret); return -1; }
+    g_adv_inited = 1;
     ret = sibles_advertising_start(g_geyi_adv_ctx);
     BLE_LOG("adv start ret=%d", ret);
     if (ret != SIBLES_ADV_NO_ERR) { g_adv_stopping = 0; BLE_LOG("adv start err %d", ret); return -1; }
     g_adv_active = 1;
     g_adv_connectable = (uint8_t)connectable;
+    g_adv_dirty = 0;   /* init 已使用当前 g_adv_payload */
     g_adv_stopping = 0;
     return 0;
 }
@@ -550,6 +553,23 @@ int gy_net_ble_host_start(uint32_t room_id, uint8_t players, uint8_t phase,
     return ret;
 }
 
+static int adv_apply_payload(int connectable)
+{
+    sibles_advertising_para_t para;
+    uint8_t ret;
+    memset(&para, 0, sizeof(para));
+    adv_fill_para(&para, connectable);
+    ret = sibles_advertising_update_adv_and_scan_rsp_data(g_geyi_adv_ctx,
+                                                          &para.adv_data, &para.rsp_data);
+    adv_free_para(&para);
+    if (ret != SIBLES_ADV_NO_ERR) {
+        BLE_LOG("adv update defer ret=%d", ret);
+        return -1;
+    }
+    g_adv_dirty = 0;
+    return 0;
+}
+
 int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
                            uint8_t max_spectators, int connectable)
 {
@@ -558,20 +578,19 @@ int gy_net_ble_host_update(uint8_t players, uint8_t phase, uint8_t spectators,
         ((uint32_t)g_adv_payload[6] << 24);
     int mode_changed = (!!connectable != !!g_adv_connectable);
     build_adv_payload(room_id, players, phase, spectators, max_spectators);
+    g_adv_dirty = 1;
     if (mode_changed) return adv_start(connectable);
-    if (!g_adv_active) return adv_start(connectable);
-    if (!g_adv_started) return 0;
-    {
-        sibles_advertising_para_t para;
-        uint8_t ret;
-        memset(&para, 0, sizeof(para));
-        adv_fill_para(&para, connectable);
-        ret = sibles_advertising_update_adv_and_scan_rsp_data(g_geyi_adv_ctx,
-                                                              &para.adv_data, &para.rsp_data);
-        adv_free_para(&para);
-        if (ret != SIBLES_ADV_NO_ERR) { BLE_LOG("adv update err %d", ret); return -1; }
+    /* 广播可能因连接/断线处于自动重启窗口，此时不要重建实例；
+     * 新人数留在 g_adv_payload，ADV_STARTED 后由 poll 写回。 */
+    if (!g_adv_active) {
+        if (g_adv_inited) return 0;
+        return adv_start(connectable);
     }
-    return 0;
+    /* 协议栈在 STARTING/STOPPING/IDLE 时拒绝 update；不要在这里重建
+     * advertising（会叠出多个实例并报 Create advertising failed），
+     * 交给 gy_net_ble_poll 在 ADV_STARTED 后重试。 */
+    if (!g_adv_started) return 0;
+    return adv_apply_payload(connectable);
 }
 
 void gy_net_ble_host_stop(void)
@@ -579,11 +598,14 @@ void gy_net_ble_host_stop(void)
     g_mode = 0;
     g_pending_host = 0;
     g_adv_stopping = 1;
-    if (g_adv_active) {
-        sibles_advertising_stop(g_geyi_adv_ctx);
-        sibles_advertising_delete(g_geyi_adv_ctx);
-        g_adv_active = 0;
-    }
+    /* 不依赖 g_adv_active：update 失败/事件乱序时该标志可能与协议栈
+     * 实际状态不一致，漏掉 stop 会让房间继续广播，其它板永远看到幽灵房。 */
+    sibles_advertising_stop(g_geyi_adv_ctx);
+    sibles_advertising_delete(g_geyi_adv_ctx);
+    g_adv_active = 0;
+    g_adv_started = 0;
+    g_adv_inited = 0;
+    g_adv_dirty = 0;
     g_adv_stopping = 0;
 }
 
@@ -591,6 +613,7 @@ int gy_net_ble_scan_start(void)
 {
     ble_gap_scan_start_t p;
     int ret;
+    if (g_scan_active || g_pending_scan) return 0;
     if (!g_power_on) { g_pending_scan = 1; BLE_LOG("scan pending power=0"); return 0; }
     memset(&p, 0, sizeof(p));
     p.own_addr_type = GAPM_STATIC_ADDR;
@@ -602,7 +625,13 @@ int gy_net_ble_scan_start(void)
     p.period = 0;
     ret = ble_gap_scan_start(&p);
     BLE_LOG("scan_start ret=%d", ret);
-    if (ret != HL_ERR_NO_ERROR) return -1;
+    if (ret != HL_ERR_NO_ERROR) {
+        /* 扫描停止是异步的；刚离开房间时可能返回 busy。1 s 后由 poll 重试。 */
+        g_pending_scan = 1;
+        g_scan_retry_at = rt_tick_get() + rt_tick_from_millisecond(1000);
+        return -1;
+    }
+    g_pending_scan = 0;
     g_scan_active = 1;
     return 0;
 }
@@ -697,10 +726,21 @@ uint16_t gy_net_ble_mtu(uint8_t conn)
 
 int gy_net_ble_local_id(void)
 {
+    static int cached = -1;
     bd_addr_t addr;
-    if (ble_get_public_address(&addr) == HL_ERR_NO_ERROR)
-        return ((int)addr.addr[4] << 8) | addr.addr[5];
-    return 0;
+    if (cached >= 0) return cached;
+    /* 有些批次的 NVDS/公共地址是同一个默认值，两块板会显示相同 #ID。
+     * 优先用芯片 UID 派生地址（SDK example/ble/* 同样做法），保证唯一；
+     * UID 不可读时才退回公共地址。只读一次，避免每次 state 都打 UID 日志。 */
+    if (bt_mac_addr_generate_via_uid_v2(&addr) == 0)
+        cached = ((int)addr.addr[4] << 8) | addr.addr[5];
+    else if (bt_mac_addr_generate_via_uid(&addr) == 0)
+        cached = ((int)addr.addr[4] << 8) | addr.addr[5];
+    else if (ble_get_public_address(&addr) == HL_ERR_NO_ERROR)
+        cached = ((int)addr.addr[4] << 8) | addr.addr[5];
+    else
+        cached = 0;
+    return cached;
 }
 
 static uint8_t *ble_get_cb(uint8_t conn_idx, uint8_t idx, uint16_t *len)
@@ -806,7 +846,20 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         break;
     case BLE_GAP_CONNECTED_IND: {
         ble_gap_connect_ind_t *ind = (ble_gap_connect_ind_t *)data;
-        GyBleConn *c = conn_alloc(ind->conn_idx);
+        GyBleConn *c;
+        if (g_mode == 0) {
+            /* 房主已离开/关房，但在停止广播前仍可能收到连接请求；
+             * 立即断开，避免客户端连上一个不处理 GATT 的僵尸设备。 */
+            BLE_LOG("reject conn idx=%d mode=idle", ind->conn_idx);
+            {
+                ble_gap_disconnect_t d;
+                d.conn_idx = ind->conn_idx;
+                d.reason = 0x13;
+                ble_gap_disconnect(&d);
+            }
+            break;
+        }
+        c = conn_alloc(ind->conn_idx);
         if (c) {
             c->role = ind->role;
             c->addr_type = ind->peer_addr_type;
@@ -816,10 +869,8 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
             BLE_LOG("connected idx=%d role=%d", ind->conn_idx, ind->role);
             if (g_mode == 2)
                 g_pending_search_conn = ind->conn_idx;
-            if (g_mode == 1 && g_adv_connectable && adv_has_space()) {
-                if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
-                    g_adv_active = 1;
-            }
+            /* 不手动 start：adv config 已设 is_auto_restart，协议栈会在
+             * 连接/断线后自行恢复广播；手动 start 会叠加实例。 */
         }
         break;
     }
@@ -827,10 +878,7 @@ static int geyi_ble_event(uint16_t event_id, uint8_t *data, uint16_t len, uint32
         ble_gap_disconnected_ind_t *ind = (ble_gap_disconnected_ind_t *)data;
         conn_free(ind->conn_idx);
         BLE_LOG("disconnected idx=%d reason=%d", ind->conn_idx, ind->reason);
-        if (g_mode == 1 && g_adv_connectable && adv_has_space()) {
-            if (sibles_advertising_start(g_geyi_adv_ctx) == SIBLES_ADV_NO_ERR)
-                g_adv_active = 1;
-        }
+        /* 同上：交给 is_auto_restart。 */
         break;
     }
     case SIBLES_MTU_EXCHANGE_IND: {
@@ -913,6 +961,15 @@ void gy_net_ble_poll(void)
         BLE_LOG("search start conn=%d", conn);
         sibles_search_service(conn, ATT_UUID_128_LEN, (uint8_t *)g_svc_uuid);
     }
+    if (g_pending_scan && (int32_t)(rt_tick_get() - g_scan_retry_at) >= 0) {
+        g_pending_scan = 0;
+        gy_net_ble_scan_start();
+    }
+    if (g_adv_dirty && g_mode == 1 && g_adv_active && g_adv_started &&
+        (int32_t)(rt_tick_get() - g_adv_retry_at) >= 0) {
+        g_adv_retry_at = rt_tick_get() + rt_tick_from_millisecond(200);
+        adv_apply_payload(g_adv_connectable);
+    }
 }
 
 void gy_net_ble_init(void)
@@ -932,6 +989,7 @@ void gy_net_ble_init(void)
         }
     }
     sifli_ble_enable();
+    BLE_LOG("local id=%04X", (unsigned)gy_net_ble_local_id());
 }
 
 int gy_net_ble_selftest(void)

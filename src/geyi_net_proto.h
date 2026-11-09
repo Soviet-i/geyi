@@ -13,7 +13,9 @@
 #include <stdint.h>
 #include "geyi_game.h"
 
-#define GY_NET_VERSION       1
+/* v2：JOIN_REQ/JOIN_ACK/ROOM_STATE 增加 16-bit 玩家唯一 ID，
+ * 用于房间页显示真实玩家名而不是对端不可知的“玩家/对手”。 */
+#define GY_NET_VERSION       2
 #define GY_NET_MAGIC0        'G'
 #define GY_NET_MAGIC1        'Y'
 #define GY_NET_HEADER_SIZE   12
@@ -76,13 +78,15 @@ typedef struct {
 } GyNetAdvRoom;
 
 typedef struct {
-    uint8_t  role;          /* 0=玩家，1=旁观 */
+    uint8_t  role;          /* 0=玩家，1=旁观，2=按房主当前空位自动选择 */
+    uint16_t player_id;     /* 本机唯一 ID（芯片 UID 派生，见 gy_net_ble_local_id） */
     uint32_t room_id;
 } GyNetJoinReq;
 
 typedef struct {
     uint8_t  color;         /* 玩家颜色；旁观为 0xff */
     uint8_t  seat;          /* 玩家 0/1；旁观为索引 0..K-1 */
+    uint16_t player_id;     /* 自己的唯一 ID，便于 ACK 丢包后校准 */
     uint32_t token;
     uint32_t room_id;
     uint32_t seq;
@@ -100,6 +104,8 @@ typedef struct {
     uint8_t  guest_ready;
     uint8_t  player_count;
     uint8_t  spectator_count;
+    uint16_t host_id;       /* host_color 座位的玩家 ID；无客人为 0 */
+    uint16_t guest_id;      /* guest_color 座位的玩家 ID；空位为 0 */
     uint32_t room_id;
     uint32_t seq;
 } GyNetRoomState;

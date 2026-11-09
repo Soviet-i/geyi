@@ -12,6 +12,12 @@
 
 #define GY_NET_APP_MAX_ROOMS 8
 
+/* gy_net_app_join_reason() 的返回值：UI 据此提示“房间不存在”等。 */
+#define GY_NET_JOIN_REASON_NONE       0
+#define GY_NET_JOIN_REASON_NOT_FOUND  1
+#define GY_NET_JOIN_REASON_FULL       2
+#define GY_NET_JOIN_REASON_TIMEOUT    3
+
 typedef struct {
     uint32_t room_id;
     uint8_t  players;
@@ -41,9 +47,12 @@ int gy_net_app_player_count(void);
 int gy_net_app_seq(void);
 int gy_net_app_local_id(void);
 int gy_net_app_seat_occupied(int color);
+int gy_net_app_seat_ready(int color);
+int gy_net_app_seat_id(int color);
 int gy_net_app_connected(void);
 int gy_net_app_local_terminal(void);
 int gy_net_app_join_rejected(void);
+int gy_net_app_join_reason(void);   /* GY_NET_JOIN_REASON_* */
 int gy_net_app_spectator_lost(void);
 int gy_net_app_result(void);
 int gy_net_app_local_turn(void);
@@ -60,6 +69,8 @@ const GyNetAppRoom *gy_net_app_room_at(int index);
 /* 房间操作 */
 int gy_net_app_create_room(uint32_t room_id);
 int gy_net_app_join_index(int index);
+/* 测试/旁观入口：role=-1 按大厅规则；GY_NET_ROLE_SPECTATOR 强制旁观。 */
+int gy_net_app_join_index_role(int index, int role);
 void gy_net_app_leave(void);
 int gy_net_app_set_ready(int ready);
 int gy_net_app_swap(void);
