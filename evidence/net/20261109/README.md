@@ -5,10 +5,10 @@
 
 | 文件 | 内容 | 覆盖 | 不覆盖 |
 |---|---|---|---|
-| `host_test_final.log` | `python tools/run_host.py` | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 307、app 199、平衡 10 断言 | 真实 BLE、桌面 LVGL |
-| `firmware_build_final.log` | `scons --board=sf32lb52-lchspi-ulp` | `main.bin` 1,064,980 B + LCPU `lcpu.bin` 6,384 B | 编译通过不等于联机可用 |
-| `board_suite_final.log` | 最终双板套件 stdout | 9 段全部 PASS；A/B final 均 active=0、rooms=0 | 不是逐像素/触摸证据 |
-| `board/suite_A_COM7_*.log`、`suite_B_COM8_*.log` | 双板串口原始日志 | 各轮套件；`132536` 为最终 PASS 轮（含认输同步/结算回房/第二局/倒计时/旁观无准备） | 失败轮保留，不能只引用 PASS 轮 |
+| `host_test_final.log` | `python tools/run_host.py` | 核心 26920、输入 60、参数 2517、参数页 85、AI 62、联机 307、app 202、平衡 10 断言 | 真实 BLE、桌面 LVGL |
+| `firmware_build_final.log` | `scons --board=sf32lb52-lchspi-ulp` | `main.bin` 1,077,420 B + LCPU `lcpu.bin` 6,384 B | 编译通过不等于联机可用 |
+| `evidence/ui/20261109/board_suite_rules.log` | 第四轮双板套件 stdout | 10 段全部 PASS（新增 rules/safe area）；A/B final 均 active=0、rooms=0 | 不是逐像素/触摸证据 |
+| `board/suite_A_COM7_*.log`、`suite_B_COM8_*.log` | 双板串口原始日志 | 各轮套件；`140907` 为最终 PASS 轮（含规则 4 页/corner=0/rbottom<370 与完整联机流程） | 失败轮保留，不能只引用 PASS 轮 |
 | `latency/latency_before_fix.log` | 延迟复现（修复前） | join 4.07s、close 3.66s FAIL | 不能写成通过 |
 | `latency/latency_after_fix.log` | 延迟复测（修复后） | join 0.98s、close 0.18s、leave 0.43s PASS | 只证明本次双板环境 |
 | `latency/latency_A_*.log`、`latency_B_*.log` | 延迟测试串口原始日志 | 各轮耗时与状态 | 失败/过渡轮保留 |
@@ -27,10 +27,14 @@
 8. 点击已关房返回 `active=0`，不变成房主，条目移除。
 9. 强制旁观 `role=2 local=255`，不占玩家位、不发操作；退出后观战数归零，最终关房后大厅清空。
 10. 延迟：join 0.98s、close 0.18s、leave 0.43s（`latency_after_fix.log`）。
+11. 游戏规则/安全区（REQ-318/NFR-UX-06）：`gy_net rules` 实际进入 4 页；逐页
+    `corner=0`、`rbottom=357/337/297/197`（<370）；首页/规则页四角安全；返回首页成功。
+    桌面截图与字体日志在 `evidence/ui/20261109/`。
 
 ## 未验证
 
 - 真实屏幕上的文字居中/右下角像素、空位灰色/准备框白色的观感、触摸点击手感；
+- 新首页“格弈”观感、游戏规则 4 页的中文标点/圆角遮挡、触摸翻页与返回（自动坐标检查通过，但无照片）；
 - 10 s 断线重连窗口、房主掉电提示、结算保留；
 - 第三块板/手机的双方预览叠加；
 - P-02 最大并发连接数、连接态广播、快照包长/吞吐、BLE 分片 ACK/重传。
