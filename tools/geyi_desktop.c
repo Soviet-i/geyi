@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "geyi_ui.h"
+#include "geyi_ai.h"
 #include "geyi_net_app.h"
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
@@ -48,7 +49,11 @@ static void screenshot(const char *path)
     BITMAPFILEHEADER file;FILE *out=NULL;
     lv_refr_now(NULL);memset(&file,0,sizeof(file));file.bfType=0x4d42;
     file.bfOffBits=sizeof(file)+sizeof(BITMAPINFOHEADER);file.bfSize=file.bfOffBits+sizeof(frame);
+#ifdef _MSC_VER
     if(fopen_s(&out,path,"wb")||!out)exit(2);
+#else
+    out=fopen(path,"wb");if(!out)exit(2);
+#endif
     fwrite(&file,sizeof(file),1,out);fwrite(&bitmap.bmiHeader,sizeof(BITMAPINFOHEADER),1,out);
     fwrite(frame,sizeof(frame),1,out);fclose(out);
 }
@@ -81,6 +86,55 @@ static int key2_tests(void)
     gy_ui_key2();
     check(!gy_ui_is_placing(),"KEY2 without coins does not enter placing");
     gy_ui_action(GY_UI_RESTART);
+    return 0;
+}
+/* REQ-319：倾斜预览与屏幕按钮预览不得互相覆盖。 */
+static int nav_source_tests(void)
+{
+    uint32_t revision;
+    gy_ui_action(GY_UI_HOME);
+    gy_ui_action(GY_UI_SINGLE);
+    check(gy_ui_is_playing()&&gy_ui_tilt_allowed(),"nav: single starts, tilt allowed");
+    (void)gy_ui_take_feedback();
+    /* 按钮进入预览 → 倾斜被忽略。 */
+    gy_ui_action(GY_UI_UP);
+    check(gy_ui_has_preview()&&!gy_ui_tilt_allowed(),"nav: button preview blocks tilt");
+    gy_ui_tilt_select(GY_DOWN,2);
+    check(gy_ui_preview_direction()==GY_UP,"nav: tilt ignored in button preview");
+    check(gy_ui_preview_count()==1,"nav: button count unchanged by tilt");
+    check(gy_ui_take_feedback()==GY_FX_NONE,"nav: ignored tilt does not flash");
+    gy_ui_action(GY_UI_CANCEL);
+    check(!gy_ui_has_preview()&&gy_ui_tilt_allowed(),"nav: cancel restores tilt");
+    /* 倾斜进入预览 → 屏幕编辑/取消/放兵被忽略，确认仍可用。 */
+    gy_ui_tilt_select(GY_UP,1);
+    check(gy_ui_has_preview()&&gy_ui_tilt_allowed(),"nav: tilt preview active");
+    gy_ui_action(GY_UI_MORE);
+    gy_ui_action(GY_UI_LEFT);
+    gy_ui_action(GY_UI_CANCEL);
+    gy_ui_action(GY_UI_PLACE);
+    check(gy_ui_has_preview(),"nav: screen edit/cancel/place ignored in tilt preview");
+    check(gy_ui_preview_direction()==GY_UP&&gy_ui_preview_count()==1,
+          "nav: tilt selection unchanged");
+    check(!gy_ui_is_placing(),"nav: place ignored in tilt preview");
+    revision=gy_ui_game()->revision;
+    (void)gy_ui_take_feedback();
+    gy_ui_action(GY_UI_CONFIRM);
+    check(gy_ui_game()->revision==revision+1&&!gy_ui_has_preview(),
+          "nav: screen confirm works in tilt preview");
+    check(gy_ui_take_feedback()==GY_FX_MOVE,"nav: confirm flashes once");
+    /* 回中只取消倾斜预览；按钮预览不被板子回中打断。 */
+    gy_ui_action(GY_UI_RESTART);
+    gy_ui_tilt_select(GY_UP,1);
+    gy_ui_tilt_cancel();
+    check(!gy_ui_has_preview()&&gy_ui_preview_direction()==-1,
+          "nav: level cancels tilt preview");
+    gy_ui_action(GY_UI_UP);
+    check(gy_ui_has_preview()&&!gy_ui_tilt_allowed(),"nav: button preview after tilt cancel");
+    gy_ui_tilt_cancel();
+    check(gy_ui_has_preview(),"nav: level does not cancel button preview");
+    gy_ui_action(GY_UI_CANCEL);
+    gy_ui_action(GY_UI_RESTART);
+    puts("PASS: REQ-319 tilt preview vs screen-button arbitration");
     return 0;
 }
 static int param_tests(void)
@@ -325,6 +379,7 @@ done: ;
     check(!gy_ui_is_playing(),"home during AI preview");
     Sleep(600);gy_ui_tick();
     check(!gy_ui_is_playing(),"preview commit cancelled after home");
+    nav_source_tests();
     key2_tests();
     param_tests();
     puts("PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board");

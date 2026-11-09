@@ -4,6 +4,7 @@
 #include "geyi_ai_task.h"
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
+#include "geyi_nav.h"
 #include "geyi_net_app.h"
 #include "geyi_font_cn16.h"
 #include <stdint.h>
@@ -17,6 +18,8 @@
 static GyGame game;
 static GyPreview preview;
 static int direction=-1, amount=1, selected_count=1, placing=0, place_column=-1, ready=0;
+/* 输入源仲裁（REQ-319）：倾斜预览/按钮预览互斥，逻辑在 geyi_nav.c 主机可测。 */
+static GyNav nav;
 static lv_obj_t *tiles[GY_MAX][GY_MAX], *labels[GY_MAX][GY_MAX], *health[GY_MAX][GY_MAX];
 static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
 static lv_obj_t *home_page,*mode_page,*game_page,*prep_page,*param_page,*rules_page;
@@ -74,10 +77,11 @@ static const char *const rules_text[RULES_PAGES]={
 "（同时兼容触屏的操作方式，屏幕的“确认”等同于KEY2）",
 "操作判定逻辑\n\n"
 "1. 谁先移动：优先移动离倾斜方向最近的可移动士兵。\n\n"
-"2. 选人数：若可移动士兵有 N 个，就把“下限到上限”的角度平均分成 N 档，每多倾斜一档，多移动 1 个士兵。\n\n"
-"（例：可移动士兵 2 个，角度 10°~60°，则 10°~35° 移动 1 个，35°~60° 移动 2 个。并且设有角度缓冲。）",
+"2. 选人数：若可移动士兵有 N 个，每 10° 一档，每多倾斜一档，多移动 1 个士兵；\n\n"
+"若 N 档大于 60° 上限，才把“下限到上限”平均分成 N 档。\n\n"
+"（例：可移动士兵 2 个，6° 进入预览，则 6°~16° 移动 1 个，16°~26° 移动 2 个，最多 2 个。并且设有角度缓冲。）",
 "操作判定逻辑（续）\n\n"
-"3. 放兵：士兵只能放置在最靠近倾斜方向且未被占用的格子里。\n\n"
+"3. 放兵：在己方底线中，士兵只能放置在最靠近倾斜方向且未被占用的格子里。\n\n"
 "4. 预览：倾斜时进入预览模式，板子回正则取消预览"
 };
 static void cancel_ai(void)
@@ -606,6 +610,7 @@ static void apply_ai(const GyAiAction *a)
     ai_preview_pending=0;ai_pending.kind=0;
     if(!ok){render();start_ai();return;}
     ready=0;placing=0;direction=-1;place_column=-1;
+    gy_nav_clear(&nav);
     if(!old_outcome&&game.outcome)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
     else if(game.revision!=old_revision)feedback=GY_FX_MOVE;
@@ -627,6 +632,7 @@ static void begin_ai_preview(const GyAiAction *a)
            game.coins[game.turn]<game.config.cost){apply_ai(a);return;}
         placing=1;ready=1;place_column=a->column;direction=-1;
     }else{apply_ai(a);return;}
+    gy_nav_clear(&nav);
     ai_pending=*a;
     ai_preview_pending=1;
     ai_preview_at=lv_tick_get();
@@ -641,6 +647,7 @@ static void commit_ai_pending(void)
     else if(ai_pending.kind==GY_AI_PLACE)ok=gy_place(&game,ai_pending.column);
     ai_preview_pending=0;ai_pending.kind=0;
     ready=0;placing=0;direction=-1;place_column=-1;
+    gy_nav_clear(&nav);
     if(!ok){status("AI 动作失效 重新思考");render();start_ai();return;}
     if(!old_outcome&&game.outcome)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
@@ -658,7 +665,8 @@ static void choose(void)
     m.direction=direction;m.count=available==0?0:(amount>available?available:amount);
     selected_count=m.count;
     ready=gy_preview(&game,m,&preview);
-    if(!ready)status("方向不可用 请重新选择");
+    if(ready)gy_nav_button_selected(&nav);
+    else{gy_nav_clear(&nav);status("方向不可用 请重新选择");}
 }
 static void param_message(const char *msg)
 {
@@ -712,8 +720,8 @@ static void choose_net(void)
     m.direction=direction;m.count=available==0?0:(amount>available?available:amount);
     selected_count=m.count;
     ready=gy_preview(&game,m,&preview);
-    if(!ready)status("方向不可用 请重新选择");
-    else gy_net_app_preview(direction,selected_count);
+    if(!ready){gy_nav_clear(&nav);status("方向不可用 请重新选择");}
+    else{gy_nav_button_selected(&nav);gy_net_app_preview(direction,selected_count);}
 }
 void gy_ui_action(int a)
 {
@@ -779,12 +787,14 @@ void gy_ui_action(int a)
     if(a==GY_UI_HOME){
         if(gy_net_app_active())gy_net_app_leave();
         gy_net_app_lobby_stop();
-        ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);return;
+        ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);
+        show_page(home_page);return;
     }
     if(a==GY_UI_MODES){
         if(gy_net_app_active())gy_net_app_leave();
         gy_net_app_lobby_stop();
-        ai_side=-1;feedback=GY_FX_CLEAR;show_page(mode_page);return;
+        ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);
+        show_page(mode_page);return;
     }
     if(a==GY_UI_SINGLE){
         if(gy_net_app_active())gy_net_app_leave();
@@ -795,20 +805,22 @@ void gy_ui_action(int a)
         if(gy_net_app_active())gy_net_app_leave();
         gy_net_app_lobby_stop();
         ai_side=-1;prep_human_red=1;update_prep_labels();
-        feedback=GY_FX_CLEAR;show_page(prep_page);return;
+        feedback=GY_FX_CLEAR;gy_nav_clear(&nav);
+        show_page(prep_page);return;
     }
     if(a==GY_UI_PREP_SWAP){
         if(!prep_active)return;
         prep_human_red=!prep_human_red;update_prep_labels();return;
     }
-    if(a==GY_UI_PREP_CANCEL){ai_side=-1;feedback=GY_FX_CLEAR;show_page(mode_page);return;}
+    if(a==GY_UI_PREP_CANCEL){ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);show_page(mode_page);return;}
     if(a==GY_UI_PREP_START){
         ai_side=prep_human_red?1:0;game_mode=GY_MODE_PVE;show_page(game_page);a=GY_UI_RESTART;
     }
     if(a==GY_UI_RESIGN&&!gy_net_app_active()){
-        if(game.outcome){ai_side=-1;feedback=GY_FX_CLEAR;show_page(home_page);}
+        if(game.outcome){ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);show_page(home_page);}
         else if(playing){
             gy_resign(&game);ready=0;placing=0;direction=-1;
+            gy_nav_clear(&nav);
             if(game.outcome)feedback=game.outcome==GY_RED_WIN?GY_FX_RED:
                 game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
             render();
@@ -816,6 +828,12 @@ void gy_ui_action(int a)
         return;
     }
     if(!playing)return;
+    /* 倾斜预览中：屏幕取消/增减/方向/放兵不生效，避免与倾斜状态互相覆盖；
+     * 屏幕确认仍等价于 KEY2（REQ-319）。 */
+    if(gy_nav_blocks_screen_edit(&nav,placing)&&
+       (a==GY_UI_CANCEL||a<=GY_UI_LEFT||a==GY_UI_LESS||a==GY_UI_MORE||a==GY_UI_PLACE)){
+        render();return;
+    }
     if(gy_net_app_active()&&net_game_active){
         if(a==GY_UI_RESIGN){
             if(gy_net_app_is_spectator()){
@@ -827,7 +845,8 @@ void gy_ui_action(int a)
         }
         if(!human_turn()||gy_net_app_is_spectator()){render();return;}
         if(a==GY_UI_CANCEL){
-            ready=0;placing=0;gy_net_app_cancel();status("已取消");render();return;
+            ready=0;placing=0;gy_nav_clear(&nav);
+            gy_net_app_cancel();status("已取消");render();return;
         }
         if(a<=GY_UI_LEFT){placing=0;direction=a;amount=1;choose_net();render();return;}
         if(a==GY_UI_LESS||a==GY_UI_MORE){
@@ -836,11 +855,11 @@ void gy_ui_action(int a)
         }
         if(a==GY_UI_CONFIRM){
             int ok=ready&&gy_net_app_confirm();
-            ready=0;placing=0;direction=-1;
+            ready=0;placing=0;direction=-1;gy_nav_clear(&nav);
             status(ok?"已发送 等待房主快照":"没有可确认的选择");render();return;
         }
         if(a==GY_UI_PLACE){
-            ready=0;placing=0;place_column=-1;
+            ready=0;placing=0;place_column=-1;gy_nav_clear(&nav);
             if(game.coins[game.turn]>=game.config.cost){
                 placing=1;gy_net_app_cancel();gy_net_app_place(-1);
             }else{char msg[48];lv_snprintf(msg,sizeof(msg),"需要%d金币才能放置",game.config.cost);status(msg);}
@@ -855,20 +874,24 @@ void gy_ui_action(int a)
         if(!gy_init(&game,config,20261015))gy_init(&game,gy_default_config(),20261015);
         layout_board();
         direction=-1;amount=1;placing=0;ready=0;place_column=-1;
+        gy_nav_clear(&nav);
         status("先选方向 再确认");
     } else if(ai_thinking||!human_turn()) {
         render();return;
     } else if(a==GY_UI_CANCEL) {
-        ready=0;placing=0;place_column=-1;direction=-1;status("已取消 棋盘状态不变");
+        ready=0;placing=0;place_column=-1;direction=-1;
+        gy_nav_clear(&nav);
+        status("已取消 棋盘状态不变");
     } else if(game.outcome) {render();return;}
     else if(a<=GY_UI_LEFT) {placing=0;direction=a;choose();}
     else if(a==GY_UI_LESS||a==GY_UI_MORE) {
         amount+=a==GY_UI_MORE?1:-1;if(amount<1)amount=1;if(amount>36)amount=36;choose();
     } else if(a==GY_UI_CONFIRM) {
         int ok=ready&&(placing?gy_place(&game,place_column):gy_commit(&game,&preview));
-        ready=0;placing=0;direction=-1;status(ok?"回合结束 请交给对方":"没有可确认的选择");
+        ready=0;placing=0;direction=-1;gy_nav_clear(&nav);
+        status(ok?"回合结束 请交给对方":"没有可确认的选择");
     } else if(a==GY_UI_PLACE) {
-        ready=0;placing=0;place_column=-1;
+        ready=0;placing=0;place_column=-1;gy_nav_clear(&nav);
         if(game.coins[game.turn]>=game.config.cost)placing=1;
         else {char msg[48];lv_snprintf(msg,sizeof(msg),"需要%d金币才能放置",game.config.cost);status(msg);}
     }
@@ -1530,7 +1553,8 @@ void gy_ui_tick(void)
         }
         if(ng&&ng->config.size>=GY_SIZE_MIN&&
            (ng->revision!=net_last_rev||phase!=net_last_phase)){
-            if(ng->revision!=net_last_rev){ready=0;placing=0;direction=-1;place_column=-1;}
+            if(ng->revision!=net_last_rev){ready=0;placing=0;direction=-1;place_column=-1;
+                gy_nav_clear(&nav);}
             game=*ng;net_last_rev=ng->revision;net_last_phase=phase;
             layout_board();render();
         }
@@ -1575,19 +1599,35 @@ void gy_ui_tick(void)
 void gy_ui_tilt_select(int d,int count)
 {
     GyMove m={d,count};
+    /* 按钮预览优先：倾斜不得把按钮选的方向/数量改掉（REQ-319）。 */
+    if(!gy_nav_tilt_allowed(&nav))return;
     if(gy_net_app_active()&&net_game_active){
         if(!human_turn()||gy_net_app_is_spectator()||placing||game.outcome)return;
         direction=d;selected_count=count;amount=count?count:1;
         ready=gy_preview(&game,m,&preview);
-        if(ready)gy_net_app_preview(d,selected_count);
-        else status("方向不可用 请重新选择");
+        if(ready){gy_nav_tilt_selected(&nav);gy_net_app_preview(d,selected_count);}
+        else{gy_nav_clear(&nav);status("方向不可用 请重新选择");}
         render();
         return;
     }
     if(!playing||ai_thinking||!human_turn()||placing||game.outcome)return;
     direction=d;selected_count=count;amount=count?count:1;
     ready=gy_preview(&game,m,&preview);
-    if(!ready)status("方向不可用 请重新选择");
+    if(ready){gy_nav_tilt_selected(&nav);}
+    else{gy_nav_clear(&nav);status("方向不可用 请重新选择");}
     render();
 }
+/* 板子回中/输入失效：只取消倾斜预览；按钮预览由屏幕取消，不被回中打断。 */
+void gy_ui_tilt_cancel(void)
+{
+    if(!gy_nav_tilt_cancel(&nav))return;
+    ready=0;placing=0;place_column=-1;direction=-1;
+    if(gy_net_app_active()&&net_game_active)gy_net_app_cancel();
+    status("已取消 棋盘状态不变");
+    render();
+}
+/* 板端在喂倾斜事件前询问：按钮预览期间倾斜应被忽略。 */
+int gy_ui_tilt_allowed(void) {return gy_nav_tilt_allowed(&nav);}
+int gy_ui_preview_direction(void) {return ready?direction:-1;}
+int gy_ui_preview_count(void) {return ready?selected_count:0;}
 #endif

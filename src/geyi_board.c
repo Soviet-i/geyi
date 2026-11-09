@@ -16,7 +16,7 @@ static struct rt_mutex motion_lock;
 static Motion shared;
 static GyInput input;
 static uint32_t last_revision;
-static int previous_place=-1,previous_column=-1;
+static int previous_place=-1,previous_column=-1,previous_preview;
 static uint32_t milliseconds(void)
 {return (uint32_t)((uint64_t)rt_tick_get()*1000/RT_TICK_PER_SECOND);}
 /* 按当前对局模式读取参数页里的方向/角度缓冲阈值。
@@ -114,7 +114,7 @@ void gy_board_poll(void)
     Motion m;uint32_t now=milliseconds();GyInputEvent event;int available[4],d,placing,key2;
     const GyGame *game=gy_ui_game();
     if(!gy_ui_is_playing()){
-        gy_input_reset(&input);previous_column=-1;previous_place=0;
+        gy_input_reset(&input);previous_column=-1;previous_place=0;previous_preview=0;
         return;
     }
     rt_mutex_take(&motion_lock,RT_WAITING_FOREVER);m=shared;rt_mutex_release(&motion_lock);
@@ -137,28 +137,44 @@ void gy_board_poll(void)
         return;
     }
     placing=gy_ui_is_placing();
-    if(game->revision!=last_revision||placing!=previous_place){
-        reset_input();last_revision=game->revision;previous_place=placing;previous_column=-1;
+    /* 预览消失（确认/取消/无效确认清空）时重置状态机；否则输入层仍以为
+     * 同一方向/数量“可见”，再次倾斜不会发 SELECT/UPDATE，UI 不再出现预览。 */
+    {
+        int preview=gy_ui_has_preview();
+        if(game->revision!=last_revision||placing!=previous_place||
+           (previous_preview&&!preview)){
+            reset_input();last_revision=game->revision;previous_place=placing;
+            previous_column=-1;
+        }
+        previous_preview=preview;
     }
     if(!m.valid||(uint32_t)(now-m.stamp)>100||abs(m.x)>9000||abs(m.y)>9000){
-        if(input.direction>=0&&gy_ui_has_preview()&&!placing)gy_ui_action(GY_UI_CANCEL);
+        if(!placing)gy_ui_tilt_cancel();
         reset_input();return;
     }
     if(placing){
-        if(abs(m.x)>1000){int size=game->config.size;
-            int col;
-            if(size<GY_SIZE_MIN||size>GY_SIZE_MAX)size=6;
-            col=(m.x+3000)*size/6001;if(col<0)col=0;if(col>=size)col=size-1;
-            if(col!=previous_column){previous_column=col;gy_ui_cell(col,game->turn?0:size-1);}}
+        int size=game->config.size,col;
+        if(size<GY_SIZE_MIN||size>GY_SIZE_MAX)size=6;
+        /* 进入放兵后先不预选列：KEY2 再按一次应退出；水平倾斜越过 4° 才选列。 */
+        if(previous_column<0&&abs(m.x)<GY_INPUT_PLACE_DEAD)return;
+        /* 离倾斜方向最近的己方底线空列；死区/半列回差在 gy_input_place_column 内。 */
+        col=gy_input_place_column(game,game->turn,m.x,m.y,previous_column);
+        if(col>=0&&col<size&&col!=previous_column){
+            previous_column=col;
+            gy_ui_cell(col,game->turn?0:size-1);
+        }
         return;
     }
+    /* 按钮预览期间忽略倾斜；重置状态机，避免按钮预览结束后补发旧选择。 */
+    if(!gy_ui_tilt_allowed()){reset_input();return;}
     for(d=0;d<4;++d)available[d]=gy_eligible_count(game,d);
     /* Pass key=0: the tilt state machine must never consume PA34 (KEY1). */
     event=gy_input_update(&input,m.x,m.y,0,now,available);
-    if(event.events&GY_INPUT_CANCEL)gy_ui_action(GY_UI_CANCEL);
-    if(event.events&GY_INPUT_SELECT){
+    if(event.events&GY_INPUT_CANCEL)gy_ui_tilt_cancel();
+    if(event.events&(GY_INPUT_SELECT|GY_INPUT_UPDATE)){
         gy_ui_tilt_select(event.direction,event.count);
-        rt_kprintf("[geyi:tilt] x=%d y=%d dir=%d count=%d preview=%d\n",m.x,m.y,event.direction,event.count,gy_ui_has_preview());
+        rt_kprintf("[geyi:tilt] x=%d y=%d dir=%d count=%d preview=%d event=%d\n",
+                   m.x,m.y,event.direction,event.count,gy_ui_has_preview(),event.events);
     }
     /* GY_INPUT_CONFIRM is intentionally unused on board: KEY1 is not a game key. */
 }
