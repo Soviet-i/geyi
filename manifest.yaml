@@ -172,7 +172,7 @@ physical_verification:
     required_action: "烧录同一固件，运行 tools/net_board_test.py：B 在 WAIT 和 PLAYING 中重启，10s 内从大厅重新加入；B 用 gy_net drop 只断链验证自动 REJOIN；B 重启后不再加入验证 WAIT 10s 释放、PLAYING 10s 判负；观察房间/对局页倒计时与返回页面"
     executed_at: "2026-11-09（sftool 烧录 COM7/COM8；reboot reclaim WAIT/PLAYING、transient rejoin、reboot timeout 段）"
     evidence_path: "evidence/net/20261109/board_suite_reconnect_final.log"
-    agent_conclusion: "PASS：B 重启 4.0s 后 WAIT 重新加入同色同 ID，A players=2/peer=1/reconn=0，B 在房间页，A 日志含 join reclaim（不是新玩家）；窗口内点交换被拒绝；PLAYING 重启 4.1s 后重新加入 role=1/local 不变/phase=2/view playing=1，A/B seq 不回退，日志含 join reclaim；transient drop（客方 drop + 房主 drop）B 保持对局页并自动 REJOIN，日志含 rejoin sent；未重连时 WAIT 约 10s 后释放 1/2，PLAYING 约 10s 后 phase=3/result=1，4s 后回 WAIT 1/2。显式 LEAVE 仍立即释放（TX 等 120ms 再断链）。独立 review 后另修换座丢计时器、STARTING ready、10s 边界、满旁观 flags、RESULT 快照、peer 离线冻结操作；主机 380+272、双板 15 段再次 PASS。限制：房主重启房间 RAM-only 必然消失；客方本机 10s local_terminal 回大厅的真实断网未测；旁观者不按 player_id 回收；满旁观容量+第三设备未测；真实触摸/像素与 P-02 容量未测。"
+    agent_conclusion: "PASS：B 重启 4.0s 后 WAIT 重新加入同色同 ID，A players=2/peer=1/reconn=0，B 在房间页，A 日志含 join reclaim（不是新玩家）；窗口内点交换被拒绝；PLAYING 重启 4.1s 后重新加入 role=1/local 不变/phase=2/view playing=1，A/B seq 不回退，日志含 join reclaim；transient drop（客方 drop + 房主 drop）B 保持对局页并自动 REJOIN，日志含 rejoin sent；未重连时 WAIT 约 10s 后释放 1/2，PLAYING 约 10s 后 phase=3/result=1，4s 后回 WAIT 1/2。显式 LEAVE 仍立即释放（TX 等 120ms 再断链）。独立 review 后另修换座丢计时器、STARTING ready、10s 边界、满旁观 flags、RESULT 快照、peer 离线冻结操作；另补对局页黄底重连横幅（每秒刷新，view reconn 断言）；主机 380+272、双板 15 段再次 PASS。限制：房主重启房间 RAM-only 必然消失；客方本机 10s local_terminal 回大厅的真实断网未测；旁观者不按 player_id 回收；满旁观容量+第三设备未测；真实触摸/像素与 P-02 容量未测。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -262,7 +262,7 @@ test_results:
   - test_id: "FW-BUILD-NET"
     description: "联机 BLE/UI 接入固件编译（REQ-513）"
     expected: "SDK v2.5.1 / sf32lb52-lchspi-ulp 编译成功"
-    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,084,084 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/真实断网/容量可用"
+    actual: "2026-11-09 通过 PowerShell export.ps1 + scons 编译成功，main.bin 1,084,716 B + LCPU lcpu.bin 6,384 B；两板已烧录并完成双板完整自动套件；不代表完整 UI/真实断网/容量可用"
     pass: true
     evidence_path: "evidence/net/20261108/firmware_build_final.log"
   - test_id: "TC-513-04-BOOT"
@@ -309,7 +309,7 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 272 checks PASS，固件 1,084,084 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
+  - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 272 checks PASS，固件 1,084,716 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
   - "【2026-11-09 当前】首页改为“格弈”并新增 4 页游戏规则（REQ-318/TC-318），对局页移除左上 GEYI、右上按钮与底栏按 R=48 圆角安全区内缩（NFR-UX-06/TC-NF-UX-06）；桌面 LVGL `--test` 与 `gy_ui_corner_clip_count(48)` 在首页/规则 1~4 页/对局页 PASS，证据 evidence/ui/20261109/。固件 1,078,356 B + LCPU 6,384 B 已烧录 COM7/COM8；双板套件新增 rules 段，实际翻 4 页、钳位、corner=0、rbottom<370，完整联机套件 PASS（15:28）。规则页正文已逐字恢复学生原文（含全角标点、10°~60°、KEY2）；KEY1(PA34) 是电源/下载复用键，板端不再读取，KEY2 单键负责确认/进入退出放兵，桌面 KEY2 用例 PASS。**真实圆角屏遮挡、中文标点观感、手指触摸翻页与真实 KEY2 手感仍未目测**，不能写成视觉验收通过。"
   - "【2026-11-09 当前】联机固件首次 STKOF、AddLCPU/GATT 自锁/UUID/索引 0/JOIN 重发已修复；后续修连接间隔 120–160ms 导致的 4s 加入卡顿、关房 TTL、结算后 CLOSED、客方 ready 残留、RESIGN 删除 ConnMap、GATT remote service 槽位泄漏、客方倒计时恒 1s、CN16 字库未更新；第六轮修 conn_idx 复用无代际、离开不取消在途连接、连接后停播导致房间消失、JOIN 早于 CCCD、离房阻塞 UI。失败与修复日志在 evidence/net/20261108/board/ 与 evidence/net/20261109/（repro_before_fix_join_window.log）。"
   - "【2026-11-09 当前】第七轮断线重连独立 review 后修：断线保留期间禁止换座并同步计时器、STARTING 断线清 ready/双方 connected 才开局、reclaim/rejoin 10s 边界统一 >=、reclaim 超时先释放过期席位、adv flags bit0 标记保留席位并保持 connectable、RESULT 不发 SNAPSHOT、peer 离线冻结到场方操作、客方房间页 10s 终局回大厅。满旁观容量+第三设备回收、真实断网下客方房间页回大厅、`player_id` 回收安全边界未实测。"
