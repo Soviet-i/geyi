@@ -182,7 +182,7 @@ static int ai_generate(const GyGame *g, AiMove *out)
             int ok;
             if (out[i].kind == GY_AI_MOVE) {
                 GyMove mv;
-                mv.direction = out[i].direction; mv.count = out[i].count;
+                mv.direction = out[i].direction; mv.count = out[i].count; mv.aim = 0;
                 ok = gy_simulate_move(g, mv, &tmp, 0);
             } else {
                 tmp = *g;
@@ -254,7 +254,7 @@ static int ai_negamax(GyAiSearch *s, const GyGame *g, int depth,
         int ok;
         if (m.kind == GY_AI_MOVE) {
             GyMove mv;
-            mv.direction = m.direction; mv.count = m.count;
+            mv.direction = m.direction; mv.count = m.count; mv.aim = 0;
             ok = gy_simulate_move(g, mv, &s->nodes[ply], 0);
         } else {
             s->nodes[ply] = *g;
@@ -350,6 +350,7 @@ int gy_ai_choose(const GyGame *g, const GyAiConfig *cfg,
     out->kind = best.kind;
     out->move.direction = best.direction;
     out->move.count = best.count;
+    out->move.aim = 0;
     out->column = best.column;
     out->score = best_score;
     return 1;
@@ -379,6 +380,7 @@ int gy_ai_selftest(void)
     if (a.kind != GY_AI_MOVE) return 0;
     mv.direction = a.move.direction;
     mv.count = a.move.count;
+    mv.aim = a.move.aim;
     if (!gy_simulate_move(&g, mv, &after, 0)) return 0;
     return after.outcome == GY_RED_WIN;
 }

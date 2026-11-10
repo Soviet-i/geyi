@@ -55,7 +55,7 @@ int main(void)
         else if(!strcmp(cmd,"place")) {puts(gy_place(&g,count)?"PLACED":"REJECTED");ready=0;}
         else if(!strcmp(cmd,"resign")) {gy_resign(&g);ready=0;}
         else if(strlen(cmd)==1 && strchr(directions,cmd[0])) {
-            GyMove m; m.direction=(int)(strchr(directions,cmd[0])-directions);m.count=count;
+            GyMove m; m.direction=(int)(strchr(directions,cmd[0])-directions);m.count=count;m.aim=0;
             ready=gy_preview(&g,m,&preview);
             if(ready) {puts("PREVIEW ONLY (includes proposed next random tile):");draw(&preview.after);}
             else puts("INVALID: direction/count blocked. State unchanged.");

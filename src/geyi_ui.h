@@ -38,13 +38,16 @@ int gy_ui_ai_previewing(void);
 int gy_ui_prep_active(void);
 int gy_ui_prep_human_red(void);
 int gy_ui_param_active(void);
-void gy_ui_tilt_select(int direction, int count);
+void gy_ui_tilt_select(int direction, int count, int aim);
 /* 板子回中/输入失效：只取消倾斜预览，不打断按钮预览。 */
 void gy_ui_tilt_cancel(void);
 /* 板端喂倾斜事件前询问：按钮预览期间返回 0（REQ-319）。 */
 int gy_ui_tilt_allowed(void);
 int gy_ui_preview_direction(void);
 int gy_ui_preview_count(void);
+int gy_ui_preview_aim(void);
+/* 页面/新局代次；板端发现变化即重置输入会话。 */
+uint32_t gy_ui_session(void);
 /* 板上自动化测试入口：由 shell 线程写入，主循环在 gy_ui_tick 中执行。 */
 void gy_ui_test_request(const char *command);
 #endif

@@ -238,6 +238,9 @@ int gy_net_pack_room_state(GyNetMsg *m, const GyNetRoomState *v)
 {
     int pos;
     if (!v) return GY_NET_ERR_ARG;
+    if ((v->seat_online & ~0x03u) ||
+        v->seat_reconnect_s[0] > 10 || v->seat_reconnect_s[1] > 10)
+        return GY_NET_ERR_RANGE;
     PACK_BEGIN(m, GY_NET_ROOM_STATE, v->seq);
     put8(m->payload, &pos, v->phase);
     put8(m->payload, &pos, v->host_color);
@@ -250,6 +253,9 @@ int gy_net_pack_room_state(GyNetMsg *m, const GyNetRoomState *v)
     put16(m->payload, &pos, v->guest_id);
     put32(m->payload, &pos, v->room_id);
     put32(m->payload, &pos, v->seq);
+    put8(m->payload, &pos, v->seat_online);
+    put8(m->payload, &pos, v->seat_reconnect_s[0]);
+    put8(m->payload, &pos, v->seat_reconnect_s[1]);
     PACK_END(m);
 }
 int gy_net_unpack_room_state(const GyNetMsg *m, GyNetRoomState *v)
@@ -257,7 +263,7 @@ int gy_net_unpack_room_state(const GyNetMsg *m, GyNetRoomState *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_ROOM_STATE, &r, 19); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_ROOM_STATE, &r, 22); if (rc) return rc;
     v->phase = get8(&r);
     v->host_color = get8(&r);
     v->guest_color = get8(&r);
@@ -269,11 +275,17 @@ int gy_net_unpack_room_state(const GyNetMsg *m, GyNetRoomState *v)
     v->guest_id = get16(&r);
     v->room_id = get32(&r);
     v->seq = get32(&r);
+    v->seat_online = get8(&r);
+    v->seat_reconnect_s[0] = get8(&r);
+    v->seat_reconnect_s[1] = get8(&r);
     if (unpack_end(&r)) return r.err;
     if (v->phase > 4u ||
         v->host_color > 1 || v->guest_color > 1 ||
         v->host_color == v->guest_color ||
-        v->player_count > 2 || v->spectator_count > 8) return GY_NET_ERR_RANGE;
+        v->player_count > 2 || v->spectator_count > 8 ||
+        (v->seat_online & ~0x03u) ||
+        v->seat_reconnect_s[0] > 10 || v->seat_reconnect_s[1] > 10)
+        return GY_NET_ERR_RANGE;
     return GY_NET_OK;
 }
 
@@ -355,16 +367,31 @@ int gy_net_unpack_start(const GyNetMsg *m, GyNetStart *v)
     return unpack_end(&r);
 }
 
+/* 一条移动请求只携带本类型真正使用的字段：移动用 direction/count/aim，
+ * 放兵用 row/column。另一组字段是保留位，可能是 -1 哨兵（0xFF），
+ * 不能拿它做范围校验，否则普通移动/放兵会在打包时被误拒。 */
+static int move_req_valid(const GyNetMoveReq *v)
+{
+    if (!v || v->side > 1 || v->kind > 1) return 0;
+    if (v->kind == 0)
+        return v->direction <= 3 && v->count <= GY_MAX * GY_MAX &&
+               v->aim >= -100 && v->aim <= 100;
+    return v->column < GY_MAX && v->row < GY_MAX;
+}
+
 int gy_net_pack_move_req(GyNetMsg *m, const GyNetMoveReq *v)
 {
     int pos;
     if (!v) return GY_NET_ERR_ARG;
+    if (!move_req_valid(v)) return GY_NET_ERR_RANGE;
     PACK_BEGIN(m, GY_NET_MOVE_REQ, v->seq);
     put8(m->payload, &pos, v->side);
     put8(m->payload, &pos, v->kind);
     put8(m->payload, &pos, v->direction);
     put8(m->payload, &pos, v->count);
     put8(m->payload, &pos, v->column);
+    put8(m->payload, &pos, v->row);
+    put8(m->payload, &pos, (uint8_t)v->aim);
     put32(m->payload, &pos, v->seq);
     PACK_END(m);
 }
@@ -373,16 +400,17 @@ int gy_net_unpack_move_req(const GyNetMsg *m, GyNetMoveReq *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_MOVE_REQ, &r, 9); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_MOVE_REQ, &r, 11); if (rc) return rc;
     v->side = get8(&r);
     v->kind = get8(&r);
     v->direction = get8(&r);
     v->count = get8(&r);
     v->column = get8(&r);
+    v->row = get8(&r);
+    v->aim = (int8_t)get8(&r);
     v->seq = get32(&r);
     if (unpack_end(&r)) return r.err;
-    if (v->side > 1 || v->kind > 1 || v->direction > 3) return GY_NET_ERR_RANGE;
-    return GY_NET_OK;
+    return move_req_valid(v) ? GY_NET_OK : GY_NET_ERR_RANGE;
 }
 
 static void put_cell(uint8_t *p, int *pos, const GyCell *c)
@@ -497,11 +525,16 @@ int gy_net_pack_preview(GyNetMsg *m, const GyNetPreview *v)
 {
     int pos;
     if (!v) return GY_NET_ERR_ARG;
+    if (v->side > 1 || v->direction > 3 || v->count > GY_MAX * GY_MAX ||
+        v->column >= GY_MAX || v->row >= GY_MAX ||
+        v->aim < -100 || v->aim > 100) return GY_NET_ERR_RANGE;
     PACK_BEGIN(m, GY_NET_PREVIEW, v->seq);
     put8(m->payload, &pos, v->side);
     put8(m->payload, &pos, v->direction);
     put8(m->payload, &pos, v->count);
     put8(m->payload, &pos, v->column);
+    put8(m->payload, &pos, v->row);
+    put8(m->payload, &pos, (uint8_t)v->aim);
     put16(m->payload, &pos, v->indicator);
     put32(m->payload, &pos, v->seq);
     PACK_END(m);
@@ -511,15 +544,19 @@ int gy_net_unpack_preview(const GyNetMsg *m, GyNetPreview *v)
     Reader r;
     int rc;
     if (!v) return GY_NET_ERR_ARG;
-    rc = unpack_begin(m, GY_NET_PREVIEW, &r, 10); if (rc) return rc;
+    rc = unpack_begin(m, GY_NET_PREVIEW, &r, 12); if (rc) return rc;
     v->side = get8(&r);
     v->direction = get8(&r);
     v->count = get8(&r);
     v->column = get8(&r);
+    v->row = get8(&r);
+    v->aim = (int8_t)get8(&r);
     v->indicator = get16(&r);
     v->seq = get32(&r);
     if (unpack_end(&r)) return r.err;
-    if (v->side > 1 || v->direction > 3) return GY_NET_ERR_RANGE;
+    if (v->side > 1 || v->direction > 3 || v->count > GY_MAX * GY_MAX ||
+        v->column >= GY_MAX || v->row >= GY_MAX ||
+        v->aim < -100 || v->aim > 100) return GY_NET_ERR_RANGE;
     return GY_NET_OK;
 }
 

@@ -82,6 +82,7 @@ static Candidate best_candidate(const GyGame *g)
             long score;
             move.direction = d;
             move.count = count;
+            move.aim = 0;
             if (!gy_simulate_move(g, move, &next, 0)) continue;
             score = score_after(g, &next, turn);
             if (best.kind == 0 || score > best.score) {

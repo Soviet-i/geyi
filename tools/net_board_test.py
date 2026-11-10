@@ -106,7 +106,7 @@ class Board:
         before = len(self.lines)
         self.send("gy_net state")
         end = time.time() + timeout
-        pat = re.compile(r"\[gy_test\] (?:state|info|ready|recon) (.+)")
+        pat = re.compile(r"\[gy_test\] (?:state|info|info2|ready|recon|spec) (.+)")
         merged: dict[str, str] = {}
         while time.time() < end:
             with self.lock:
@@ -504,7 +504,7 @@ def reboot_board(board: Board, timeout: float = 20.0) -> float:
     mark = board.mark()
     t0 = time.time()
     board.send("reboot")
-    require(board.wait_for_since("Keep board still", mark, timeout),
+    require(board.wait_for_since("[geyi:lcd] READY", mark, timeout),
             f"{board.name} did not boot after reboot")
     time.sleep(1.2)   # let LVGL/UI command loop settle
     return time.time() - t0
@@ -850,8 +850,8 @@ def main() -> int:
         require(b.wait_for("[geyi:ble] local id=", 12), "B local ID log missing")
         # The shell prompt appears before LVGL/board init finishes; wait until
         # gy_ui_tick() is actually servicing commands.
-        require(a.wait_for("[geyi:board] Keep board still", 15), "A UI not ready")
-        require(b.wait_for("[geyi:board] Keep board still", 15), "B UI not ready")
+        require(a.wait_for("[geyi:lcd] READY", 15), "A UI not ready")
+        require(b.wait_for("[geyi:lcd] READY", 15), "B UI not ready")
         time.sleep(1.0)
 
         print("== boot / unique ID ==")

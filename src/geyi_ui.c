@@ -13,13 +13,18 @@
 #include <string.h>
 #ifdef GEYI_WITH_RTTHREAD
 #include "finsh.h"
+#include "geyi_board.h"
 #endif
 
 static GyGame game;
 static GyPreview preview;
-static int direction=-1, amount=1, selected_count=1, placing=0, place_column=-1, ready=0;
+static int direction=-1, amount=1, selected_count=1, aim=0;
+static int placing=0, place_row=-1, place_column=-1, ready=0;
 /* 输入源仲裁（REQ-319）：倾斜预览/按钮预览互斥，逻辑在 geyi_nav.c 主机可测。 */
 static GyNav nav;
+/* 页面/新局代次：板端发现变化即重置倾斜会话，避免第二局沿用上一局状态。 */
+static uint32_t ui_session;
+static lv_obj_t *ui_page;
 static lv_obj_t *tiles[GY_MAX][GY_MAX], *labels[GY_MAX][GY_MAX], *health[GY_MAX][GY_MAX];
 static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
 static lv_obj_t *home_page,*mode_page,*game_page,*prep_page,*param_page,*rules_page;
@@ -36,6 +41,7 @@ static lv_obj_t *net_result_overlay,*net_result_title,*net_result_sub;
 static lv_obj_t *net_reconn_overlay,*net_reconn_label;
 static int net_last_reconn=-1;
 static lv_obj_t *net_confirm_block,*net_confirm_overlay,*net_confirm_label;
+static void net_confirm_hide(void);
 static int net_lobby_active,net_room_active,net_game_active;
 static uint32_t net_last_rev;static int net_last_phase=-1;
 static uint32_t net_terminal_at;   /* 对方断线 10s 后的本地提示停留起点 */
@@ -97,6 +103,15 @@ static int human_turn(void)
     if(gy_net_app_active())return gy_net_app_local_turn();
     return ai_side<0||game.turn!=ai_side;
 }
+/* 放兵与方向预览在 UI 里是两套互斥状态；集中清理，避免某条路径漏字段。 */
+static void clear_ui_placement(void)
+{
+    placing=0;place_row=-1;place_column=-1;
+}
+static void reset_selection_ui(void)
+{
+    ready=0;direction=-1;aim=0;clear_ui_placement();
+}
 static void show_page(lv_obj_t *page)
 {
     cancel_ai();
@@ -124,7 +139,9 @@ static void show_page(lv_obj_t *page)
         if(net_confirm_block)lv_obj_add_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
         if(net_confirm_overlay)lv_obj_add_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
     }
-    ready=0;placing=0;direction=-1;place_column=-1;
+    if(page!=ui_page){ui_page=page;++ui_session;}
+    gy_nav_clear(&nav);
+    reset_selection_ui();
 }
 static void rules_refresh(void)
 {
@@ -195,6 +212,36 @@ static const char *net_phase_text(void)
     default:return "已结束";
     }
 }
+/* 座位状态文案：在线看准备状态；离线区分本机断链、远端倒计时和已断线。 */
+static void net_seat_state_text(char *buf,int cap,int color,int ready)
+{
+    int sec;
+    if(gy_net_app_seat_online(color)){
+        lv_snprintf(buf,cap,ready?"已准备":"未准备");
+        return;
+    }
+    sec=gy_net_app_seat_reconnect_seconds(color);
+    if(gy_net_app_role()==GY_NET_ROLE_SPECTATOR&&
+       gy_net_app_reconnect_seconds()>0&&color==gy_net_app_host_color())
+        lv_snprintf(buf,cap,"连接中断");
+    else if(sec>0)lv_snprintf(buf,cap,"断线重连 %ds",sec);
+    else lv_snprintf(buf,cap,"断线");
+}
+/* 重连横幅统一文案；host_text 由页面决定（房间页“等待对手”，对局页“对方断线”）。
+ * overlay=1 时沿用对局页大字横幅的“%d s”格式。 */
+static void net_reconn_text(char *buf,int cap,const char *host_text,int overlay)
+{
+    int sec=gy_net_app_remote_reconnect_seconds();
+    int off=gy_net_app_offline_seat();
+    if(gy_net_app_role()==GY_NET_ROLE_HOST)
+        lv_snprintf(buf,cap,overlay?"%s 重连中 %d s":"%s %ds",host_text,sec);
+    else if(gy_net_app_role()==GY_NET_ROLE_SPECTATOR&&off>=0&&
+            gy_net_app_reconnect_seconds()==0)
+        lv_snprintf(buf,cap,overlay?"%s断线 重连中 %d s":"%s断线 重连中 %ds",
+                    off==GY_NET_COLOR_RED?"红方":"蓝方",sec);
+    else
+        lv_snprintf(buf,cap,overlay?"连接中断 重连中 %d s":"连接中断 重连中 %ds",sec);
+}
 static void net_lobby_refresh(void)
 {
     int i;
@@ -232,16 +279,18 @@ static void net_room_refresh(void)
     char text[80];
     int role=gy_net_app_role();
     int phase=gy_net_app_phase();
-    int local=gy_net_app_local_color();
     if(!net_room_status)return;
     {
         const char *fail=gy_net_app_join_reason()==GY_NET_JOIN_REASON_NOT_FOUND?"房间不存在":
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_FULL?"房间已满":
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_TIMEOUT?"加入超时":"加入失败";
-        int reconn=gy_net_app_reconnect_seconds();
+        int reconn=gy_net_app_remote_reconnect_seconds();
         if(reconn>0)
             lv_snprintf(text,sizeof(text),"%s 重连中 %ds | 本机 #%04X",
-                        role==GY_NET_ROLE_HOST?"对手断线":"连接中断",
+                        role==GY_NET_ROLE_HOST?"对手断线":
+                        role==GY_NET_ROLE_SPECTATOR?
+                            (gy_net_app_reconnect_seconds()>0?"连接中断":"玩家断线"):
+                        "连接中断",
                         reconn,(unsigned)gy_net_app_local_id());
         else
             lv_snprintf(text,sizeof(text),"%s | %s | 本机 #%04X",
@@ -282,12 +331,8 @@ static void net_room_refresh(void)
                     lv_snprintf(text,sizeof(text),"玩家%s",
                                 hc==GY_NET_COLOR_RED?"(房主)":"");
                 lv_label_set_text(net_red_name,text);
-                if(!gy_net_app_seat_online(GY_NET_COLOR_RED))
-                    lv_snprintf(text,sizeof(text),"断线重连 %ds",
-                                gy_net_app_reconnect_seconds());
-                lv_label_set_text(net_red_state,
-                    gy_net_app_seat_online(GY_NET_COLOR_RED)?
-                    (red_ready?"已准备":"未准备"):text);
+                net_seat_state_text(text,sizeof(text),GY_NET_COLOR_RED,red_ready);
+                lv_label_set_text(net_red_state,text);
             }
             lv_obj_set_style_text_color(net_red_name,
                 lv_color_hex(red_occ?0x142238:0xe7edf8),0);
@@ -307,19 +352,14 @@ static void net_room_refresh(void)
                     lv_snprintf(text,sizeof(text),"玩家%s",
                                 hc==GY_NET_COLOR_BLUE?"(房主)":"");
                 lv_label_set_text(net_blue_name,text);
-                if(!gy_net_app_seat_online(GY_NET_COLOR_BLUE))
-                    lv_snprintf(text,sizeof(text),"断线重连 %ds",
-                                gy_net_app_reconnect_seconds());
-                lv_label_set_text(net_blue_state,
-                    gy_net_app_seat_online(GY_NET_COLOR_BLUE)?
-                    (blue_ready?"已准备":"未准备"):text);
+                net_seat_state_text(text,sizeof(text),GY_NET_COLOR_BLUE,blue_ready);
+                lv_label_set_text(net_blue_state,text);
             }
             lv_obj_set_style_text_color(net_blue_name,
                 lv_color_hex(blue_occ?0x142238:0xe7edf8),0);
             lv_obj_set_style_text_color(net_blue_state,
                 lv_color_hex(blue_occ?0x142238:0xe7edf8),0);
         }
-        (void)local;
     }
     if(net_spectator_label){
         lv_snprintf(text,sizeof(text),"观战 %d 人",gy_net_app_spectator_count());
@@ -343,12 +383,10 @@ static void net_room_refresh(void)
         lv_obj_set_width(net_leave_button,
                          role==GY_NET_ROLE_SPECTATOR?358:170);
     }
-    if(gy_net_app_reconnect_seconds()>0&&gy_net_app_active()){
+    if(gy_net_app_remote_reconnect_seconds()>0&&gy_net_app_active()){
         if(net_spectator_label)lv_obj_add_flag(net_spectator_label,LV_OBJ_FLAG_HIDDEN);
         if(net_room_hint){
-            lv_snprintf(text,sizeof(text),
-                        role==GY_NET_ROLE_HOST?"等待对手重连 %ds":"连接中断 重连中 %ds",
-                        gy_net_app_reconnect_seconds());
+            net_reconn_text(text,sizeof(text),"等待对手重连",0);
             lv_label_set_text(net_room_hint,text);
             lv_obj_set_style_text_font(net_room_hint,&geyi_font_cn16,0);
             lv_obj_set_style_text_color(net_room_hint,lv_color_hex(0x142238),0);
@@ -429,6 +467,7 @@ static void net_result_show(int result)
     lv_label_set_text(net_result_title,title);
     lv_label_set_text(net_result_sub,sub);
     if(net_reconn_overlay)lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
+    net_confirm_hide();
     lv_obj_remove_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(net_result_overlay);
 }
@@ -440,11 +479,10 @@ static void net_result_hide(void)
 static void net_reconn_refresh(void)
 {
     char text[80];
-    int sec=gy_net_app_reconnect_seconds();
+    int sec=gy_net_app_remote_reconnect_seconds();
     if(!net_reconn_overlay||!net_reconn_label)return;
     if(sec>0&&gy_net_app_active()&&!gy_net_app_local_terminal()){
-        lv_snprintf(text,sizeof(text),"%s 重连中 %d s",
-                    gy_net_app_role()==GY_NET_ROLE_HOST?"对方断线":"连接中断",sec);
+        net_reconn_text(text,sizeof(text),"对方断线",1);
         lv_label_set_text(net_reconn_label,text);
         lv_obj_remove_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
         lv_obj_move_foreground(net_reconn_overlay);
@@ -456,6 +494,7 @@ static void net_confirm_show(void)
 {
     if(!net_confirm_overlay)return;
     lv_label_set_text(net_confirm_label,"认输会让对手获胜,确定?");
+    if(net_result_overlay)lv_obj_add_flag(net_result_overlay,LV_OBJ_FLAG_HIDDEN);
     if(net_reconn_overlay)lv_obj_add_flag(net_reconn_overlay,LV_OBJ_FLAG_HIDDEN);
     if(net_confirm_block)lv_obj_remove_flag(net_confirm_block,LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(net_confirm_overlay,LV_OBJ_FLAG_HIDDEN);
@@ -519,9 +558,14 @@ static void render(void)
         uint32_t bg=(x+y)%2?0x25344b:0x202e44;
         lv_obj_set_style_border_width(tiles[y][x],changed?2:0,0);
         lv_obj_set_style_border_color(tiles[y][x],lv_color_hex(0x61e0c2),0);
-        if(placing&&y==(game.turn?0:size-1)) {
+        /* 只画真正可放的格子：外边沿行/列的第一个空格；不能再画整圈。 */
+        if(placing&&gy_place_legal(&game,y,x)) {
             lv_obj_set_style_border_width(tiles[y][x],2,0);
-            lv_obj_set_style_border_color(tiles[y][x],lv_color_hex(place_column==x?0xffdc79:0x65768f),0);
+            lv_obj_set_style_border_color(tiles[y][x],lv_color_hex(0x65768f),0);
+        }
+        if(placing&&place_row==y&&place_column==x) {
+            lv_obj_set_style_border_width(tiles[y][x],2,0);
+            lv_obj_set_style_border_color(tiles[y][x],lv_color_hex(0xffdc79),0);
         }
         lv_obj_add_flag(health[y][x],LV_OBJ_FLAG_HIDDEN);
         if(c->kind==GY_SOLDIER) {
@@ -543,7 +587,7 @@ static void render(void)
             const GyNetPreview *np=gy_net_app_preview_at(side);
             GyMove nm;GyPreview nv;
             if(!gy_net_app_preview_visible(side)||!np)continue;
-            nm.direction=np->direction;nm.count=np->count;
+            nm.direction=np->direction;nm.count=np->count;nm.aim=np->aim;
             if(!gy_preview(&game,nm,&nv))continue;
             for(y=0;y<size;++y)for(x=0;x<size;++x)
                 if(memcmp(&nv.visible.cells[y][x],&game.cells[y][x],sizeof(GyCell))){
@@ -555,29 +599,27 @@ static void render(void)
     if(game.outcome)status(gy_net_app_active()?"本局结束,即将返回房间":
                                            "本局结束,点右上角返回首页");
     else if(gy_net_app_active()){
-        int reconn=gy_net_app_reconnect_seconds();
+        int reconn=gy_net_app_remote_reconnect_seconds();
         int netres=gy_net_app_result();
         if(netres){
             net_result_text(value,sizeof(value),netres,",即将返回房间");
             status(value);
         }
         else if(reconn>0){
-            lv_snprintf(value,sizeof(value),
-                gy_net_app_role()==GY_NET_ROLE_HOST?"等待对手重连 %ds":"连接中断 重连中 %ds",
-                reconn);
+            net_reconn_text(value,sizeof(value),"等待对手重连",0);
             status(value);
         }
         else if(gy_net_app_local_terminal())status("对方断线(本地提示,不是权威结算)");
         else if(gy_net_app_phase()==GY_NET_PHASE_STARTING)status("双方已准备 3 秒后开始");
         else if(gy_net_app_phase()!=GY_NET_PHASE_PLAYING)status(net_phase_text());
         else if(gy_net_app_is_spectator())status("旁观中 只读");
-        else if(placing)status(place_column<0?"放置 请选择己方底线空位":"已选位置 请确认或取消");
+        else if(placing)status(place_column<0?"放置 请选择空格":"已选位置 请确认或取消");
         else if(ready){lv_snprintf(value,sizeof(value),"预览 %s %d 个 确认后发送",dirs[direction],selected_count);status(value);}
         else status(gy_net_app_local_turn()?"你的回合 先选方向":"对方回合 等待快照");
     }
     else if(ai_thinking)status("AI 思考中...");
     else if(ai_preview_pending)status("AI 预览 即将落子");
-    else if(placing)status(place_column<0?"放置 请选择己方底线空位":"已选位置 请确认或取消");
+    else if(placing)status(place_column<0?"放置 请选择空格":"已选位置 请确认或取消");
     else if(ready) {
         lv_snprintf(value,sizeof(value),"预览 %s %d 个 确认后移动",dirs[direction],selected_count);status(value);
     }else if(ai_side>=0)status(game.turn==ai_side?"AI 回合":"先选方向 再确认");
@@ -609,7 +651,7 @@ static void apply_ai(const GyAiAction *a)
     }else if(a->kind==GY_AI_PLACE)ok=gy_place(&game,a->column);
     ai_preview_pending=0;ai_pending.kind=0;
     if(!ok){render();start_ai();return;}
-    ready=0;placing=0;direction=-1;place_column=-1;
+    reset_selection_ui();
     gy_nav_clear(&nav);
     if(!old_outcome&&game.outcome)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
@@ -624,13 +666,13 @@ static void begin_ai_preview(const GyAiAction *a)
         direction=a->move.direction;
         selected_count=a->move.count;
         amount=selected_count?selected_count:1;
-        ready=1;placing=0;place_column=-1;
+        clear_ui_placement();ready=1;
     }else if(a->kind==GY_AI_PLACE){
         int row=game.turn==0?game.config.size-1:0;
         if(a->column<0||a->column>=game.config.size||
            game.cells[row][a->column].kind!=GY_EMPTY||
            game.coins[game.turn]<game.config.cost){apply_ai(a);return;}
-        placing=1;ready=1;place_column=a->column;direction=-1;
+        placing=1;ready=1;place_row=row;place_column=a->column;direction=-1;aim=0;
     }else{apply_ai(a);return;}
     gy_nav_clear(&nav);
     ai_pending=*a;
@@ -646,7 +688,7 @@ static void commit_ai_pending(void)
     if(ai_pending.kind==GY_AI_MOVE)ok=gy_commit(&game,&preview);
     else if(ai_pending.kind==GY_AI_PLACE)ok=gy_place(&game,ai_pending.column);
     ai_preview_pending=0;ai_pending.kind=0;
-    ready=0;placing=0;direction=-1;place_column=-1;
+    reset_selection_ui();
     gy_nav_clear(&nav);
     if(!ok){status("AI 动作失效 重新思考");render();start_ai();return;}
     if(!old_outcome&&game.outcome)
@@ -662,7 +704,7 @@ static void choose(void)
     ready=0;
     if(direction<0||placing||game.outcome)return;
     available=gy_eligible_count(&game,direction);
-    m.direction=direction;m.count=available==0?0:(amount>available?available:amount);
+    m.direction=direction;m.count=available==0?0:(amount>available?available:amount);m.aim=0;
     selected_count=m.count;
     ready=gy_preview(&game,m,&preview);
     if(ready)gy_nav_button_selected(&nav);
@@ -717,11 +759,11 @@ static void choose_net(void)
     GyMove m;int available;
     if(direction<0||placing||game.outcome)return;
     available=gy_eligible_count(&game,direction);
-    m.direction=direction;m.count=available==0?0:(amount>available?available:amount);
+    m.direction=direction;m.count=available==0?0:(amount>available?available:amount);m.aim=0;
     selected_count=m.count;
     ready=gy_preview(&game,m,&preview);
     if(!ready){gy_nav_clear(&nav);status("方向不可用 请重新选择");}
-    else{gy_nav_button_selected(&nav);gy_net_app_preview(direction,selected_count);}
+    else{gy_nav_button_selected(&nav);gy_net_app_preview(direction,selected_count,0);}
 }
 void gy_ui_action(int a)
 {
@@ -732,8 +774,12 @@ void gy_ui_action(int a)
     }
     if(a==GY_UI_NET_CONFIRM_YES){
         net_confirm_hide();
+        if(!gy_net_app_active()||gy_net_app_phase()!=GY_NET_PHASE_PLAYING){
+            /* RESULT 之后的迟到确认不能再发 RESIGN/释放席位。 */
+            render();return;
+        }
         /* 认输即结束：先清本地预览，避免结果快照到达前还渲染旧预览盘面。 */
-        ready=0;placing=0;place_column=-1;direction=-1;gy_nav_clear(&nav);
+        reset_selection_ui();gy_nav_clear(&nav);
         gy_net_app_resign();
         render();
         return;
@@ -821,7 +867,7 @@ void gy_ui_action(int a)
     if(a==GY_UI_RESIGN&&!gy_net_app_active()){
         if(game.outcome){ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);show_page(home_page);}
         else if(playing){
-            gy_resign(&game);ready=0;placing=0;direction=-1;
+            gy_resign(&game);reset_selection_ui();
             gy_nav_clear(&nav);
             if(game.outcome)feedback=game.outcome==GY_RED_WIN?GY_FX_RED:
                 game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
@@ -842,7 +888,11 @@ void gy_ui_action(int a)
                 gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);return;
             }
             if(gy_net_app_phase()==GY_NET_PHASE_PLAYING)net_confirm_show();
-            else {gy_net_app_leave();gy_net_app_lobby_start();show_page(net_lobby_page);}
+            else {
+                /* 结算/等待阶段右上“退出”先回房间页，不主动断链；
+                 * 房间页的“离开”才是明确退出。 */
+                show_page(net_room_page);net_room_refresh();
+            }
             return;
         }
         if(!human_turn()||gy_net_app_is_spectator()){render();return;}
@@ -856,14 +906,23 @@ void gy_ui_action(int a)
             choose_net();render();return;
         }
         if(a==GY_UI_CONFIRM){
-            int ok=ready&&gy_net_app_confirm();
-            ready=0;placing=0;direction=-1;gy_nav_clear(&nav);
-            status(ok?"已发送 等待房主快照":"没有可确认的选择");render();return;
+            if(!ready){status("没有可确认的选择");render();return;}
+            if(!gy_net_app_confirm()){
+                /* 可重试失败（pending/peer offline/host busy）保留预览，
+                 * 不能一按就清空，否则松开后只能靠 200ms 重预览。 */
+                status("发送失败 请等待同步或重试");render();return;
+            }
+            reset_selection_ui();gy_nav_clear(&nav);
+            status("已发送 等待房主快照");render();return;
         }
         if(a==GY_UI_PLACE){
-            ready=0;placing=0;place_column=-1;gy_nav_clear(&nav);
+            clear_ui_placement();ready=0;gy_nav_clear(&nav);
             if(game.coins[game.turn]>=game.config.cost){
-                placing=1;gy_net_app_cancel();gy_net_app_place(-1);
+                gy_net_app_cancel();
+                /* 链路短暂不可用时 net app 不会进入放兵；UI 不能单方面
+                 * placing=1，否则重连后确认会被路由成移动请求。 */
+                if(gy_net_app_place(-1,-1))placing=1;
+                else status("网络未就绪 请稍后重试");
             }else{char msg[48];lv_snprintf(msg,sizeof(msg),"需要%d金币才能放置",game.config.cost);status(msg);}
             render();return;
         }
@@ -875,13 +934,14 @@ void gy_ui_action(int a)
         if(!gy_param_apply(game_mode,&config))config=gy_default_config();
         if(!gy_init(&game,config,20261015))gy_init(&game,gy_default_config(),20261015);
         layout_board();
-        direction=-1;amount=1;placing=0;ready=0;place_column=-1;
+        ++ui_session;
+        amount=1;reset_selection_ui();
         gy_nav_clear(&nav);
         status("先选方向 再确认");
     } else if(ai_thinking||!human_turn()) {
         render();return;
     } else if(a==GY_UI_CANCEL) {
-        ready=0;placing=0;place_column=-1;direction=-1;
+        reset_selection_ui();
         gy_nav_clear(&nav);
         status("已取消 棋盘状态不变");
     } else if(game.outcome) {render();return;}
@@ -889,11 +949,11 @@ void gy_ui_action(int a)
     else if(a==GY_UI_LESS||a==GY_UI_MORE) {
         amount+=a==GY_UI_MORE?1:-1;if(amount<1)amount=1;if(amount>36)amount=36;choose();
     } else if(a==GY_UI_CONFIRM) {
-        int ok=ready&&(placing?gy_place(&game,place_column):gy_commit(&game,&preview));
-        ready=0;placing=0;direction=-1;gy_nav_clear(&nav);
+        int ok=ready&&(placing?gy_place_at(&game,place_row,place_column):gy_commit(&game,&preview));
+        reset_selection_ui();gy_nav_clear(&nav);
         status(ok?"回合结束 请交给对方":"没有可确认的选择");
     } else if(a==GY_UI_PLACE) {
-        ready=0;placing=0;place_column=-1;gy_nav_clear(&nav);
+        clear_ui_placement();ready=0;gy_nav_clear(&nav);
         if(game.coins[game.turn]>=game.config.cost)placing=1;
         else {char msg[48];lv_snprintf(msg,sizeof(msg),"需要%d金币才能放置",game.config.cost);status(msg);}
     }
@@ -909,17 +969,23 @@ void gy_ui_cell(int x,int y)
     if(size<GY_SIZE_MIN||size>GY_SIZE_MAX)size=6;
     if(gy_net_app_active()&&net_game_active){
         if(!human_turn()||gy_net_app_is_spectator()||!placing||game.outcome||
-           x<0||x>=size||y!=(game.turn?0:size-1))return;
-        place_column=x;ready=game.cells[y][x].kind==GY_EMPTY;
-        if(ready)gy_net_app_place(x);
-        render();
-        if(!ready)status("位置已被占用 请选择空位");
+           x<0||x>=size||y<0||y>=size)return;
+        {
+            int legal=gy_place_legal(&game,y,x);
+            place_row=y;place_column=x;
+            /* 只有 net app 真正接受放置时才让 UI ready，避免断线窗口里
+             * UI 有预览而 net app 的 placing 仍为 0，确认时错发 MOVE_REQ。 */
+            ready=legal&&gy_net_app_place(y,x);
+            render();
+            if(!legal)status("该位置不可放置 请选择外围空格");
+            else if(!ready)status("网络未就绪 请稍后重试");
+        }
         return;
     }
     if(!playing||ai_thinking||!human_turn()||!placing||game.outcome||
-       x<0||x>=size||y!=(game.turn?0:size-1))return;
-    place_column=x;ready=game.cells[y][x].kind==GY_EMPTY;render();
-    if(!ready)status("位置已被占用 请选择空位");
+       x<0||x>=size||y<0||y>=size)return;
+    place_row=y;place_column=x;ready=gy_place_legal(&game,y,x);render();
+    if(!ready)status("该位置不可放置 请选择外围空格");
 }
 static void action_event(lv_event_t *e) {gy_ui_action((int)(intptr_t)lv_event_get_user_data(e));}
 static void cell_event(lv_event_t *e)
@@ -1139,8 +1205,9 @@ void gy_ui_create(void)
      net_ready_button=button(net_room_page,"准备",204,350,170,44,GY_UI_NET_READY);
     }
     root=game_page;
-    /* 真机为圆角屏：对局页左上角不再放 GEYI,右上角按钮下移并右缩,避开圆角裁切。 */
-    resign_button=button(root,"认输",270,22,96,36,GY_UI_RESIGN);
+    /* 真机为圆角屏：左上角不放 GEYI；右上角“认输/返回首页/退出旁观”按钮左移，
+     * 避开板边和右手遮挡，同时仍在圆角安全区内。 */
+    resign_button=button(root,"认输",240,22,96,36,GY_UI_RESIGN);
     /* 左上圆角 R=48：回合标签原在 (16,26) 会被圆角裁掉；右移到
      * 棋盘左边界附近，既避开圆角也不压右上认输按钮。 */
     turn_label=text(root,"RED TURN",90,24);money_label=text(root,"",16,50);
@@ -1340,6 +1407,29 @@ static void run_test_command(void)
     if(!test_command[0])return;
     strncpy(cmd,test_command,sizeof(cmd)-1);cmd[sizeof(cmd)-1]=0;
     test_command[0]=0;
+#ifdef GEYI_WITH_RTTHREAD
+    /* 自动化输入注入：仅替换 IMU/KEY2 采样源，UI 与状态机路径不变。 */
+    if(sscanf(cmd,"simtilt %d %d",&a,&b)==2){
+        gy_board_test_tilt(a,b);
+        GY_TEST_LOG("[gy_test] simtilt x=%d y=%d\n",a,b);
+        return;
+    }
+    if(!strcmp(cmd,"simkey")){
+        gy_board_test_key();
+        GY_TEST_LOG("[gy_test] simkey\n");
+        return;
+    }
+    if(!strcmp(cmd,"simoff")){
+        gy_board_test_off();
+        GY_TEST_LOG("[gy_test] simoff\n");
+        return;
+    }
+    if(sscanf(cmd,"simcoin %d",&a)==1){
+        int ok=gy_net_app_test_set_coins(a);
+        GY_TEST_LOG("[gy_test] simcoin value=%d ok=%d\n",a,ok);
+        return;
+    }
+#endif
     if(!strcmp(cmd,"rules")){gy_ui_action(GY_UI_RULES);return;}
     if(!strcmp(cmd,"rulesnext")){gy_ui_action(GY_UI_RULES_NEXT);return;}
     if(!strcmp(cmd,"rulesprev")){gy_ui_action(GY_UI_RULES_PREV);return;}
@@ -1359,8 +1449,26 @@ static void run_test_command(void)
         }else net_lobby_refresh();
         return;
     }
+    if(sscanf(cmd,"preview %d %d",&a,&b)==2){
+        GyMove m;m.direction=a;m.count=b?b:1;m.aim=0;
+        if(!gy_net_app_active()||!net_game_active||!gy_net_app_local_turn()){
+            GY_TEST_LOG("[gy_test] preview rejected active=%d turn=%d\n",
+                       gy_net_app_active(),gy_net_app_local_turn());return;
+        }
+        direction=a;amount=m.count;selected_count=amount;
+        ready=gy_preview(&game,m,&preview);
+        if(!ready){GY_TEST_LOG("[gy_test] preview invalid dir=%d count=%d\n",a,b);return;}
+        gy_net_app_preview(a,selected_count,0);
+        GY_TEST_LOG("[gy_test] preview sent dir=%d count=%d\n",a,selected_count);
+        return;
+    }
+    if(!strcmp(cmd,"cancel")){
+        gy_net_app_cancel();reset_selection_ui();gy_nav_clear(&nav);
+        GY_TEST_LOG("[gy_test] cancel sent\n");
+        return;
+    }
     if(sscanf(cmd,"move %d %d",&a,&b)==2){
-        GyMove m;m.direction=a;m.count=b;
+        GyMove m;m.direction=a;m.count=b;m.aim=0;
         if(!gy_net_app_active()||!net_game_active||!gy_net_app_local_turn()){
             GY_TEST_LOG("[gy_test] move rejected active=%d turn=%d\n",
                        gy_net_app_active(),gy_net_app_local_turn());return;
@@ -1368,19 +1476,33 @@ static void run_test_command(void)
         direction=a;amount=b?b:1;selected_count=amount;
         ready=gy_preview(&game,m,&preview);
         if(!ready){GY_TEST_LOG("[gy_test] move preview=0 dir=%d count=%d\n",a,b);return;}
-        gy_net_app_preview(a,selected_count);
+        gy_net_app_preview(a,selected_count,0);
         gy_ui_action(GY_UI_CONFIRM);
         GY_TEST_LOG("[gy_test] move sent dir=%d count=%d\n",a,b);
         return;
     }
     if(sscanf(cmd,"place %d",&a)==1){
+        int row;
         if(!gy_net_app_active()||!net_game_active||!gy_net_app_local_turn()){
             GY_TEST_LOG("[gy_test] place rejected active=%d turn=%d\n",
                        gy_net_app_active(),gy_net_app_local_turn());return;
         }
-        gy_net_app_place(a);
+        row=game.turn?0:game.config.size-1;
+        if(a<0||a>=game.config.size||!gy_place_legal(&game,row,a)){
+            GY_TEST_LOG("[gy_test] place invalid row=%d col=%d\n",row,a);return;
+        }
+        /* 走与触摸/倾斜选格后相同的 UI 确认路径：必须先把 UI 的
+         * ready/placing 置好，否则 gy_ui_action(CONFIRM) 会在
+         * “没有可确认的选择”处提前返回，命令看似成功但不会发包。 */
+        placing=1;place_row=row;place_column=a;ready=1;
+        if(!gy_net_app_place(row,a)){
+            placing=0;ready=0;
+            GY_TEST_LOG("[gy_test] place rejected net row=%d col=%d\n",row,a);
+            return;
+        }
         gy_ui_action(GY_UI_CONFIRM);
-        GY_TEST_LOG("[gy_test] place sent col=%d\n",a);
+        GY_TEST_LOG("[gy_test] place sent row=%d col=%d accepted=%d\n",
+                   row,a,!ready);
         return;
     }
     if(!strcmp(cmd,"suggest")){
@@ -1446,12 +1568,20 @@ static void run_test_command(void)
                    gy_net_app_player_count(),gy_net_app_spectator_count(),
                    (unsigned)gy_net_app_seq(),gy_net_app_room_count(),
                    ng->turn,(unsigned)ng->revision,gy_net_app_host_adv_active());
+        /* RT-Thread 控制台单行约 128 B，超过会被截断；拆成两行。 */
         GY_TEST_LOG("[gy_test] info local=%d host=%d guest=%d id=%04X "
-                   "hostid=%04X guestid=%04X\n",
+                   "hostid=%04X guestid=%04X human=%d ready=%d dir=%d count=%d "
+                   "placing=%d\n",
                    gy_net_app_local_color(),gy_net_app_host_color(),
                    gy_net_app_guest_color(),(unsigned)gy_net_app_local_id(),
                    (unsigned)gy_net_app_seat_id(GY_NET_COLOR_RED),
-                   (unsigned)gy_net_app_seat_id(GY_NET_COLOR_BLUE));
+                   (unsigned)gy_net_app_seat_id(GY_NET_COLOR_BLUE),
+                   human_turn(),ready,direction,ready?selected_count:0,placing);
+        GY_TEST_LOG("[gy_test] info2 prow=%d pcol=%d pending=%d coinr=%d coinb=%d "
+                   "cost=%d\n",
+                   place_row,place_column,gy_net_app_pending_move(),
+                   game.coins[GY_NET_COLOR_RED],game.coins[GY_NET_COLOR_BLUE],
+                   game.config.cost);
         GY_TEST_LOG("[gy_test] ready hready=%d gready=%d rready=%d bready=%d "
                    "outcome=%d result=%d joinrej=%d joinreason=%d cd=%d\n",
                    gy_net_app_host_ready(),gy_net_app_guest_ready(),
@@ -1460,10 +1590,25 @@ static void run_test_command(void)
                    ng->outcome,gy_net_app_result(),
                    gy_net_app_join_rejected(),gy_net_app_join_reason(),
                    gy_net_app_countdown_seconds());
-        GY_TEST_LOG("[gy_test] recon peer=%d reconn=%d seatr=%d seatb=%d\n",
+        GY_TEST_LOG("[gy_test] recon peer=%d reconn=%d seatr=%d seatb=%d "
+                   "secr=%d secb=%d\n",
                    gy_net_app_peer_online(),gy_net_app_reconnect_seconds(),
                    gy_net_app_seat_online(GY_NET_COLOR_RED),
-                   gy_net_app_seat_online(GY_NET_COLOR_BLUE));
+                   gy_net_app_seat_online(GY_NET_COLOR_BLUE),
+                   gy_net_app_seat_reconnect_seconds(GY_NET_COLOR_RED),
+                   gy_net_app_seat_reconnect_seconds(GY_NET_COLOR_BLUE));
+        {
+            const GyNetPreview *pr=gy_net_app_preview_at(GY_NET_COLOR_RED);
+            const GyNetPreview *pb=gy_net_app_preview_at(GY_NET_COLOR_BLUE);
+            GY_TEST_LOG("[gy_test] spec spec=%d lost=%d off=%d rsec=%d "
+                       "prevr=%d,%d,%d prevb=%d,%d,%d\n",
+                       gy_net_app_is_spectator(),gy_net_app_spectator_lost(),
+                       gy_net_app_offline_seat(),gy_net_app_remote_reconnect_seconds(),
+                       gy_net_app_preview_visible(GY_NET_COLOR_RED),
+                       pr?pr->direction:-1,pr?pr->count:0,
+                       gy_net_app_preview_visible(GY_NET_COLOR_BLUE),
+                       pb?pb->direction:-1,pb?pb->count:0);
+        }
         GY_TEST_LOG("[gy_test] end\n");
         return;
     }
@@ -1481,7 +1626,7 @@ static int gy_net_cmd(int argc,char **argv)
         cmd[sizeof(cmd)-1]=0;
         n++;
     }
-    if(!n){GY_TEST_LOG("usage: gy_net host|lobby|join N|ready|swap|leave|move D C|place C|state|view|rules|rulesnext|rulesprev|rulesback|home\n");return 0;}
+    if(!n){GY_TEST_LOG("usage: gy_net host|lobby|join N|watch N|ready|swap|leave|preview D C|cancel|move D C|place C|simtilt X Y|simkey|simoff|simcoin N|state|view|rules|rulesnext|rulesprev|rulesback|home\n");return 0;}
     gy_ui_test_request(cmd);
     return 0;
 }
@@ -1555,13 +1700,19 @@ void gy_ui_tick(void)
         }
         if(ng&&ng->config.size>=GY_SIZE_MIN&&
            (ng->revision!=net_last_rev||phase!=net_last_phase)){
-            if(ng->revision!=net_last_rev){ready=0;placing=0;direction=-1;place_column=-1;
-                gy_nav_clear(&nav);}
+            if(ng->revision!=net_last_rev||phase!=GY_NET_PHASE_PLAYING){
+                reset_selection_ui();
+                gy_nav_clear(&nav);
+                if(phase!=GY_NET_PHASE_PLAYING)net_confirm_hide();
+                if(ng->revision!=net_last_rev)gy_net_app_cancel();
+            }
             game=*ng;net_last_rev=ng->revision;net_last_phase=phase;
             layout_board();render();
         }
         {
-            int rsec=gy_net_app_reconnect_seconds();
+            /* 旁观者看远端断线时本机 reconnect_seconds() 恒 0；必须用
+             * remote_reconnect_seconds() 才能每秒重绘底部状态条。 */
+            int rsec=gy_net_app_remote_reconnect_seconds();
             if(rsec!=net_last_reconn){net_last_reconn=rsec;render();}
             net_reconn_refresh();
         }
@@ -1598,22 +1749,22 @@ void gy_ui_tick(void)
        game.outcome==GY_PLAYING&&game.turn==ai_side)
         start_ai();
 }
-void gy_ui_tilt_select(int d,int count)
+void gy_ui_tilt_select(int d,int count,int aim_value)
 {
-    GyMove m={d,count};
+    GyMove m={d,count,aim_value};
     /* 按钮预览优先：倾斜不得把按钮选的方向/数量改掉（REQ-319）。 */
     if(!gy_nav_tilt_allowed(&nav))return;
     if(gy_net_app_active()&&net_game_active){
         if(!human_turn()||gy_net_app_is_spectator()||placing||game.outcome)return;
-        direction=d;selected_count=count;amount=count?count:1;
+        direction=d;selected_count=count;amount=count?count:1;aim=aim_value;
         ready=gy_preview(&game,m,&preview);
-        if(ready){gy_nav_tilt_selected(&nav);gy_net_app_preview(d,selected_count);}
+        if(ready){gy_nav_tilt_selected(&nav);gy_net_app_preview(d,selected_count,aim_value);}
         else{gy_nav_clear(&nav);status("方向不可用 请重新选择");}
         render();
         return;
     }
     if(!playing||ai_thinking||!human_turn()||placing||game.outcome)return;
-    direction=d;selected_count=count;amount=count?count:1;
+    direction=d;selected_count=count;amount=count?count:1;aim=aim_value;
     ready=gy_preview(&game,m,&preview);
     if(ready){gy_nav_tilt_selected(&nav);}
     else{gy_nav_clear(&nav);status("方向不可用 请重新选择");}
@@ -1623,7 +1774,7 @@ void gy_ui_tilt_select(int d,int count)
 void gy_ui_tilt_cancel(void)
 {
     if(!gy_nav_tilt_cancel(&nav))return;
-    ready=0;placing=0;place_column=-1;direction=-1;
+    reset_selection_ui();
     if(gy_net_app_active()&&net_game_active)gy_net_app_cancel();
     status("已取消 棋盘状态不变");
     render();
@@ -1632,4 +1783,6 @@ void gy_ui_tilt_cancel(void)
 int gy_ui_tilt_allowed(void) {return gy_nav_tilt_allowed(&nav);}
 int gy_ui_preview_direction(void) {return ready?direction:-1;}
 int gy_ui_preview_count(void) {return ready?selected_count:0;}
+int gy_ui_preview_aim(void) {return ready?aim:0;}
+uint32_t gy_ui_session(void) {return ui_session;}
 #endif

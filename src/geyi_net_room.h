@@ -71,6 +71,7 @@ typedef struct {
     uint8_t  result_reason;
     uint8_t  game_valid;
     uint8_t  local_terminal;   /* 客方本地“房主断线”提示，不是权威 RESULT */
+    uint8_t  seat_reconnect_s[2]; /* 客户端从 ROOM_STATE 收到：各座位剩余重连秒数 */
     GyGame   game;
 } GyNetRoomView;
 
@@ -79,7 +80,6 @@ typedef struct {
     uint8_t  role;             /* 本地角色 */
     uint8_t  local_color;      /* 房主/玩家颜色；旁观为 NONE */
     uint32_t token;
-    uint32_t last_seq;
     uint32_t last_room_seq;
     uint32_t last_snapshot_seq;
     uint32_t last_result_seq;
@@ -119,8 +119,8 @@ int gy_net_room_swap_seats(GyNetRoom *host);
 int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms);
 
 /* 房主结算动作。成功返回 0；失败返回 GY_NET_ERR_*（TURN/ACTION/STATE）。 */
-int gy_net_room_move(GyNetRoom *host, uint8_t color, int direction, int count, uint32_t now_ms);
-int gy_net_room_place(GyNetRoom *host, uint8_t color, int column, uint32_t now_ms);
+int gy_net_room_move(GyNetRoom *host, uint8_t color, int direction, int count, int aim, uint32_t now_ms);
+int gy_net_room_place(GyNetRoom *host, uint8_t color, int row, int column, uint32_t now_ms);
 int gy_net_room_resign(GyNetRoom *host, uint8_t color, uint32_t now_ms);
 
 void gy_net_room_snapshot(const GyNetRoom *host, GyNetSnapshot *out);

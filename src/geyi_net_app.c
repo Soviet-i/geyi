@@ -89,6 +89,8 @@ static struct {
     uint32_t join_ready_at;
     uint16_t local_player_id;
     uint8_t  pending_move;
+    uint32_t pending_move_at;
+    uint32_t last_snapshot_ms;
     uint8_t  leaving;        /* 客户端 LEAVE 已交给 TX，等链路关闭 */
     uint32_t leaving_at;
     uint8_t  local_ready;
@@ -96,15 +98,17 @@ static struct {
     uint8_t  ready_pending;  /* 已发 READY，等房主状态确认 */
     uint8_t  need_fresh_join;/* REJOIN 被拒后等 WAIT 再 auto JOIN */
     uint32_t ready_at;
-    uint32_t starting_seq;   /* 客方最近一次 STARTING 状态 seq */
     uint8_t  reack_left;     /* 换座后 JOIN_ACK 重发次数，防止单包丢失 */
     uint32_t reack_at;
     int      dir;
     int      count;
+    int      aim;
     int      last_dir;
     int      last_count;
+    int      last_aim;
     uint8_t  last_preview_valid;
     int      placing;
+    int      place_row;
     int      place_col;
     GyNetPreview preview[2];
     uint8_t  preview_valid[2];
@@ -113,12 +117,49 @@ static struct {
 static int color_valid(uint8_t c) { return c == GY_NET_COLOR_RED || c == GY_NET_COLOR_BLUE; }
 static void join_fail(uint8_t reason);
 
-static void send_msg(uint8_t conn, GyNetMsg *msg)
+/* 放兵/预览的清理点较多；集中在这里，避免某条路径漏掉字段。 */
+static void clear_placement(void)
+{
+    g.placing = 0;
+    g.place_row = -1;
+    g.place_col = -1;
+}
+static void clear_visible_previews(void)
+{
+    g.preview_valid[GY_NET_COLOR_RED] = 0;
+    g.preview_valid[GY_NET_COLOR_BLUE] = 0;
+}
+static void clear_preview_state(void)
+{
+    g.last_preview_valid = 0;
+    clear_visible_previews();
+}
+/* 移动参数在缩窄成协议字段前校验，避免越界值回绕后看起来合法。 */
+static int move_args_valid(int direction, int count, int aim)
+{
+    return direction >= 0 && direction <= 3 &&
+           count >= 0 && count <= GY_MAX * GY_MAX &&
+           aim >= -100 && aim <= 100;
+}
+
+#ifndef GEYI_WITH_RTTHREAD
+/* 主机测试没有 BLE，但需要检查“发了什么类型”；只记录消息类型，不模拟链路。 */
+#define APP_TEST_TX_MAX 16
+static uint8_t app_test_tx[APP_TEST_TX_MAX];
+static int app_test_tx_count;
+#endif
+
+static int send_msg(uint8_t conn, GyNetMsg *msg)
 {
 #ifdef GEYI_WITH_RTTHREAD
-    gy_net_ble_send(conn, msg);
+    /* 0 = 链路/发送队列当前不可用；调用方（尤其客方确认）不能把
+     * “没排进 TX 队列”当成已发送。 */
+    return gy_net_ble_send(conn, msg);
 #else
-    (void)conn; (void)msg;
+    (void)conn;
+    if (app_test_tx_count < APP_TEST_TX_MAX)
+        app_test_tx[app_test_tx_count++] = msg->type;
+    return 1;
 #endif
 }
 static void send_broadcast(GyNetMsg *msg) { send_msg(GY_NET_BLE_BROADCAST_CONN, msg); }
@@ -132,30 +173,6 @@ static void send_spectators(GyNetMsg *msg)
             send_msg(g.conns[i].conn, msg);
 }
 
-static void broadcast_state(void)
-{
-    GyNetRoomState s;
-    GyNetMsg m;
-    gy_net_room_state(&g.room, &s);
-    if (gy_net_pack_room_state(&m, &s) == GY_NET_OK) send_broadcast(&m);
-}
-static void broadcast_snapshot(void)
-{
-    GyNetSnapshot s;
-    GyNetMsg m;
-    gy_net_room_snapshot(&g.room, &s);
-    if (gy_net_pack_snapshot(&m, &s) == GY_NET_OK) send_broadcast(&m);
-}
-static void broadcast_result(void)
-{
-    GyNetResult r;
-    GyNetMsg m;
-    memset(&r, 0, sizeof(r));
-    r.outcome = g.room.view.result;
-    r.reason = g.room.view.result_reason;
-    r.seq = g.room.view.seq;
-    if (gy_net_pack_result(&m, &r) == GY_NET_OK) send_broadcast(&m);
-}
 static void send_state_to(uint8_t conn)
 {
     GyNetRoomState s;
@@ -169,6 +186,32 @@ static void send_snapshot_to(uint8_t conn)
     GyNetMsg m;
     gy_net_room_snapshot(&g.room, &s);
     if (gy_net_pack_snapshot(&m, &s) == GY_NET_OK) send_msg(conn, &m);
+}
+/* 广播 = 发往 BLE 广播连接 0xff；单播与广播共用同一套打包逻辑。 */
+static void broadcast_state(void) { send_state_to(GY_NET_BLE_BROADCAST_CONN); }
+static void broadcast_snapshot(void)
+{
+    send_snapshot_to(GY_NET_BLE_BROADCAST_CONN);
+    g.last_snapshot_ms = g.now;
+}
+static void broadcast_result(void)
+{
+    GyNetResult r;
+    GyNetMsg m;
+    memset(&r, 0, sizeof(r));
+    r.outcome = g.room.view.result;
+    r.reason = g.room.view.result_reason;
+    r.seq = g.room.view.seq;
+    if (gy_net_pack_result(&m, &r) == GY_NET_OK) send_broadcast(&m);
+}
+/* 只有当前确实处于有效对局时才补棋盘快照；WAIT/未开局的迟到请求
+ * 不能给客方发零棋盘/上一局快照。 */
+static void resync_snapshot_to(uint8_t conn)
+{
+    if (g.room.view.phase == GY_NET_PHASE_PLAYING && g.room.view.game_valid)
+        send_snapshot_to(conn);
+    else
+        send_state_to(conn);
 }
 static void send_join_ack(uint8_t conn, uint8_t color, uint32_t token, uint16_t player_id)
 {
@@ -596,6 +639,8 @@ static void host_process(uint8_t conn, uint8_t gen, const GyNetMsg *msg)
                     c->used = 0;
                 }
                 /* 仅认输：连接和席位保留，结算后还要回同一房间准备。 */
+            } else if (resign_only) {
+                /* 结算后迟到的 RESIGN：不能再释放席位/断链。 */
             } else {
                 gy_net_room_leave_token(&g.room, c->token, g.now);
                 c->used = 0;
@@ -612,15 +657,23 @@ static void host_process(uint8_t conn, uint8_t gen, const GyNetMsg *msg)
         int rc;
         if (!c || gy_net_unpack_move_req(msg, &mr) != GY_NET_OK) return;
         if (c->intent_seen && mr.seq <= c->last_intent_seq) {
+            APP_LOG("move req duplicate conn=%d color=%d kind=%d seq=%u last=%u",
+                    conn, conn_color(c), mr.kind, (unsigned)mr.seq,
+                    (unsigned)c->last_intent_seq);
             send_reject(conn, (uint8_t)(-GY_NET_ERR_STATE));
+            /* 重复/过期意图：仅有效 PLAYING 时补快照，避免零棋盘。 */
+            resync_snapshot_to(conn);
             return;
         }
         if (mr.kind == 0)
-            rc = gy_net_room_move(&g.room, conn_color(c), mr.direction, mr.count, g.now);
+            rc = gy_net_room_move(&g.room, conn_color(c), mr.direction, mr.count, mr.aim, g.now);
         else
-            rc = gy_net_room_place(&g.room, conn_color(c), mr.column, g.now);
+            rc = gy_net_room_place(&g.room, conn_color(c), mr.row, mr.column, g.now);
         if (rc != GY_NET_OK) {
+            APP_LOG("move req failed conn=%d color=%d kind=%d rc=%d seq=%u",
+                    conn, conn_color(c), mr.kind, rc, (unsigned)mr.seq);
             send_reject(conn, (uint8_t)(rc < 0 ? -rc : rc));
+            resync_snapshot_to(conn);
         } else {
             c->intent_seen = 1;
             c->last_intent_seq = mr.seq;
@@ -706,8 +759,9 @@ static void host_process(uint8_t conn, uint8_t gen, const GyNetMsg *msg)
         }
         send_join_ack(conn, color, r.token, gy_net_room_seat_id(&g.room, color));
         send_state_to(conn);
-        if (g.room.view.phase != GY_NET_PHASE_RESULT)
-            send_snapshot_to(conn);
+        /* WAIT/RESULT 没有有效棋盘：只能回状态，不能把上一局终局快照
+         * 发给刚重连的客方，否则客方会被拉回 RESULT。 */
+        resync_snapshot_to(conn);
         /* 重连成功后其它端/大厅也要看到席位恢复。 */
         broadcast_state();
         host_update_adv();
@@ -753,11 +807,12 @@ static void promote_self_to_host(uint8_t new_host_color, uint32_t now_ms)
     g.join_sent = 0;
     g.join_connected = 0;
     g.join_ready_at = 0;
-    g.pending_move = 0;
+    g.pending_move = 0; g.pending_move_at = 0;
+    g.last_snapshot_ms = 0;
     g.dropped = 0;
     g.drop_at = 0;
-    g.preview_valid[0] = g.preview_valid[1] = 0;
-    g.last_preview_valid = 0;
+    clear_placement();
+    clear_preview_state();
 #ifdef GEYI_WITH_RTTHREAD
     gy_net_ble_scan_stop();
     /* 先彻底结束 client 会话（取消在途连接/断开/清 remote svc/TX），
@@ -819,7 +874,6 @@ static void client_process(const GyNetMsg *msg)
         g.ready_pending = 0;
         g.ready_desired = 0;
         g.need_fresh_join = 0;
-        g.starting_seq = 0;
         g.dropped = 0;
         g.rejoin_sent = 0;
         g.rejoin_at = 0;
@@ -859,14 +913,17 @@ static void client_process(const GyNetMsg *msg)
             uint8_t old_phase = g.room.view.phase;
             int applied = gy_net_room_apply_room_state(&g.room, &s);
             if (applied && s.phase == GY_NET_PHASE_STARTING &&
-                (old_phase != GY_NET_PHASE_STARTING ||
-                 s.seq != g.starting_seq)) {
-                /* ROOM_STATE 不带时间戳；客户端从收到 STARTING 的时刻
-                 * 本地起算 3/2/1，否则会用 0 起算一直显示 1s。 */
+                old_phase != GY_NET_PHASE_STARTING) {
+                /* ROOM_STATE 不带时间戳；客户端从首次进入 STARTING 的时刻
+                 * 本地起算 3/2/1。STARTING 中 REJOIN 会让 seq++，不能因此
+                 * 把所有人的倒计时重置回 3s。 */
                 g.room.view.phase_since_ms = g.now;
-                g.starting_seq = s.seq;
             }
-            if (s.phase != GY_NET_PHASE_STARTING) g.starting_seq = 0;
+            /* 预览只属于当前 PLAYING 局；结算/回房/倒计时阶段不能把
+             * 上一局的旁观高亮留在屏幕上。旧 seq 的迟到状态不能误清
+             * 当前局的预览，所以只在实际应用成功时清。 */
+            if (applied && s.phase != GY_NET_PHASE_PLAYING)
+                clear_visible_previews();
         }
         if (color_valid(g.local_color)) {
             uint8_t auth = (g.local_color == s.host_color) ? s.host_ready : s.guest_ready;
@@ -884,28 +941,67 @@ static void client_process(const GyNetMsg *msg)
             g.role = GY_NET_ROLE_SPECTATOR;
         break;
     }
+    case GY_NET_START: {
+        GyNetStart st;
+        /* 重复/迟到的 START 不能把已经应用的新快照作废。 */
+        if (gy_net_unpack_start(msg, &st) == GY_NET_OK &&
+            st.seq <= g.room.last_snapshot_seq)
+            break;
+        /* 新局开始：旧棋盘立即作废，等随后的快照；若快照丢失，
+         * PLAYING 期间的周期快照会恢复，不能在旧棋盘上发动作。 */
+        g.room.view.game_valid = 0;
+        g.pending_move = 0; g.pending_move_at = 0;
+        clear_placement();
+        clear_preview_state();
+        break;
+    }
     case GY_NET_SNAPSHOT: {
         GyNetSnapshot s;
+        int was_valid;
+        uint32_t old_rev;
+        uint8_t old_outcome;
         if (gy_net_unpack_snapshot(msg, &s) != GY_NET_OK) return;
-        gy_net_room_apply_snapshot(&g.room, &s);
-        g.pending_move = 0;
-        g.placing = 0;
-        g.last_preview_valid = 0;
-        if (color_valid(g.local_color)) g.preview_valid[g.local_color] = 0;
+        was_valid = g.room.view.game_valid;
+        old_rev = g.room.view.game.revision;
+        old_outcome = (uint8_t)g.room.view.game.outcome;
+        if (gy_net_room_apply_snapshot(&g.room, &s)) {
+            /* 棋盘 revision/outcome 没变的快照只是重同步（REJOIN、座位在线位、
+             * 1s 周期快照），不能清掉用户正在进行的放兵选择/预览；否则客方
+             * 在放兵界面停留超过 1s，下一次确认会被当成移动请求。 */
+            int board_changed = !was_valid || s.game.revision != old_rev ||
+                                s.game.outcome != old_outcome;
+            g.pending_move = 0; g.pending_move_at = 0;
+            if (board_changed) {
+                /* 只有棋盘真的前进才清本地选择；同 revision 的 REJOIN/
+                 * 周期快照不能打断正在进行的放兵。 */
+                clear_placement();
+                clear_preview_state();
+            }
+        } else {
+            APP_LOG("snapshot reject seq=%u rev=%u view_seq=%u last_seq=%u pending=%d",
+                    (unsigned)s.seq, (unsigned)s.game.revision,
+                    (unsigned)g.room.view.seq, (unsigned)g.room.last_snapshot_seq,
+                    g.pending_move);
+        }
         break;
     }
     case GY_NET_RESULT: {
         GyNetResult r;
         if (gy_net_unpack_result(msg, &r) != GY_NET_OK) return;
         gy_net_room_apply_result(&g.room, &r);
+        g.pending_move = 0; g.pending_move_at = 0;
+        clear_placement();
+        clear_preview_state();
         break;
     }
     case GY_NET_REJECT: {
         GyNetReject r;
         if (gy_net_unpack_reject(msg, &r) != GY_NET_OK) return;
-        g.pending_move = 0;
-        g.last_preview_valid = 0;
-        if (color_valid(g.local_color)) g.preview_valid[g.local_color] = 0;
+        APP_LOG("move reject reason=%d seq=%u phase=%d turn=%d local=%d",
+                r.reason, (unsigned)r.seq, g.room.view.phase,
+                g.room.view.game.turn, g.local_color);
+        g.pending_move = 0; g.pending_move_at = 0;
+        clear_preview_state();
         if (r.reason == (uint8_t)(-GY_NET_ERR_TOKEN) ||
             r.reason == (uint8_t)GY_NET_ERR_TOKEN) {
             /* WAIT 已立即释放旧席位，REJOIN 必然失败；链路还在时用
@@ -1026,6 +1122,11 @@ void gy_net_app_init(void)
 void gy_net_app_tick(uint32_t now_ms)
 {
     g.now = now_ms;
+    if (g.pending_move && (uint32_t)(now_ms - g.pending_move_at) >= 1000u) {
+        /* 快照/REJECT 丢失时不能永久卡住下一步；下一次确认会重发请求，
+         * 房主对重复 seq 会补发快照。 */
+        g.pending_move = 0; g.pending_move_at = 0;
+    }
 #ifdef GEYI_WITH_RTTHREAD
     gy_net_ble_poll();
 #endif
@@ -1068,6 +1169,11 @@ void gy_net_app_tick(uint32_t now_ms)
             }
         }
         changed |= host_sync_conns();
+        /* PLAYING 期间每秒补一帧权威快照：START/快照丢包时客方能恢复；
+         * 同 revision 的快照不会清掉本地放兵/预览（见 SNAPSHOT 分支）。 */
+        if (g.room.view.phase == GY_NET_PHASE_PLAYING &&
+            (uint32_t)(now_ms - g.last_snapshot_ms) >= 1000u)
+            broadcast_snapshot();
         {
             /* 断链后保留的 ConnMap 只等 REJOIN；席位已被结算释放的
              * 陈年映射要清掉，避免 4 个槽位被历史会话占满。 */
@@ -1392,7 +1498,12 @@ int gy_net_app_peer_online(void)
     }
     if (g.active == 2) {
         if (g.dropped || g.room.view.local_terminal) return 0;
+#ifdef GEYI_WITH_RTTHREAD
         return gy_net_app_connected() ? 1 : 0;
+#else
+        /* 主机测试没有 BLE：只要会话未标记断链，就按链路在线处理。 */
+        return 1;
+#endif
     }
     return 1;
 }
@@ -1435,14 +1546,49 @@ int gy_net_app_seat_online(int color)
         return g.room.seats[color].connected ? 1 : 0;
     }
     if (g.active == 2) {
-        /* 客方看不到远端每个座位的连通状态；本机断链时只知道房主端
-         * 不可达。自己的座位仍显示在线（本机正在重连）。 */
+        /* 客方/旁观者用房主 ROOM_STATE 下发的座位在线位。本机断链时
+         * 只知道房主端不可达；自己的座位仍按“正在重连”显示在线。 */
         if ((g.dropped || g.room.view.local_terminal) &&
             color == g.room.view.host_color)
             return 0;
-        return 1;
+        return g.room.seats[color].connected ? 1 : 0;
     }
     return 1;
+}
+
+int gy_net_app_seat_reconnect_seconds(int color)
+{
+    if (!gy_net_app_seat_occupied(color)) return 0;
+    if (g.active == 1) {
+        if (color == g.room.view.host_color) return 0;
+        return gy_net_app_reconnect_seconds();   /* 房主：客席断线窗口 */
+    }
+    if (g.active == 2) {
+        if ((g.dropped || g.room.view.local_terminal) &&
+            color == g.room.view.host_color)
+            return gy_net_app_reconnect_seconds(); /* 本机链路窗口 */
+        return g.room.view.seat_reconnect_s[color];
+    }
+    return 0;
+}
+
+int gy_net_app_offline_seat(void)
+{
+    if (!g.active) return -1;
+    if (gy_net_app_seat_occupied(GY_NET_COLOR_RED) &&
+        !gy_net_app_seat_online(GY_NET_COLOR_RED))
+        return GY_NET_COLOR_RED;
+    if (gy_net_app_seat_occupied(GY_NET_COLOR_BLUE) &&
+        !gy_net_app_seat_online(GY_NET_COLOR_BLUE))
+        return GY_NET_COLOR_BLUE;
+    return -1;
+}
+
+int gy_net_app_remote_reconnect_seconds(void)
+{
+    int r = gy_net_app_seat_reconnect_seconds(GY_NET_COLOR_RED);
+    int b = gy_net_app_seat_reconnect_seconds(GY_NET_COLOR_BLUE);
+    return r > b ? r : b;
 }
 int gy_net_app_local_terminal(void) { return g.room.view.local_terminal; }
 int gy_net_app_join_rejected(void) { return g.join_rejected; }
@@ -1731,15 +1877,14 @@ void gy_net_app_leave(void)
     g.join_sent = 0;
     g.join_connected = 0;
     g.join_ready_at = 0;
-    g.pending_move = 0;
-    g.placing = 0;
-    g.place_col = -1;
-    g.last_preview_valid = 0;
+    g.pending_move = 0; g.pending_move_at = 0;
+    g.last_snapshot_ms = 0;
+    clear_placement();
+    clear_preview_state();
     g.local_ready = 0;
     g.ready_pending = 0;
     g.ready_desired = 0;
     g.need_fresh_join = 0;
-    g.starting_seq = 0;
     g.join_rejected = 0;
     g.spectator_lost = 0;
     g.dropped = 0;
@@ -1748,7 +1893,6 @@ void gy_net_app_leave(void)
     g.rejoin_sent = 0;
     g.rejoin_at = 0;
     g.client_gen = 0;
-    g.preview_valid[0] = g.preview_valid[1] = 0;
     memset(g.unknown_link_at, 0, sizeof(g.unknown_link_at));
     memset(g.unknown_gen, 0, sizeof(g.unknown_gen));
     memset(&g.room, 0, sizeof(g.room));
@@ -1768,7 +1912,7 @@ int gy_net_app_set_ready(int ready)
         GyNetMsg m;
         r.ready = ready ? 1 : 0;
         if (gy_net_pack_ready(&m, &r) == GY_NET_OK) {
-            send_msg(0xff, &m);
+            send_broadcast(&m);
             g.local_ready = r.ready;
             g.ready_desired = r.ready;
             g.ready_pending = 1;
@@ -1798,20 +1942,28 @@ int gy_net_app_swap(void)
     return 1;
 }
 
-int gy_net_app_preview(int direction, int count)
+int gy_net_app_preview(int direction, int count, int aim)
 {
     GyNetPreview p;
     if (!gy_net_app_local_turn()) return 0;
-    if (g.last_preview_valid && g.last_dir == direction && g.last_count == count) return 0;
+    if (!move_args_valid(direction, count, aim)) return 0;
+    /* 移动预览与放兵互斥：UI 从放兵切到方向键时，不能让 net app 的
+     * g.placing 残留，否则确认会被路由成“放兵但无列”而直接失败。 */
+    clear_placement();
+    if (g.last_preview_valid && g.last_dir == direction && g.last_count == count &&
+        g.last_aim == aim) return 0;
     g.last_preview_valid = 1;
     g.last_dir = direction;
     g.last_count = count;
+    g.last_aim = aim;
     g.dir = direction;
     g.count = count;
+    g.aim = aim;
     memset(&p, 0, sizeof(p));
     p.side = g.local_color;
     p.direction = (uint8_t)direction;
     p.count = (uint8_t)count;
+    p.aim = (int8_t)aim;
     p.indicator = (uint16_t)((direction & 0xff) | ((count & 0xff) << 8));
     p.seq = g.room.view.seq;
     g.preview[p.side] = p;
@@ -1822,8 +1974,43 @@ int gy_net_app_preview(int direction, int count)
             send_spectators(&m);
     } else if (g.active == 2) {
         GyNetMsg m;
-        if (gy_net_pack_preview(&m, &p) == GY_NET_OK) send_msg(0xff, &m);
+        if (gy_net_pack_preview(&m, &p) == GY_NET_OK) send_broadcast(&m);
     }
+    return 1;
+}
+
+/* 客方确认：只填本类型使用的字段，打包/入队失败都返回 0，让 UI 保留预览。 */
+static int guest_send_move_req(void)
+{
+    GyNetMoveReq mr;
+    GyNetMsg m;
+
+    if (g.pending_move) return 0;
+    memset(&mr, 0, sizeof(mr));
+    mr.side = g.local_color;
+    mr.kind = g.placing ? 1 : 0;
+    if (g.placing) {
+        if (g.place_row < 0 || g.place_col < 0) return 0;
+        mr.row = (uint8_t)g.place_row;
+        mr.column = (uint8_t)g.place_col;
+    } else {
+        if (!move_args_valid(g.dir, g.count, g.aim)) return 0;
+        mr.direction = (uint8_t)g.dir;
+        mr.count = (uint8_t)g.count;
+        mr.aim = (int8_t)g.aim;
+    }
+    mr.seq = g.room.view.seq;
+    if (gy_net_pack_move_req(&m, &mr) != GY_NET_OK) {
+        APP_LOG("move req pack failed kind=%d seq=%u", mr.kind, (unsigned)mr.seq);
+        return 0;
+    }
+    if (!send_msg(GY_NET_BLE_BROADCAST_CONN, &m)) {
+        APP_LOG("move req send failed kind=%d seq=%u", mr.kind, (unsigned)mr.seq);
+        return 0;
+    }
+    g.pending_move = 1;
+    g.pending_move_at = g.now;
+    clear_placement();
     return 1;
 }
 
@@ -1833,40 +2020,27 @@ int gy_net_app_confirm(void)
     if (g.active == 1) {
         int rc;
         if (g.placing) {
-            if (g.place_col < 0) return 0;
-            rc = gy_net_room_place(&g.room, g.local_color, g.place_col, g.now);
+            if (g.place_col < 0 || g.place_row < 0) return 0;
+            rc = gy_net_room_place(&g.room, g.local_color, g.place_row, g.place_col, g.now);
         } else {
-            rc = gy_net_room_move(&g.room, g.local_color, g.dir, g.count, g.now);
+            rc = gy_net_room_move(&g.room, g.local_color, g.dir, g.count, g.aim, g.now);
         }
-        if (rc != GY_NET_OK) return 0;
+        if (rc != GY_NET_OK) {
+            APP_LOG("host confirm failed rc=%d placing=%d phase=%d turn=%d",
+                    rc, g.placing, g.room.view.phase, g.room.view.game.turn);
+            return 0;
+        }
         gy_net_room_preview_clear(&g.room, g.local_color);
         send_preview_clear_to_spectators(g.local_color);
         g.preview_valid[g.local_color] = 0;
         g.last_preview_valid = 0;
-        g.placing = 0;
+        clear_placement();
         broadcast_snapshot();
         host_phase_change(GY_NET_PHASE_PLAYING);
         return 1;
     }
-    if (g.active == 2 && g.role == GY_NET_ROLE_PLAYER) {
-        GyNetMoveReq mr;
-        GyNetMsg m;
-        if (g.pending_move) return 0;
-        if (g.placing && g.place_col < 0) return 0;
-        memset(&mr, 0, sizeof(mr));
-        mr.side = g.local_color;
-        mr.kind = g.placing ? 1 : 0;
-        mr.direction = (uint8_t)g.dir;
-        mr.count = (uint8_t)g.count;
-        mr.column = (uint8_t)g.place_col;
-        mr.seq = g.room.view.seq;
-        if (gy_net_pack_move_req(&m, &mr) == GY_NET_OK) {
-            send_msg(0xff, &m);
-            g.pending_move = 1;
-            g.placing = 0;
-            return 1;
-        }
-    }
+    if (g.active == 2 && g.role == GY_NET_ROLE_PLAYER)
+        return guest_send_move_req();
     return 0;
 }
 
@@ -1882,19 +2056,35 @@ int gy_net_app_cancel(void)
             gy_net_room_preview_clear(&g.room, g.local_color);
             if (gy_net_pack_preview_clear(&m, &p) == GY_NET_OK) send_spectators(&m);
         } else if (g.active == 2 && g.role == GY_NET_ROLE_PLAYER) {
-            if (gy_net_pack_preview_clear(&m, &p) == GY_NET_OK) send_msg(0xff, &m);
+            if (gy_net_pack_preview_clear(&m, &p) == GY_NET_OK) send_broadcast(&m);
         }
     }
-    g.placing = 0;
-    g.place_col = -1;
+    clear_placement();
     g.last_preview_valid = 0;
     return 1;
 }
 
-int gy_net_app_place(int column)
+int gy_net_app_test_set_coins(int coins)
+{
+    if (coins < 0 || coins > 1000) return 0;
+    if (g.active != 1 || g.role != GY_NET_ROLE_HOST) return 0;
+    if (g.room.view.phase != GY_NET_PHASE_PLAYING || !g.room.view.game_valid)
+        return 0;
+    /* revision 必须前进，客方 UI 才会把新金币同步到本地棋盘。 */
+    g.room.view.game.coins[GY_NET_COLOR_RED] = coins;
+    g.room.view.game.coins[GY_NET_COLOR_BLUE] = coins;
+    g.room.view.game.revision++;
+    g.room.view.seq++;
+    clear_preview_state();
+    broadcast_snapshot();
+    return 1;
+}
+
+int gy_net_app_place(int row, int column)
 {
     if (g.active && !gy_net_app_peer_online()) return 0;
     g.placing = 1;
+    g.place_row = row;
     g.place_col = column;
     return 1;
 }
@@ -1911,7 +2101,7 @@ int gy_net_app_resign(void)
         GyNetLeave l;
         GyNetMsg m;
         l.reason = GY_NET_REASON_RESIGN;
-        if (gy_net_pack_leave(&m, &l) == GY_NET_OK) { send_msg(0xff, &m); return 1; }
+        if (gy_net_pack_leave(&m, &l) == GY_NET_OK) { send_broadcast(&m); return 1; }
     }
     return 0;
 }

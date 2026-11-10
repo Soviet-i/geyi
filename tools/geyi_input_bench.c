@@ -38,7 +38,7 @@ static void sim_init(Sim *s, int step, int dir_pct, int angle_pct, int avail)
 static GyInputEvent sim_feed(Sim *s, int x, int y, int key)
 {
     s->now += (uint32_t)s->step;
-    return gy_input_update(&s->in, x, y, key, s->now, s->avail);
+    return gy_input_update(&s->in, x, y, key, s->now, s->avail, 0xF);
 }
 
 /* 从"新输入的第一个样本"起计时，直到出现 want 事件；返回毫秒，超时返回 -1 */

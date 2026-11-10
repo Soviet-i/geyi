@@ -99,14 +99,14 @@ static int nav_source_tests(void)
     /* 按钮进入预览 → 倾斜被忽略。 */
     gy_ui_action(GY_UI_UP);
     check(gy_ui_has_preview()&&!gy_ui_tilt_allowed(),"nav: button preview blocks tilt");
-    gy_ui_tilt_select(GY_DOWN,2);
+    gy_ui_tilt_select(GY_DOWN,2,0);
     check(gy_ui_preview_direction()==GY_UP,"nav: tilt ignored in button preview");
     check(gy_ui_preview_count()==1,"nav: button count unchanged by tilt");
     check(gy_ui_take_feedback()==GY_FX_NONE,"nav: ignored tilt does not flash");
     gy_ui_action(GY_UI_CANCEL);
     check(!gy_ui_has_preview()&&gy_ui_tilt_allowed(),"nav: cancel restores tilt");
     /* 倾斜进入预览 → 屏幕编辑/取消/放兵被忽略，确认仍可用。 */
-    gy_ui_tilt_select(GY_UP,1);
+    gy_ui_tilt_select(GY_UP,1,0);
     check(gy_ui_has_preview()&&gy_ui_tilt_allowed(),"nav: tilt preview active");
     gy_ui_action(GY_UI_MORE);
     gy_ui_action(GY_UI_LEFT);
@@ -124,7 +124,7 @@ static int nav_source_tests(void)
     check(gy_ui_take_feedback()==GY_FX_MOVE,"nav: confirm flashes once");
     /* 回中只取消倾斜预览；按钮预览不被板子回中打断。 */
     gy_ui_action(GY_UI_RESTART);
-    gy_ui_tilt_select(GY_UP,1);
+    gy_ui_tilt_select(GY_UP,1,0);
     gy_ui_tilt_cancel();
     check(!gy_ui_has_preview()&&gy_ui_preview_direction()==-1,
           "nav: level cancels tilt preview");
@@ -189,14 +189,44 @@ static int param_tests(void)
     gy_ui_action(GY_UI_HOME);
     return 0;
 }
+/* REQ-320-D：认输后第二局不得沿用上一局的来源位/预览状态。 */
+static int second_game_tests(void)
+{
+    uint32_t before,revision;int i;
+    gy_ui_action(GY_UI_HOME);
+    gy_ui_action(GY_UI_SINGLE);
+    before=gy_ui_session();
+    gy_ui_tilt_select(GY_UP,1,-50);
+    check(gy_ui_has_preview(),"second game: first game preview");
+    gy_ui_action(GY_UI_RESIGN);
+    check(gy_ui_game()->outcome!=GY_PLAYING,"second game: resign ends first");
+    gy_ui_action(GY_UI_RESIGN); /* 结算后同一按钮回首页 */
+    check(!gy_ui_is_playing(),"second game: back home");
+    gy_ui_action(GY_UI_SINGLE);
+    check(gy_ui_session()>before,"second game: page session changed");
+    for(i=0;i<20;++i){
+        gy_ui_tilt_select(GY_UP,1,-50);
+        check(gy_ui_has_preview(),"second game: preview stays stable");
+        check(gy_ui_preview_aim()==-50,"second game: aim preserved");
+    }
+    revision=gy_ui_game()->revision;
+    gy_ui_action(GY_UI_CONFIRM);
+    check(gy_ui_game()->revision==revision+1&&!gy_ui_has_preview(),
+          "second game: confirm commits once");
+    gy_ui_action(GY_UI_CONFIRM);
+    check(gy_ui_game()->revision==revision+1,"second game: no double commit");
+    gy_ui_action(GY_UI_RESTART);
+    puts("PASS: REQ-320-D second game tilt session stable");
+    return 0;
+}
 static int tests(void)
 {
-    GyGame before;GyPreview p;GyMove m={GY_UP,1};
+    GyGame before;GyPreview p;GyMove m={GY_UP,1,0};
     initialize();before=*gy_ui_game();screenshot("home.bmp");
     check(gy_light_selftest(),"TC-314 light timeline including wrap");
     check(gy_ui_take_feedback()==GY_FX_CLEAR,"home clears light");
     check(!gy_ui_is_playing(),"startup is home");
-    gy_ui_action(GY_UI_UP);gy_ui_tilt_select(GY_UP,1);gy_ui_action(GY_UI_CONFIRM);
+    gy_ui_action(GY_UI_UP);gy_ui_tilt_select(GY_UP,1,0);gy_ui_action(GY_UI_CONFIRM);
     check(!gy_ui_has_preview()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"menu ignores game input");
     check(gy_ui_take_feedback()==GY_FX_NONE,"menu game actions do not flash");
     click(160,268);
@@ -273,11 +303,13 @@ static int tests(void)
                 int x,y=gy_ui_game()->turn?0:5;
                 for(x=0;x<6;++x)if(gy_ui_game()->cells[y][x].kind==GY_EMPTY){
                     uint32_t revision=gy_ui_game()->revision;
+                    int ty=gy_ui_game()->cells[0][x].kind==GY_EMPTY?0:y;
                     gy_ui_key2();check(gy_ui_is_placing(),"KEY2 enters placing with coins");
                     gy_ui_key2();check(!gy_ui_is_placing(),"KEY2 leaves placing without column");
                     gy_ui_key2();check(gy_ui_is_placing(),"KEY2 re-enters placing");
-                    gy_ui_cell(x,y);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
+                    gy_ui_cell(x,ty);check(gy_ui_has_preview(),"place preview");screenshot("placement.bmp");
                     gy_ui_key2();check(gy_ui_game()->revision==revision+1,"KEY2 confirms placement");
+                    check(gy_ui_game()->cells[ty][x].kind==GY_SOLDIER,"placement accepts outer row");
                     check(!gy_ui_is_placing(),"KEY2 leaves placing after confirm");
                     check(gy_ui_take_feedback()==GY_FX_MOVE,"successful placement flashes");
                     goto placed;
@@ -381,6 +413,7 @@ done: ;
     check(!gy_ui_is_playing(),"preview commit cancelled after home");
     nav_source_tests();
     key2_tests();
+    second_game_tests();
     param_tests();
     puts("PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board");
     puts("PASS: KEY2-only confirm/placing state machine (KEY1 untested as game key)");
