@@ -1,0 +1,34 @@
+\documentclass[tikz,border=8pt]{standalone}
+\input{_preamble}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  st/.style={core, minimum width=3.00cm, minimum height=1.05cm, rounded corners=10pt}]
+
+  \node[st] (wait) at (-8.00,1.20) {\textbf{WAIT}\\[-1pt]\scriptsize 等待 / 准备};
+  \node[st] (start) at (-4.00,1.20) {\textbf{STARTING}\\[-1pt]\scriptsize 3 s 倒计时};
+  \node[st] (play) at (0.00,1.20) {\textbf{PLAYING}\\[-1pt]\scriptsize 房主权威对局};
+  \node[st] (result) at (4.00,1.20) {\textbf{RESULT}\\[-1pt]\scriptsize 结算弹窗};
+  \node[st, draw=cred!60!black, fill=cred!5] (closed) at (4.00,-1.30)
+    {\textbf{CLOSED}\\[-1pt]\scriptsize 房间解散};
+
+  \draw[arr] (wait) -- node[lab, above]{双方准备} (start);
+  \draw[arr] (start) -- node[lab, above]{3 s} (play);
+  \draw[arr] (play) -- node[lab, above, align=center]{终局\\[-2pt]认输} (result);
+
+  \draw[arr] (result.north) -- (4.00,3.05) -- (-8.00,3.05)
+    -- node[lab, above, pos=0.55]{约 4 s 后回同一房间} (wait.north);
+  \draw[arr] (start.south) -- (-4.00,0.00) -- (-8.00,0.00)
+    -- node[lab, below, pos=0.60]{取消准备 / 断线保留席位} (wait.south);
+
+  \draw[arr] (wait.south) -- (-8.00,-1.30) -- node[lab, above, pos=0.35]{房主退出且无人} (closed.west);
+  \draw[arr] (result.south) -- node[lab, right]{房主返回大厅} (closed.north);
+
+  % 说明
+  \node[draw=ink!20, fill=ink!3, rounded corners=3pt, align=left,
+        font=\scriptsize, text=ink!85, inner sep=5pt] at (-4.00,-2.55)
+    {仅房主推进阶段，客方与旁观者只镜像；\\
+     PLAYING 断线保留席位 10 s，超时判缺席方负；\\
+     等待阶段显式退出立即释放席位。};
+
+\end{tikzpicture}
+\end{document}
