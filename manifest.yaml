@@ -173,6 +173,16 @@ physical_verification:
     executed_at: "2026-11-09（sftool 烧录 COM7/COM8；reboot reclaim WAIT/PLAYING、transient rejoin、reboot timeout 段）"
     evidence_path: "evidence/net/20261109/board_suite_reconnect_final.log"
     agent_conclusion: "PASS：B 重启 4.0s 后 WAIT 重新加入同色同 ID，A players=2/peer=1/reconn=0，B 在房间页，A 日志含 join reclaim（不是新玩家）；窗口内点交换被拒绝；PLAYING 重启 4.1s 后重新加入 role=1/local 不变/phase=2/view playing=1，A/B seq 不回退，日志含 join reclaim；transient drop（客方 drop + 房主 drop）B 保持对局页并自动 REJOIN，日志含 rejoin sent；未重连时 WAIT 约 10s 后释放 1/2，PLAYING 约 10s 后 phase=3/result=1，4s 后回 WAIT 1/2。显式 LEAVE 仍立即释放（TX 等 120ms 再断链）。独立 review 后另修换座丢计时器、STARTING ready、10s 边界、满旁观 flags、RESULT 快照、peer 离线冻结操作；另补对局页黄底重连横幅（每秒刷新，view reconn 断言）；主机 380+281、双板 15 段再次 PASS。限制：房主重启房间 RAM-only 必然消失；客方本机 10s local_terminal 回大厅的真实断网未测；旁观者不按 player_id 回收；满旁观容量+第三设备未测；真实触摸/像素与 P-02 容量未测。"
+  - item: "REQ-501/503/507 第三块实体板烧录与启动（COM5）"
+    required_action: "把当前联机固件烧录到学生新增的第三块黄山派，确认启动自检、LCD、IMU 与 BLE 本地 ID"
+    executed_at: "2026-11-09 23:25（sftool 直接烧录 COM5；COM7/COM8 未重烧）"
+    evidence_path: "evidence/board/20261109_232523/README.md"
+    agent_conclusion: "烧录成功（sftool rc=0），main.bin 1,085,708 B；启动 core/input/ai/param/paramui/net/light 全 PASS，LCD READY 390x450、IMU 6a、BLE local id=B7B0；启动后 gy_net state active=0/role=2。仅证明第三块板启动，不代表观战已完成；真实屏幕/触摸/观战流程未验证。固件来自 d99780e 加未提交的 geyi_board.c/main.c 改动，逐文件哈希见 firmware.json。"
+  - item: "REQ-309/REQ-311 倾斜输入板端实测（COM7，2026-11-09）"
+    required_action: "烧录 1,085,716 B 固件，学生进入单机后做四向倾斜、1↔2 边界、KEY2 确认并保持倾斜；agent 串口抓 motion/tilt/key"
+    executed_at: "2026-11-09 23:33（sftool 直接烧录 COM7；学生本人操作）"
+    evidence_path: "evidence/board/20261109_233306/README.md"
+    agent_conclusion: "PASS（串口）：平放 x≈0；左倾 x<0 dir=LEFT、右倾 x>0 dir=RIGHT、上倾 y<0 dir=UP；向上 2→1→2→1 只发 UPDATE，无 CANCEL；90 秒 91 motion、26 tilt（21 SELECT+5 UPDATE，0 CANCEL）、7 次 KEY2，换回合后仍倾斜自动 SELECT。修正了旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃的问题，以及 Z 轴朝下、X 轴左右反。限制：放兵列与屏幕取消/增减冲突未测（7 次 KEY2 均 now_placing=0）；左右方向需学生目测确认；正确率/延迟未量化。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -315,7 +325,7 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 271 断言、桌面 REQ-319 用例、固件 1,086,060 B + LCPU 6,384 B 编译通过；**真实倾斜手感/正确率、放兵选列、屏幕按钮冲突、已倾斜开局仍未上板验证**。独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 271 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10 与 docs/06 L-03。"
+  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 271 断言、桌面 REQ-319 用例、固件 1,085,716 B + LCPU 6,384 B 编译通过。**2026-11-09 板端 COM7 实测**：旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃、倾斜完全无反应；改为固定平放=重力（Z 轴朝下 x=atan2(ax,-az)）并修正 X 轴左右后，平放 x≈0、四向符号、1↔2 仅 UPDATE（90 秒 21 SELECT+5 UPDATE、0 CANCEL）、7 次 KEY2 换回合后仍倾斜自动重预览均有串口证据（evidence/board/20261109_233306/）。**放兵选列、倾斜预览时屏幕取消/增减未测；左右方向待学生目测；正确率/延迟未量化。** 独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 271 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10/§11 与 docs/06 L-03。"
   - "【2026-11-09 当前】REQ-319 倾斜/按钮仲裁：主机 gy_nav 状态机与桌面 LVGL nav_source_tests PASS；真实触摸与板端 IMU 同时操作未验证。倾斜预览中屏幕取消/增减/方向/放兵被忽略、确认可用；按钮预览中倾斜被忽略；回中只取消倾斜预览。"
   - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 281 checks PASS，固件 1,084,932 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
   - "【2026-11-09 当前】首页改为“格弈”并新增 4 页游戏规则（REQ-318/TC-318），对局页移除左上 GEYI、右上按钮与底栏按 R=48 圆角安全区内缩（NFR-UX-06/TC-NF-UX-06）；桌面 LVGL `--test` 与 `gy_ui_corner_clip_count(48)` 在首页/规则 1~4 页/对局页 PASS，证据 evidence/ui/20261109/。固件 1,078,356 B + LCPU 6,384 B 已烧录 COM7/COM8；双板套件新增 rules 段，实际翻 4 页、钳位、corner=0、rbottom<370，完整联机套件 PASS（15:28）。规则页正文已逐字恢复学生原文（含全角标点、10°~60°、KEY2）；KEY1(PA34) 是电源/下载复用键，板端不再读取，KEY2 单键负责确认/进入退出放兵，桌面 KEY2 用例 PASS。**真实圆角屏遮挡、中文标点观感、手指触摸翻页与真实 KEY2 手感仍未目测**，不能写成视觉验收通过。"
@@ -393,7 +403,7 @@ self_review: |
   调用者 CONFIRM 后锁定到回中；新增 gy_input_place_column() 把水平倾斜映射到最近己方底线空列；新增
   gy_nav 纯逻辑仲裁，gy_ui 与 gy_board 接线。tests/test_tilt_ux.c 271 断言、桌面
   nav_source_tests、run_host 全量 26920/61/271/2517/85/62/10 PASS、联机 380+281 PASS；
-  固件 1,086,060 B + LCPU 6,384 B 编译通过。本机无 VS2022 MSVC，桌面用例改用 MinGW gcc
+  固件 1,085,716 B + LCPU 6,384 B 编译通过。本机无 VS2022 MSVC，桌面用例改用 MinGW gcc
   构建 SDK LVGL v9 后运行；tools/build_desktop.py 已加入 gcc/clang 回退并包含 geyi_nav.c。
   独立 review 在主机/桌面通过后仍发现 6 个代码级问题（放兵列无全边界半列回差、locked 在板端
   为死代码、联机认输清 nav 不清 ready、4°~6° 带内可改向、无兵方向粘滞、同帧 UPDATE+CONFIRM），
@@ -401,6 +411,15 @@ self_review: |
   未完成：真实倾斜手感/正确率、放兵左右选列、倾斜预览时屏幕取消/增减、屏幕确认单次提交、
   已倾斜开局都未上板；不得写成板端通过。docs/07 §10 记录复现与复测数字，docs/06 L-03
   改为“软件已重构，板端待验证”。
+
+  2026-11-09 板端 COM7 实测（sftool 直接烧录，不依赖 VS Code/MCP）：学生反馈倾斜完全无反应，
+  串口显示旧开机采样 zero_x=17873，motion x 在 ±17900 被板端 |x|>9000 丢弃，0 条 tilt。
+  尝试只把零点设 0 后 x 仍约 ±178°，确认这块板 Z 轴朝下、atan2(ax,az) 平放即 180°；
+  改为 x=atan2(ax,-az) 后平放 x≈0、tilt 出现，但学生指出左右反，再把 X 轴取正。
+  最终 90 秒日志 91 motion、26 tilt（21 SELECT+5 UPDATE，0 CANCEL）、7 次 KEY2，换回合后
+  仍倾斜自动重预览；证据 evidence/board/20261109_233306/。未测放兵列、倾斜预览时屏幕
+  取消/增减；左右方向需学生目测；正确率/延迟未量化。学生明确要求不要开机采样零点，
+  本实现按“平放=重力”固定，不再受开机姿态影响。
 
 human_checkpoints:
   # 用于区分"学生自己做的决定"和"agent建议、学生只是同意"
@@ -436,6 +455,8 @@ human_checkpoints:
     student_confirmation: "学生 2026-11-08 要求先写测试再实现；agent 已实现主机纯逻辑、BLE 传输与 UI（253 + app 70 checks PASS、固件 1,056,484 B + LCPU 6,384 B），并完成双板 BLE 自动冒烟；真实 UI/旁观/重连/容量未执行。联机是否必达、双板排期与止损日期仍需学生拍板。"
   - decision_point: "联机主机实现边界"
     student_confirmation: "学生要求“写相关测试，写完测试后规划具体实现方案并实现”；agent 按纯逻辑优先实现 net_proto/net_room/net_link 内存管道，未擅自改 proj.conf 或伪造 BLE/双板结果。是否继续 BLE 绑定与 UI 由学生决定。"
+  - decision_point: "IMU 平放零点"
+    student_confirmation: "学生 2026-11-09 明确要求：不要用开机采样校准零点，平放就是零点；每次重新校正可能把用户开机时的倾斜当成 0。agent 改为固定重力方向（这块板 Z 轴朝下，x=atan2(ax,-az)），并按真机把 X 轴左右翻正。"
   - decision_point: "倾斜手感与输入仲裁方案"
     student_confirmation: "学生 2026-11-09 明确要求：从 1 兵到 2 兵不得回弹成 0 个兵；缩小预览进入下限；数量默认每 10° 一档，N 档放不下再按兵均分；放兵放在离倾斜方向最近的格子；本回合开始前板子已倾斜也要进入预览；倾斜预览中屏幕取消/增减失效但确认可用，按钮预览时忽略倾斜。agent 按此实现 6°/4° 回滞、10° 档位、200ms 稳定 UPDATE、最近空列与 gy_nav 仲裁；阈值与档位属于学生拍板的暂定手感参数。"
 
