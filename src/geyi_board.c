@@ -39,20 +39,21 @@ static int write_register(struct rt_i2c_bus_device *bus,uint8_t reg,uint8_t valu
 static int16_t word(const uint8_t *p) {return (int16_t)(p[0]|(uint16_t)p[1]<<8);}
 static void publish(Motion *m)
 {rt_mutex_take(&motion_lock,RT_WAITING_FOREVER);shared=*m;rt_mutex_release(&motion_lock);}
-static float wrap(float a)
-{while(a>180)a-=360;while(a<-180)a+=360;return a;}
 static void sample_thread(void *parameter)
 {
     struct rt_i2c_bus_device *bus;uint8_t id=0,old_acc=0,old_ctrl=0,data[6],ready;
-    int configured=0,stable=0,calibrated=0,missed=0;
-    float zero_x=0,zero_y=0,previous_x=0,previous_y=0,filtered_x=0,filtered_y=0;
+    int configured=0,missed=0;
+    float filtered_x=0,filtered_y=0;
     Motion motion={0};(void)parameter;
     HAL_PIN_Set(PAD_PA40,I2C3_SCL,PIN_PULLUP,1);HAL_PIN_Set(PAD_PA39,I2C3_SDA,PIN_PULLUP,1);
     bus=rt_i2c_bus_device_find("i2c3");
     if(!bus||!read_register(bus,0x0f,&id,1)||id!=0x6a){
         rt_kprintf("[geyi:imu] FAIL bus/id=%02x\n",id);return;
     }
-    rt_kprintf("[geyi:imu] WHO_AM_I=%02x keep still for calibration\n",id);
+    /* 平放零点 = 重力方向。LSM6DS3TR-C 在这块板上 Z 轴朝下：
+     * 屏幕朝上平放时 az≈-1g，所以用 atan2(ax,-az) 让平放为 0；
+     * 这是固定安装方向，不采样开机姿态。开机时板子斜着，读数仍是真实倾斜。 */
+    rt_kprintf("[geyi:imu] WHO_AM_I=%02x flat=gravity (Z inverted mount, no boot sampling)\n",id);
     if(!read_register(bus,0x10,&old_acc,1)||!read_register(bus,0x12,&old_ctrl,1))return;
     configured=1;
     if(!write_register(bus,0x12,(old_ctrl&~2)|0x44)||!write_register(bus,0x10,0x40))goto fail;
@@ -61,22 +62,16 @@ static void sample_thread(void *parameter)
         if(ready&1){
             float ax,ay,az,x,y,norm;
             if(!read_register(bus,0x28,data,6))goto fail;
-            ax=-word(data+2)*0.000061f;ay=word(data)*0.000061f;az=word(data+4)*0.000061f;
+            /* X 轴按屏幕方向取正：真机右倾 x>0；LSM6DS3TR-C 的 X 轴与屏幕相反，
+             * 原先取负会导致左右反。y 轴不变。 */
+            ax=word(data+2)*0.000061f;ay=word(data)*0.000061f;az=word(data+4)*0.000061f;
             norm=sqrtf(ax*ax+ay*ay+az*az);
-            if(norm<0.7f||norm>1.3f){motion.valid=0;publish(&motion);stable=0;rt_thread_mdelay(20);continue;}
-            x=atan2f(ax,az)*57.29578f;y=atan2f(-ay,sqrtf(ax*ax+az*az))*57.29578f;
-            if(!calibrated){
-                if(stable&&fabsf(wrap(x-previous_x))<2&&fabsf(y-previous_y)<2){
-                    zero_x=wrap(zero_x+wrap(x-zero_x)/(stable+1));zero_y+=(y-zero_y)/(stable+1);++stable;
-                }else{stable=1;zero_x=x;zero_y=y;}
-                previous_x=x;previous_y=y;
-                if(stable>=32){calibrated=1;rt_kprintf("[geyi:imu] calibrated zero_x=%d zero_y=%d\n",(int)(zero_x*100),(int)(zero_y*100));}
-            }else{
-                filtered_x+=(wrap(x-zero_x)-filtered_x)*0.3f;
-                filtered_y+=(y-zero_y-filtered_y)*0.3f;
-                motion.x=(int)(filtered_x*100);motion.y=(int)(filtered_y*100);
-                motion.valid=1;motion.stamp=milliseconds();++motion.seq;publish(&motion);
-            }
+            if(norm<0.7f||norm>1.3f){motion.valid=0;publish(&motion);rt_thread_mdelay(20);continue;}
+            x=atan2f(ax,-az)*57.29578f;y=atan2f(-ay,sqrtf(ax*ax+az*az))*57.29578f;
+            filtered_x+=(x-filtered_x)*0.3f;
+            filtered_y+=(y-filtered_y)*0.3f;
+            motion.x=(int)(filtered_x*100);motion.y=(int)(filtered_y*100);
+            motion.valid=1;motion.stamp=milliseconds();++motion.seq;publish(&motion);
             missed=0;
         }else if(++missed>10)goto fail;
         rt_thread_mdelay(20);

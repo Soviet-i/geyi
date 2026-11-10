@@ -38,7 +38,7 @@ if '--check' in sys.argv:
     print('READ-ONLY preflight passed; no serial open, flashing or reboot performed.')
     raise SystemExit(0)
 print('Close other serial monitors. Put the board flat and keep USB connected.')
-print('After calibration: test touch, then tilt UP/RIGHT/DOWN/LEFT and SHORT-tap KEY2.')
+print('After boot: test touch, then tilt UP/RIGHT/DOWN/LEFT and SHORT-tap KEY2.')
 print('KEY1 is power/download: do not use it as a game key. KEY2 confirms or enters/leaves placement.')
 if input('Type FLASH to flash and capture 120 seconds; anything else cancels: ').strip()!='FLASH':raise SystemExit('Cancelled')
 stamp=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime('%Y%m%d_%H%M%S')
@@ -77,7 +77,7 @@ except serial.SerialException as exc:
     print('\nSerial error:',exc,'. Keep the existing logs; do not assume test passed.')
 finally:device.close()
 print('\nEvidence folder:',folder)
-markers=[b'core=PASS',b'input=PASS',b'param=PASS',b'paramui=PASS',b'[geyi:lcd] READY',b'WHO_AM_I=6a',b'[geyi:imu] calibrated']
+markers=[b'core=PASS',b'input=PASS',b'param=PASS',b'paramui=PASS',b'[geyi:lcd] READY',b'WHO_AM_I=6a',b'flat=gravity']
 missing=[]
 for marker in markers:
     found=marker in received
