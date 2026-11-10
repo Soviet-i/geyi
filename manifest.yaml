@@ -182,12 +182,12 @@ physical_verification:
     required_action: "烧录 1,085,716 B 固件，学生进入单机后做四向倾斜、1↔2 边界、KEY2 确认并保持倾斜；agent 串口抓 motion/tilt/key"
     executed_at: "2026-11-09 23:33（sftool 直接烧录 COM7；学生本人操作）"
     evidence_path: "evidence/board/20261109_233306/README.md"
-    agent_conclusion: "PASS（串口）：平放 x≈0；左倾 x<0 dir=LEFT、右倾 x>0 dir=RIGHT、上倾 y<0 dir=UP；向上 2→1→2→1 只发 UPDATE，无 CANCEL；90 秒 91 motion、26 tilt（21 SELECT+5 UPDATE，0 CANCEL）、7 次 KEY2，换回合后仍倾斜自动 SELECT。修正了旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃的问题，以及 Z 轴朝下、X 轴左右反。限制：放兵列与屏幕取消/增减冲突未测（7 次 KEY2 均 now_placing=0）；左右方向需学生目测确认；正确率/延迟未量化。"
+    agent_conclusion: "PASS（串口）：平放 x≈0；左倾 x<0 dir=LEFT、右倾 x>0 dir=RIGHT、上倾 y<0 dir=UP；向上 2→1→2→1 只发 UPDATE，无 CANCEL；90 秒 91 motion、26 tilt（21 SELECT+5 UPDATE，0 CANCEL）、7 次 KEY2，换回合后仍倾斜自动 SELECT。修正了旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃的问题，以及 Z 轴朝下、X 轴左右反。限制：本块板 7 次 KEY2 均 now_placing=0，放兵/屏幕按钮由 COM5 2026-11-10 补测并目测通过；左右方向也由 COM5 目测一致；正确率/延迟未量化。"
   - item: "REQ-305/REQ-309/REQ-311 COM5 倾斜+放兵流程复测（2026-11-10）"
     required_action: "烧录 1,085,716 B 固件，学生进入单机做左右/上下、1↔2 边界，攒 4 金币后 KEY2 进放兵、左右倾斜选列、KEY2 确认"
     executed_at: "2026-11-10 09:14（sftool 直接烧录 COM5；学生本人操作，60 秒串口）"
     evidence_path: "evidence/board/20261110_091421/README.md"
-    agent_conclusion: "PASS（串口）：60 motion、23 tilt（11 SELECT+12 UPDATE，0 CANCEL）、6 次 KEY2；左右符号与 COM7 一致；放兵进入 was_placing=0→now_placing=1 revision=2 turn=0，放兵期间 motion x 在 -2233~+1688 变化，确认 was_placing=1→now_placing=0 revision=3 turn=1（revision+1、换手）。限制：未记录放兵列号，高亮列是否跟手、屏幕取消/加减/确认、左右最终目测仍需学生确认；正确率/延迟未量化。"
+    agent_conclusion: "PASS（串口）：60 motion、23 tilt（11 SELECT+12 UPDATE，0 CANCEL）、6 次 KEY2；左右符号与 COM7 一致；放兵进入 was_placing=0→now_placing=1 revision=2 turn=0，放兵期间 motion x 在 -2233~+1688 变化，确认 was_placing=1→now_placing=0 revision=3 turn=1（revision+1、换手）。学生 2026-11-10 目测通过：高亮列跟手、屏幕取消/加减被忽略、确认只落子一次、左右一致；未记录列号，正确率/延迟未量化。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -330,7 +330,7 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 271 断言、桌面 REQ-319 用例、固件 1,085,716 B + LCPU 6,384 B 编译通过。**2026-11-09 板端 COM7 实测**：旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃、倾斜完全无反应；改为固定平放=重力（Z 轴朝下 x=atan2(ax,-az)）并修正 X 轴左右后，平放 x≈0、四向符号、1↔2 仅 UPDATE（90 秒 21 SELECT+5 UPDATE、0 CANCEL）、7 次 KEY2 换回合后仍倾斜自动重预览均有串口证据（evidence/board/20261109_233306/）。**2026-11-10 COM5 复测**：60 秒 60 motion/23 tilt（11 SELECT+12 UPDATE，0 CANCEL）/6 KEY2；放兵进入/确认流程走通（revision 2→3、turn 0→1），放兵期间 x 在 -2233~+1688 变化；**高亮列/屏幕取消增减/左右最终目测仍未确认**。独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 271 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10/§11 与 docs/06 L-03。"
+  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 271 断言、桌面 REQ-319 用例、固件 1,085,716 B + LCPU 6,384 B 编译通过。**2026-11-09 板端 COM7 实测**：旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃、倾斜完全无反应；改为固定平放=重力（Z 轴朝下 x=atan2(ax,-az)）并修正 X 轴左右后，平放 x≈0、四向符号、1↔2 仅 UPDATE（90 秒 21 SELECT+5 UPDATE、0 CANCEL）、7 次 KEY2 换回合后仍倾斜自动重预览均有串口证据（evidence/board/20261109_233306/）。**2026-11-10 COM5 复测**：60 秒 60 motion/23 tilt（11 SELECT+12 UPDATE，0 CANCEL）/6 KEY2；放兵进入/确认流程走通（revision 2→3、turn 0→1），放兵期间 x 在 -2233~+1688 变化；**高亮列/屏幕取消增减/左右方向学生 2026-11-10 目测通过**。独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 271 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10/§11 与 docs/06 L-03。"
   - "【2026-11-09 当前】REQ-319 倾斜/按钮仲裁：主机 gy_nav 状态机与桌面 LVGL nav_source_tests PASS；真实触摸与板端 IMU 同时操作未验证。倾斜预览中屏幕取消/增减/方向/放兵被忽略、确认可用；按钮预览中倾斜被忽略；回中只取消倾斜预览。"
   - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 281 checks PASS，固件 1,084,932 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
   - "【2026-11-09 当前】首页改为“格弈”并新增 4 页游戏规则（REQ-318/TC-318），对局页移除左上 GEYI、右上按钮与底栏按 R=48 圆角安全区内缩（NFR-UX-06/TC-NF-UX-06）；桌面 LVGL `--test` 与 `gy_ui_corner_clip_count(48)` 在首页/规则 1~4 页/对局页 PASS，证据 evidence/ui/20261109/。固件 1,078,356 B + LCPU 6,384 B 已烧录 COM7/COM8；双板套件新增 rules 段，实际翻 4 页、钳位、corner=0、rbottom<370，完整联机套件 PASS（15:28）。规则页正文已逐字恢复学生原文（含全角标点、10°~60°、KEY2）；KEY1(PA34) 是电源/下载复用键，板端不再读取，KEY2 单键负责确认/进入退出放兵，桌面 KEY2 用例 PASS。**真实圆角屏遮挡、中文标点观感、手指触摸翻页与真实 KEY2 手感仍未目测**，不能写成视觉验收通过。"
@@ -422,8 +422,8 @@ self_review: |
   尝试只把零点设 0 后 x 仍约 ±178°，确认这块板 Z 轴朝下、atan2(ax,az) 平放即 180°；
   改为 x=atan2(ax,-az) 后平放 x≈0、tilt 出现，但学生指出左右反，再把 X 轴取正。
   最终 90 秒日志 91 motion、26 tilt（21 SELECT+5 UPDATE，0 CANCEL）、7 次 KEY2，换回合后
-  仍倾斜自动重预览；证据 evidence/board/20261109_233306/。未测放兵列、倾斜预览时屏幕
-  取消/增减；左右方向需学生目测；正确率/延迟未量化。学生明确要求不要开机采样零点，
+  仍倾斜自动重预览；证据 evidence/board/20261109_233306/。COM5 2026-11-10 补测放兵
+  进入/确认，并由学生目测通过左右/放兵列/屏幕取消增减/确认单次；正确率/延迟未量化。学生明确要求不要开机采样零点，
   本实现按“平放=重力”固定，不再受开机姿态影响。
 
 human_checkpoints:
