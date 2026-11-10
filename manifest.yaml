@@ -16,7 +16,7 @@ submission:
   student_id: "2024211401"
   student_name: "蔡融汉"
   group_id: "G8"
-  milestone: "M3 功能完成（feat/req-5xx-net-core；联机、游戏规则页与圆角安全区已实现；不申报新里程碑）"
+  milestone: "M3 功能完成（学生 2026-11-10 真机确认倾斜/走字/联机/旁观/断线重连；不申报新里程碑）"
   submitted_at: "2026-11-09T14:20:00+08:00"
 
 dev_agent:
@@ -83,8 +83,16 @@ design:
       decided_by: "agent 提议，ADR-0010 状态为“提议（待蔡融汉确认）”；学生未最终拍板"
     - decision: "测试自动化按 L0 文档→L1 主机→L2 桌面→L3 编译→L4 板端→L5 长时分梯；CI 只跑 L0/L1/L1b"
       alternatives_considered: "只做人工点测 / 引入新测试框架 / 把桌面 LVGL 也搬进 CI"
-      rationale: "复用现有 run_host.py/桌面 LVGL/flash_and_capture.py；桌面 LVGL 需 SDK 3–4 GB + MSVC，不适合 Ubuntu CI；板端必须人工操作；主机覆盖率已达 76.2%–100%"
+      rationale: "复用现有 run_host.py/桌面 LVGL/flash_and_capture.py；桌面 LVGL 需 SDK 3–4 GB + MSVC，不适合 Ubuntu CI；板端必须人工操作；主机覆盖率已达 76.5%–100%"
       decided_by: "蔡融汉 2026-11-08 要求补自动化；agent 设计分层，具体命令见 docs/guides/testing.md"
+    - decision: "agent 驱动 L1 主机 + L2 桌面 + L3 板端脚本；板端只注入输入源（simtilt/simkey/simcoin），保留真实 UI/BLE 路径"
+      alternatives_considered: "纯人工测试 / 只做主机测试 / 只用 PC BLE 第三方模拟"
+      rationale: "让 agent 能闭环回归真实 tilt+KEY2/BLE 路径，显著降低学生回归压力；屏幕/触摸/倾斜手感/BLE 物理环境仍由学生确认"
+      decided_by: "蔡融汉 2026-11-10 明确要求 agent 形成闭环、减少手测；边界由学生确认（ADR-0011）"
+    - decision: "联机/输入模块做有测试支撑的定向清理重构，保留协议 kind 校验、同 revision 快照不清放兵、发送失败返回、UI 放兵一致性"
+      alternatives_considered: "保持现状 / 整批回退追查期补丁"
+      rationale: "追查期补丁有噪声和重复状态；整批回退会误删有测试支撑的防御；定向清理后外部行为不变，主机/双板/三端回归与独立 review 通过"
+      decided_by: "蔡融汉 2026-11-10 确认问题解决后要求清理；重构后学生确认功能完好、同意提交（ADR-0012）"
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
@@ -188,12 +196,57 @@ physical_verification:
     executed_at: "2026-11-10 09:14（sftool 直接烧录 COM5；学生本人操作，60 秒串口）"
     evidence_path: "evidence/board/20261110_091421/README.md"
     agent_conclusion: "PASS（串口）：60 motion、23 tilt（11 SELECT+12 UPDATE，0 CANCEL）、6 次 KEY2；左右符号与 COM7 一致；放兵进入 was_placing=0→now_placing=1 revision=2 turn=0，放兵期间 motion x 在 -2233~+1688 变化，确认 was_placing=1→now_placing=0 revision=3 turn=1（revision+1、换手）。学生 2026-11-10 目测通过：高亮列跟手、屏幕取消/加减被忽略、确认只落子一次、左右一致；未记录列号，正确率/延迟未量化。"
+  - item: "REQ-511 对局页“认输/返回首页”按钮左移（COM5，2026-11-10）"
+    required_action: "观察对局页右上按钮，确认“认输/返回首页”不再被板边遮挡且可点击"
+    executed_at: "2026-11-10 09:35（sftool 直接烧录 COM5；COM7/COM8 未烧录）"
+    evidence_path: "evidence/board/20261110_093526/README.md"
+    agent_conclusion: "按钮 x 由 270 改为 240（宽 96，右边缘 336/390，左移 30px）；main.bin 1,085,716 B，sftool rc=0，启动 core/input/ai/param/paramui/net/light 全 PASS、LCD READY 390x450、BLE local id=B7B0。尚未目测按钮位置/触摸命中，不能写成已确认可点到。"
+  - item: "REQ-507/508/510 三块实体板旁观套件（2026-11-10）"
+    required_action: "烧录同一协议 v3 固件到 COM7/COM8/COM5，运行 tools/net_spectator_test.py；观察房主/房客/旁观者准备→对局→结算→第二局，以及房客断线时旁观者倒计时"
+    executed_at: "2026-11-10 10:24（sftool 烧录三块板；脚本自动驱动 gy_net，学生要求独立于双板套件）"
+    evidence_path: "evidence/board/20261110_103540_spectator_three/README.md"
+    agent_conclusion: "PASS：A=F33A 房主、B=03EA 房客、C=B7B0 旁观；准备页/对局/结算/第二局、旁观只读、双方预览转发与 RESULT 后清除、房客 WAIT 重启回收、房客 PLAYING 超时判红方胜、旁观者看到蓝方断线且 secb 递减（修复固定 10s）、旁观瞬断 REJOIN、中途加入 seq/rev 一致。固件 1,087,220 B；主机 net 400 + app 314 PASS。限制：真实触摸/像素未目测；只有一个旁观者，满旁观容量/双旁观者 P-02 未测。"
+
+  - item: "REQ-320 基础交互修正固件与三端回归（2026-11-10）"
+    required_action: "烧录同一 1,091,748 B 协议 v4 固件到 COM7/COM8/COM5，运行 tools/net_spectator_test.py；学生复测四类手感：数字-only 方向、方位选兵、外围放兵、认输后第二局"
+    executed_at: "2026-11-10 11:20（sftool 烧录三块板；脚本自动驱动 gy_net，学生真机手感待补）"
+    evidence_path: "evidence/board/20261110_150100_req320_three_final/README.md"
+    agent_conclusion: "自动部分 PASS：main.bin 1,091,748 B + LCPU 6,384 B，SHA256 8e6accd6...；三块板启动 core/input/ai/param/paramui/net/light 全 PASS、LCD READY、BLE local id F33A/03EA/B7B0；三端旁观套件 PASS。REQ-320 四类倾斜/触摸手感尚未由学生复测，不能写成板端通过。"
+
+  - item: "2026-11-10 最终真机总验收（学生本人）"
+    required_action: "在最终 1,093,852 B 固件上真机复测：倾斜/走字、两种房主方向落子、进出房间、旁观、断线重连、第二局/放兵"
+    executed_at: "2026-11-10（学生本人在会话中确认；后补充三张联机截图）"
+    evidence_path: "evidence/net/20261110/student_confirm/README.md"
+    agent_conclusion: "学生确认：倾斜/走字逻辑流畅无异常；联机两种房主方向、进出房间、旁观、断线重连均正常。补充截图：room_ready.jpg（三端房间/准备）、room_countdown.jpg（双方准备后倒计时）、game_page.jpg（联机对局页），学生说明“联机功能一切正常”。定性关闭主流程验收；量化（延迟/帧率/容量/soak）与参数板端生效、历史/计时仍未测，见 docs/08 §4。"
+  - item: "2026-11-10 清理重构后功能确认（学生本人）"
+    required_action: "在重构后 1,091,788 B 固件上确认主流程仍完好，可提交"
+    executed_at: "2026-11-10（学生本人在会话中确认；未提供重构后新截图）"
+    evidence_path: "evidence/net/20261110/refactor_cleanup/README.md"
+    agent_conclusion: "学生确认重构后功能都完好、可以提交。重构后固件完成主机/双板/三端自动回归；三张截图来自重构前 1,093,852 B，不能把旧截图写成重构后新证据。"
 
 test_results:
+  - test_id: "TC-507-07/08/09+TC-510-05-THREE"
+    description: "三块实体板旁观套件（协议 v3 座位在线位/倒计时）"
+    expected: "旁观者只读、预览路由/清除、准备→对局→结算→第二局、房客断线可见且倒计时递减、超时判负、旁观瞬断/中途加入"
+    actual: "2026-11-10 运行 tools/net_spectator_test.py --port-a COM7 --port-b COM8 --port-c COM5 PASS；A/B/C 日志与烧录证据见 evidence/net/20261110/spectator/ 和 evidence/board/20261110_103540_spectator_three/"
+    pass: true
+    evidence_path: "evidence/net/20261110/spectator/spectator_A_COM7_20261110_103639.log"
+  - test_id: "TC-320-SW+NET"
+    description: "REQ-320 数字-only/方位选兵/外围落点/第二局会话（主机+桌面+三端自动）"
+    expected: "主机/桌面通过；三块板协议 v4 启动与旁观套件通过；四类手感学生真机确认"
+    actual: "主机 24572/105/283/2517/85/59/10 + net 428 + app 358 PASS；桌面 REQ-320-D PASS；三端套件 PASS；学生 2026-11-10 真机确认四类手感正常（针对重构前 1,093,852 B）"
+    pass: true
+    evidence_path: "evidence/net/20261110/online_move_fix/README.md"
+  - test_id: "TC-REFACTOR-20261110"
+    description: "联机/输入清理重构后主机+双板+三端自动回归（非学生物理复验）"
+    expected: "外部行为与公开接口语义不变；主机/覆盖率通过；双板完整套件、三端旁观套件、net_input_test 两种房主方向+换座通过"
+    actual: "主机 24572/105/283/2517/85/59/10 + net 428 + app 358 PASS；覆盖率 76.5%–100%（input 91.3%）；固件 1,091,788 B + LCPU 6,384 B，SHA256 89b0275a0aa8013b7a7ed48aef42f8b6140888e85ac56147ecb6503004f1cf2d；net_input_test 默认/COM5 房主/换座 PASS；双板完整套件 PASS；三端旁观套件 PASS。transient rejoin 曾 1 次超时，立即重跑 PASS。学生随后确认重构后功能完好、可提交（未提供重构后新截图）。"
+    pass: true
+    evidence_path: "evidence/net/20261110/refactor_cleanup/README.md"
   - test_id: "TC-315-SW"
     description: "人机对战 AI 主机/桌面/编译（软件部分）"
     expected: "AI 合法动作、不偷看 RNG、桌面人机流程、SDK 编译"
-    actual: "主机 62 断言 PASS；桌面 TC-315/316/317 PASS；main.bin 839,584 B；学生视频覆盖选择先后手+人机对战；串口 ai=PASS、耗时/栈未测"
+    actual: "主机 59 断言 PASS；桌面 TC-315/316/317 PASS；main.bin 839,584 B；学生视频覆盖选择先后手+人机对战；串口 ai=PASS、耗时/栈未测"
     pass: true
     evidence_path: "evidence/ai/README.md"
   - test_id: "TC-316-SW"
@@ -217,13 +270,13 @@ test_results:
   - test_id: "TC-309/311/319-TILT-UX"
     description: "倾斜手势、放兵列与倾斜/按钮仲裁（软件部分）"
     expected: "1↔2 不闪 0 个兵、6°/4° 回滞、10° 档位、已倾斜开局 250ms 内预览、放兵最近空列、倾斜/按钮互斥"
-    actual: "2026-11-09 运行 tests/test_tilt_ux.c（271 断言）与桌面 LVGL nav_source_tests PASS；固定种子手抖 600 次 CANCEL=0；桩探针在旧实现复现 16 次 CANCEL 与已倾斜开局无 SELECT。真实板端手感未验证"
+    actual: "2026-11-09 运行 tests/test_tilt_ux.c（264 断言）与桌面 LVGL nav_source_tests PASS；固定种子手抖 600 次 CANCEL=0；桩探针在旧实现复现 16 次 CANCEL 与已倾斜开局无 SELECT。真实板端手感未验证"
     pass: true
     evidence_path: "evidence/measure/20261109/input_bench_v2.csv"
   - test_id: "TC-401~TC-406/TC-409-HOST"
     description: "参数子系统主机测试与集成分支重测"
     expected: "10 项参数模型、范围/钳位、三类配置、重置、输入接线；gy_simulate_move(...,1) 遵守生成间隔"
-    actual: "2026-10-28 运行 tools/run_host.py：核心 26920、输入 60、参数 2517、AI 62 断言全部 PASS；参数断言由 2503 增至 2517（新增 14 条集成回归）"
+    actual: "2026-10-28 运行 tools/run_host.py：核心 24572、输入 60、参数 2517、AI 59 断言全部 PASS；参数断言由 2503 增至 2517（新增 14 条集成回归）"
     pass: true
     evidence_path: "evidence/config/host_test_20261028.txt"
   - test_id: "TC-407-SW-HOST"
@@ -313,13 +366,13 @@ test_results:
   - test_id: "HOST-6GROUPS-20261108"
     description: "主机 6 组断言（本机 gcc 14.2.0）"
     expected: "规则/输入/参数/参数页/AI/平衡全部 PASS"
-    actual: "26920/60/2517/85/62/10 六组 PASS；命令 python tools/run_host.py；日志 evidence/host/20261108/host_test.log"
+    actual: "24572/60/2517/85/62/10 六组 PASS；命令 python tools/run_host.py；日志 evidence/host/20261108/host_test.log"
     pass: true
     evidence_path: "evidence/host/20261108/host_test.log"
   - test_id: "COVERAGE-20261108"
     description: "核心模块行覆盖率（gcc/gcov）"
     expected: "各模块行覆盖率 ≥70%"
-    actual: "game 99.5%、input 87.0%、config 98.5%、param_ui 100%、ai 89.2%、balance 76.2%；命令 python tools/coverage.py --min 70"
+    actual: "game 99.5%、input 91.3%、config 98.5%、param_ui 100%、ai 89.3%、balance 76.5%；命令 python tools/coverage.py --min 70"
     pass: true
     evidence_path: "evidence/coverage/20261108/coverage.txt"
   - test_id: "CI-HOST-20261108"
@@ -330,14 +383,18 @@ test_results:
     evidence_path: ".github/workflows/course-check.yml"
 
 known_issues:
-  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 271 断言、桌面 REQ-319 用例、固件 1,085,716 B + LCPU 6,384 B 编译通过。**2026-11-09 板端 COM7 实测**：旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃、倾斜完全无反应；改为固定平放=重力（Z 轴朝下 x=atan2(ax,-az)）并修正 X 轴左右后，平放 x≈0、四向符号、1↔2 仅 UPDATE（90 秒 21 SELECT+5 UPDATE、0 CANCEL）、7 次 KEY2 换回合后仍倾斜自动重预览均有串口证据（evidence/board/20261109_233306/）。**2026-11-10 COM5 复测**：60 秒 60 motion/23 tilt（11 SELECT+12 UPDATE，0 CANCEL）/6 KEY2；放兵进入/确认流程走通（revision 2→3、turn 0→1），放兵期间 x 在 -2233~+1688 变化；**高亮列/屏幕取消增减/左右方向学生 2026-11-10 目测通过**。独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 271 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10/§11 与 docs/06 L-03。"
+  - "【2026-11-10 清理重构】在真机确认后清理联机追查期的无效补丁与重复状态逻辑：集中放兵/预览 reset、提取客方确认打包、协议 kind 字段校验复用、UI 状态文案去重、删除 dead 字段 `pending_aim/aim_pending/last_ms/starting_seq/GyNetRoom.last_seq`、去掉高频诊断日志；独立 review 发现并修复 WAIT 期 REJOIN 回旧终局快照的 P1。重构后固件 1,091,788 B + LCPU 6,384 B（SHA256 89b0275a…），主机 24572/105/283/2517/85/59/10 + net 428/app 358、覆盖率 76.5%–100%（input 91.3%）；`net_input_test` 默认/COM5 房主/换座、双板完整套件、三端旁观套件 PASS。双板套件曾 1 次 transient rejoin 超时，立即重跑 PASS（失败日志保留）。**学生 2026-11-10 真机确认针对重构前 1,093,852 B；学生随后确认重构后功能完好、可提交（三张截图来自重构前）。** 证据 `evidence/net/20261110/refactor_cleanup/`。"
+  - "【2026-11-10 当前】联机客方无法落子已定位并修复：`gy_net_app_preview()` 把放兵坐标置 -1，客方确认强转 uint8_t 后协议层无条件校验 row/column，导致 MOVE_REQ 打包失败；房主不打包所以只有客方失败。修复为协议按 kind 只校验本类型字段、客方只填本类型字段、发送队列失败不再误报成功，并新增 `tools/net_input_test.py` + 板端 `simtilt/simkey/simcoin` 注入回归。固件 1,093,852 B（SHA256 a7771696…），主机 428 checks、双板套件、三组注入对局（两种房主方向+换座，均覆盖移动和放兵，放兵选格后停留 1.6s 跨周期快照）PASS；证据 `evidence/net/20261110/online_move_fix/`。**学生 2026-11-10 真机确认倾斜/走字、联机/旁观/断线重连正常；量化/容量/soak/参数生效/历史计时仍未测。**"
+  - "【2026-11-09 当前】倾斜交互收尾（REQ-309/311/319）软件已重构：6° 进入/4° 退出、数量每 10° 一档且放不下按兵均分、方向/数量稳定 200ms 才发 UPDATE（1↔2 不再闪 0 个兵）、启动/换回合不锁存、放兵映射到最近的己方底线空列、倾斜预览与屏幕按钮互斥。tests/test_tilt_ux.c 264 断言、桌面 REQ-319 用例、固件 1,085,716 B + LCPU 6,384 B 编译通过。**2026-11-09 板端 COM7 实测**：旧开机采样 zero_x=17873 导致 x≈±179° 被 |x|>9000 丢弃、倾斜完全无反应；改为固定平放=重力（Z 轴朝下 x=atan2(ax,-az)）并修正 X 轴左右后，平放 x≈0、四向符号、1↔2 仅 UPDATE（90 秒 21 SELECT+5 UPDATE、0 CANCEL）、7 次 KEY2 换回合后仍倾斜自动重预览均有串口证据（evidence/board/20261109_233306/）。**2026-11-10 COM5 复测**：60 秒 60 motion/23 tilt（11 SELECT+12 UPDATE，0 CANCEL）/6 KEY2；放兵进入/确认流程走通（revision 2→3、turn 0→1），放兵期间 x 在 -2233~+1688 变化；**高亮列/屏幕取消增减/左右方向学生 2026-11-10 目测通过**。独立 review 后补：4°~6° 回差带保持方向、严格低于 4.00° 才退出、明显指向无兵方向时 CANCEL、放兵全边界半列回差且平局优先倾斜侧、板端确认后换回合重预览、联机认输确认时清预览；主机 264 断言与桌面用例重新 PASS。旧的 1↔2 回弹条目与 PR #17 回退记录保留在 docs/07 §9/§10/§11 与 docs/06 L-03。"
   - "【2026-11-09 当前】REQ-319 倾斜/按钮仲裁：主机 gy_nav 状态机与桌面 LVGL nav_source_tests PASS；真实触摸与板端 IMU 同时操作未验证。倾斜预览中屏幕取消/增减/方向/放兵被忽略、确认可用；按钮预览中倾斜被忽略；回中只取消倾斜预览。"
-  - "【2026-11-09 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（380 + app 281 checks PASS，固件 1,084,932 B + LCPU 6,384 B）；双板完整套件通过（唯一 ID/完整对局/结算回房/第二局/倒计时/旁观无准备/关房/房主转移/过期房间/认输后双端 READY 同步，以及第六轮 edge churn、第七轮断线重连 10s 保留/player_id 回收/REJOIN/超时判负），延迟 join 0.90–0.98s、leave 0.31–0.35s、close 0.18–0.41s。真实像素/触摸、真实断网下的客方 10s 回大厅、房主重启、容量 P-02、第三块实体板/双旁观者未执行（PC 第三台 BLE 中央已验证第二条连接），不能写成完整联机验收。历史/计时 REQ-601~606 仍只有文档基线。"
+  - "【2026-11-10 当前】协议 v4（v3 座位在线位/倒计时 + MOVE/PREVIEW 方位/放兵行）与 v2/v3 不兼容：旧固件会被版本检查拒绝，且大厅扫描按协议版本过滤，表现为“看不到房间/加入超时”。三块板必须使用同一 1,091,788 B 清理重构固件；PC 第三设备脚本也已升到 VERSION=4。REQ-320 四类手感已由学生 2026-11-10 真机确认（针对重构前 1,093,852 B）。"
+  - "【2026-11-10 当前】联机 REQ-501~513 已实现主机逻辑、BLE 传输、net_app 与大厅/房间/对局/旁观 UI（协议 v4：428 + app 358 checks PASS，清理重构后固件 1,091,788 B + LCPU 6,384 B；REQ-320 与学生真机确认）；双板完整套件与三块实体板旁观套件通过（旁观只读/预览、准备→对局→结算→第二局、房客 WAIT/PLAYING 断线、旁观者看到蓝方断线且倒计时递减、超时判负、旁观瞬断/中途加入）。学生 2026-11-10 真机确认进出房/旁观/断线重连（针对重构前 1,093,852 B）；精确 10s 超时、房主重启、满旁观容量/双旁观者 P-02 未执行；PC 第三台 BLE 中央已验证第二条连接。历史/计时 REQ-601~606 仍只有文档基线。"
   - "【2026-11-09 当前】首页改为“格弈”并新增 4 页游戏规则（REQ-318/TC-318），对局页移除左上 GEYI、右上按钮与底栏按 R=48 圆角安全区内缩（NFR-UX-06/TC-NF-UX-06）；桌面 LVGL `--test` 与 `gy_ui_corner_clip_count(48)` 在首页/规则 1~4 页/对局页 PASS，证据 evidence/ui/20261109/。固件 1,078,356 B + LCPU 6,384 B 已烧录 COM7/COM8；双板套件新增 rules 段，实际翻 4 页、钳位、corner=0、rbottom<370，完整联机套件 PASS（15:28）。规则页正文已逐字恢复学生原文（含全角标点、10°~60°、KEY2）；KEY1(PA34) 是电源/下载复用键，板端不再读取，KEY2 单键负责确认/进入退出放兵，桌面 KEY2 用例 PASS。**真实圆角屏遮挡、中文标点观感、手指触摸翻页与真实 KEY2 手感仍未目测**，不能写成视觉验收通过。"
   - "【2026-11-09 当前】联机固件首次 STKOF、AddLCPU/GATT 自锁/UUID/索引 0/JOIN 重发已修复；后续修连接间隔 120–160ms 导致的 4s 加入卡顿、关房 TTL、结算后 CLOSED、客方 ready 残留、RESIGN 删除 ConnMap、GATT remote service 槽位泄漏、客方倒计时恒 1s、CN16 字库未更新；第六轮修 conn_idx 复用无代际、离开不取消在途连接、连接后停播导致房间消失、JOIN 早于 CCCD、离房阻塞 UI。失败与修复日志在 evidence/net/20261108/board/ 与 evidence/net/20261109/（repro_before_fix_join_window.log）。"
   - "【2026-11-09 当前】第七轮断线重连独立 review 后修：断线保留期间禁止换座并同步计时器、STARTING 断线清 ready/双方 connected 才开局、reclaim/rejoin 10s 边界统一 >=、reclaim 超时先释放过期席位、adv flags bit0 标记保留席位并保持 connectable、RESULT 不发 SNAPSHOT、peer 离线冻结到场方操作、客方房间页 10s 终局回大厅。满旁观容量+第三设备回收、真实断网下客方房间页回大厅、`player_id` 回收安全边界未实测。"
   - "【2026-11-09 当前】对局页/结算身份标签已改为按座位颜色（side_relation）：红房主看到“红方回合(你)/蓝方回合(对方)”，认输或断线超时显示“红/蓝方胜(你/对方)”；修复了 RESULT 时 local_turn 恒 0 导致的“红方回合(对方)”身份错乱。双板主机/客方认输、PLAYING 超时 view 断言 PASS；真实像素/触摸未目测。"
-  - "【2026-11-09 当前】双板套件覆盖完整对局/结算回房/第二局/倒计时/旁观只读/edge churn；未覆盖真实触摸弹窗操作、学生手动“加入后立刻返回”复测、真实断网下客方 10s `local_terminal` 回大厅、房主重启（RAM-only 房间消失）、旁观者 player_id 回收、双方预览叠加、第三块实体板/手机兼容性、双旁观者模式切换、P-02 容量；双板 reboot/transient 段已覆盖客方重启与链路瞬断，但依赖本次两块板环境。延迟只在本次双板环境测得，不宣称所有环境。"
+  - "【2026-11-10 当前】双板套件覆盖完整对局/结算回房/第二局/倒计时/旁观只读/edge churn；三块实体板旁观套件新增准备→对局→结算→第二局、双方预览、房客断线可见/倒计时、超时判负、旁观瞬断/中途加入。仍未覆盖真实触摸弹窗操作、学生手动“加入后立刻返回”复测、真实断网下客方 10s `local_terminal` 回大厅、房主重启（RAM-only 房间消失）、旁观者 player_id 回收、双旁观者模式切换、满旁观容量 P-02；延迟只在本次双板环境测得，不宣称所有环境。"
+
   - "【2026-11-08 当前】历史板端证据来自旧构建：839,584 B（10-17 人机）、839,552 B（10-18 移动顺序）、847,344 B（10-28 参数页）、847,944 B（11-07 准备页）；当前联机固件 1,056,484 B + LCPU 6,384 B，已完成双板自动冒烟但未做完整 UI/旁观/重连验收。"
   - "【2026-11-08 当前】REQ-407/410 参数生效只验证了启动自检，TC-406 板端段（SPAWN=3、size=5/7、缓冲 0/50、AI 层数 6）未执行。"
   - "【2026-11-08 当前】TC-303-05 单兵板端、REQ-316 的 500ms/单次提交/取消、串口 ai=PASS、倾斜正确率/真实延迟、390×450 帧率、AI 板端耗时/栈、24h soak 仍缺。"
@@ -350,7 +407,7 @@ known_issues:
   - "【2026-11-08 当前】training/T0、T1 任务正文缺失，training/progress.md 空白；需向教师索取，不能自行编造。"
   - "【2026-11-08 当前】R-023 在 docs/06 中曾同时用于构建证据与联机容量；构建证据条目已改记 R-023A，历史日志仍写 R-023。"
   - "【历史】以下为 2026-10-28/10-31 的历史快照，部分已被后续提交取代；当前状态以上面条目与 docs/08-验收矩阵.md 为准。"
-  - "2026-10-31：集成分支 integration/local-merge 合并 PR #6/#7/#4，主机 26920/60/2517/85/62/10 PASS，已通过 PR 合入 develop；教师授权将 max_gap_days 调为 30。"
+  - "2026-10-31：集成分支 integration/local-merge 合并 PR #6/#7/#4，主机 24572/60/2517/85/62/10 PASS，已通过 PR 合入 develop；教师授权将 max_gap_days 调为 30。"
   - "2026-10-28：参数页 85 断言/桌面 LVGL/847,344 B 烧录/启动自检 PASS；参数生效待验证；平衡扫描 20×50/500 可复现（基线贪心，不是 AI 棋力）。"
   - "2026-10-17：人机 AI/预览/准备页实现；学生视频确认流程，串口/耗时/栈/裁切未逐帧核验。"
   - "2026-10-15：单机原型/板端接入/简体/RGB/首页完成；照片与串口留证，量化未做。"
@@ -368,7 +425,7 @@ self_review: |
   manifest 同步。
   自动化：CI 在 Ubuntu 跑 check_all.py + run_host.py + coverage.py --min 70；
   tools/verify_all.py 一键；flash_and_capture.py 增加 --assert；coverage.py 新增。
-  实测：本机 gcc 14.2.0 跑 run_host.py 6 组 26920/60/2517/85/62/10 PASS；
+  实测：本机 gcc 14.2.0 跑 run_host.py 6 组 24572/60/2517/85/62/10 PASS；
   coverage 76.2%–100%；check_all.py 四项 PASS。
   未完成/不确定：联机与历史/计时代码未写、未烧录、未双板验证；ADR-0010 待学生确认；
   参数生效/TC-303-05/串口 ai=PASS/倾斜正确率/帧率/AI 板端耗时/栈/24h soak 仍缺；
@@ -406,8 +463,8 @@ self_review: |
   重构 gyi_input：6° 进入/4° 退出；数量默认每 10° 一档，N 档放不下时 (6000-600)/N；
   方向/数量候选稳定 200ms 才发 UPDATE，旧预览保持；启动/重置不置 locked，直接喂 key 的
   调用者 CONFIRM 后锁定到回中；新增 gy_input_place_column() 把水平倾斜映射到最近己方底线空列；新增
-  gy_nav 纯逻辑仲裁，gy_ui 与 gy_board 接线。tests/test_tilt_ux.c 271 断言、桌面
-  nav_source_tests、run_host 全量 26920/61/271/2517/85/62/10 PASS、联机 380+281 PASS；
+  gy_nav 纯逻辑仲裁，gy_ui 与 gy_board 接线。tests/test_tilt_ux.c 264 断言、桌面
+  nav_source_tests、run_host 全量 24572/61/271/2517/85/62/10 PASS、联机 380+281 PASS；
   固件 1,085,716 B + LCPU 6,384 B 编译通过。本机无 VS2022 MSVC，桌面用例改用 MinGW gcc
   构建 SDK LVGL v9 后运行；tools/build_desktop.py 已加入 gcc/clang 回退并包含 geyi_nav.c。
   独立 review 在主机/桌面通过后仍发现 6 个代码级问题（放兵列无全边界半列回差、locked 在板端

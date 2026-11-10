@@ -69,16 +69,16 @@ python tools/verify_all.py --board         # + L4（需板，人工输入 FLASH�
 ## 5. 覆盖率
 
 `tools/coverage.py` 为每个测试二进制单独编译、运行、gcov，按模块报告行覆盖率。
-当前基线（2026-11-08，MinGW gcc 14.2.0）：
+当前基线（2026-11-10，MinGW gcc 14.2.0；清理重构后）：
 
 | 模块 | 行覆盖率 |
 |---|---:|
 | `src/geyi_game.c` | 99.5% |
-| `src/geyi_input.c` | 87.0% |
+| `src/geyi_input.c` | 91.3% |
 | `src/geyi_config.c` | 98.5% |
 | `src/geyi_param_ui.c` | 100.0% |
-| `src/geyi_ai.c` | 89.2% |
-| `tools/geyi_balance.c` | 76.2% |
+| `src/geyi_ai.c` | 89.3% |
+| `tools/geyi_balance.c` | 76.5% |
 
 CI 使用 `--min 70`；低于阈值会让 CI 失败。覆盖率不是目的：未覆盖的分支要能解释
 （例如硬件错误路径、未实现的联机/历史分支）。

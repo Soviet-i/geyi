@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-10",
+  "purpose": "cleanup/refactor regression after student hardware confirmation",
+  "board": "sf32lb52-lchspi-ulp",
+  "sdk": "SiFli SDK v2.5.1",
+  "main_bin_bytes": 1091788,
+  "lcpu_bin_bytes": 6384,
+  "sha256": "89b0275a0aa8013b7a7ed48aef42f8b6140888e85ac56147ecb6503004f1cf2d",
+  "flashed_ports": ["COM7", "COM5", "COM8"],
+  "student_confirmation_applies_to": {
+    "main_bin_bytes": 1093852,
+    "sha256": "a77716961d41e24434b07963302017e6115ff8de645fec32ebfa26824145cfc1",
+    "note": "student confirmed real hardware before this cleanup; refactor binary was not re-confirmed visually"
+  }
+}

@@ -1,0 +1,4 @@
+start turn 0 local 0 1 coins 4 4
+host role place OK, rev 2
+guest role place OK, rev 3
+PASS gy_net place command both roles
