@@ -56,8 +56,15 @@ int gy_net_app_connected(void);
 int gy_net_app_peer_online(void);
 /* 断线重连剩余秒数 10..1；无重连窗口返回 0。 */
 int gy_net_app_reconnect_seconds(void);
-/* 座位是否在线；房主用本地 seat.connected，客方用本机链路状态。 */
+/* 座位是否在线；房主用本地 seat.connected，客方/旁观者用 ROOM_STATE
+ * 下发的权威座位在线位。 */
 int gy_net_app_seat_online(int color);
+/* 某个座位的重连剩余秒数；客方/旁观者使用房主下发的值。 */
+int gy_net_app_seat_reconnect_seconds(int color);
+/* 任一远端座位/本机链路的重连剩余秒数，UI 横幅用。 */
+int gy_net_app_remote_reconnect_seconds(void);
+/* 首个离线座位颜色，-1=无。 */
+int gy_net_app_offline_seat(void);
 /* 颜色与“本机”的关系：1=本机座位，0=对方，-1=旁观/无本地座位。
  * 只描述身份，不随 phase/回合/断线变化；不要拿 local_turn() 当身份用。 */
 int gy_net_app_side_relation(int color);
@@ -86,10 +93,10 @@ int gy_net_app_join_index_role(int index, int role);
 void gy_net_app_leave(void);
 int gy_net_app_set_ready(int ready);
 int gy_net_app_swap(void);
-int gy_net_app_preview(int direction, int count);
+int gy_net_app_preview(int direction, int count, int aim);
 int gy_net_app_confirm(void);
 int gy_net_app_cancel(void);
-int gy_net_app_place(int column);
+int gy_net_app_place(int row, int column);
 int gy_net_app_resign(void);
 
 /* 预览可见性：UI 用 side=红/蓝 取预览；对手端由 visible 返回 0。 */
@@ -100,5 +107,8 @@ int gy_net_app_selftest(void);
 
 /* 测试专用：只断开当前 BLE 链路，不结束应用会话；用于验证自动重连/REJOIN。 */
 void gy_net_app_test_drop(void);
+/* 板端自动化夹具：只由房主把双方金币设为固定值并广播快照，
+ * 用于在真实放置输入路径上复现/回归放兵请求。 */
+int gy_net_app_test_set_coins(int coins);
 
 #endif /* GEYI_NET_APP_H */

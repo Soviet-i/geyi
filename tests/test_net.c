@@ -72,12 +72,19 @@ static int test_proto_typed(void)
     }
     {
         GyNetRoomState v = {GY_NET_PHASE_STARTING, GY_NET_COLOR_RED, GY_NET_COLOR_BLUE,
-                            1, 0, 2, 1, 0x1111, 0x2222, 5, 12}, o;
+                            1, 0, 2, 1, 0x1111, 0x2222, 5, 12, 0x03, {10, 0}}, o;
         CHECK(gy_net_pack_room_state(&m, &v) == GY_NET_OK);
         CHECK(gy_net_unpack_room_state(&m, &o) == GY_NET_OK);
         CHECK(o.phase == v.phase && o.host_ready == 1 && o.spectator_count == 1 &&
               o.host_id == 0x1111 && o.guest_id == 0x2222 &&
-              o.room_id == 5 && o.seq == 12);
+              o.room_id == 5 && o.seq == 12 &&
+              o.seat_online == 0x03 && o.seat_reconnect_s[0] == 10 &&
+              o.seat_reconnect_s[1] == 0);
+        v.seat_online = 0x04;
+        CHECK(gy_net_pack_room_state(&m, &v) == GY_NET_ERR_RANGE);
+        v.seat_online = 0x03;
+        v.seat_reconnect_s[1] = 11;
+        CHECK(gy_net_pack_room_state(&m, &v) == GY_NET_ERR_RANGE);
     }
     {
         GyNetReady v = {1}, o;
@@ -92,22 +99,43 @@ static int test_proto_typed(void)
     }
     {
         GyNetStart v = {GY_NET_COLOR_RED, GY_NET_COLOR_BLUE, 1234, 9}, o;
-        GyNetMoveReq mv = {GY_NET_COLOR_RED, 0, GY_UP, 1, 0, 10}, mo;
+        GyNetMoveReq mv = {GY_NET_COLOR_RED, 0, GY_UP, 1, 2, 3, -50, 10}, mo;
         GyNetResult r = {GY_RED_WIN, GY_NET_REASON_NORMAL, 11}, ro;
         CHECK(gy_net_pack_start(&m, &v) == GY_NET_OK);
         CHECK(gy_net_unpack_start(&m, &o) == GY_NET_OK && o.seed == 1234 && o.seq == 9);
         CHECK(gy_net_pack_move_req(&m, &mv) == GY_NET_OK);
-        CHECK(gy_net_unpack_move_req(&m, &mo) == GY_NET_OK && mo.direction == GY_UP && mo.seq == 10);
+        CHECK(gy_net_unpack_move_req(&m, &mo) == GY_NET_OK && mo.direction == GY_UP &&
+              mo.row == 3 && mo.aim == -50 && mo.seq == 10);
+        /* 普通移动不携带放置坐标：0xFF 哨兵不能被协议层当成越界拒绝，
+         * 否则客方每一条移动都在本地打包失败。 */
+        {
+            GyNetMoveReq plain = {GY_NET_COLOR_BLUE, 0, GY_UP, 0, 0xff, 0xff, 0, 11}, po;
+            CHECK(gy_net_pack_move_req(&m, &plain) == GY_NET_OK);
+            CHECK(gy_net_unpack_move_req(&m, &po) == GY_NET_OK && po.kind == 0 &&
+                  po.count == 0 && po.column == 0xff && po.row == 0xff);
+            /* 放兵请求同样只校验 row/column；direction=-1 的哨兵不能挡路。 */
+            plain.kind = 1;
+            plain.direction = 0xff;
+            plain.count = 0xff;
+            plain.row = 2;
+            plain.column = 3;
+            CHECK(gy_net_pack_move_req(&m, &plain) == GY_NET_OK);
+            CHECK(gy_net_unpack_move_req(&m, &po) == GY_NET_OK && po.kind == 1 &&
+                  po.row == 2 && po.column == 3);
+            plain.row = GY_MAX;
+            CHECK(gy_net_pack_move_req(&m, &plain) == GY_NET_ERR_RANGE);
+        }
         CHECK(gy_net_pack_result(&m, &r) == GY_NET_OK);
         CHECK(gy_net_unpack_result(&m, &ro) == GY_NET_OK && ro.outcome == GY_RED_WIN);
     }
     {
-        GyNetPreview v = {GY_NET_COLOR_RED, GY_UP, 2, 0, 0x1234, 13}, o;
+        GyNetPreview v = {GY_NET_COLOR_RED, GY_UP, 2, 2, 1, 25, 0x1234, 13}, o;
         GyNetPreviewClear c = {GY_NET_COLOR_RED}, co;
         GyNetRejoin r = {77, 14}, ro;
         GyNetReject j = {GY_NET_ERR_TURN, 15}, jo;
         CHECK(gy_net_pack_preview(&m, &v) == GY_NET_OK);
-        CHECK(gy_net_unpack_preview(&m, &o) == GY_NET_OK && o.indicator == 0x1234 && o.seq == 13);
+        CHECK(gy_net_unpack_preview(&m, &o) == GY_NET_OK && o.column == 2 && o.row == 1 &&
+              o.aim == 25 && o.indicator == 0x1234 && o.seq == 13);
         CHECK(gy_net_pack_preview_clear(&m, &c) == GY_NET_OK);
         CHECK(gy_net_unpack_preview_clear(&m, &co) == GY_NET_OK && co.side == GY_NET_COLOR_RED);
         CHECK(gy_net_pack_rejoin(&m, &r) == GY_NET_OK);
@@ -315,13 +343,13 @@ static int test_room_move_and_reject(void)
 
     gy_net_room_init_host(&host, 1005, 0, 2);
     CHECK(start_game(&host, &token) == 0);
-    CHECK(gy_net_room_move(&host, GY_NET_COLOR_BLUE, GY_UP, 1, 4000) == GY_NET_ERR_TURN);
+    CHECK(gy_net_room_move(&host, GY_NET_COLOR_BLUE, GY_UP, 1, 0, 4000) == GY_NET_ERR_TURN);
     d = first_valid_direction(&host.view.game);
     CHECK(d >= 0);
-    CHECK(gy_net_room_move(&host, GY_NET_COLOR_RED, d, 1, 4100) == GY_NET_OK);
+    CHECK(gy_net_room_move(&host, GY_NET_COLOR_RED, d, 1, 0, 4100) == GY_NET_OK);
     CHECK(host.view.seq > 0);
     CHECK(host.view.game.turn == GY_NET_COLOR_BLUE);
-    CHECK(gy_net_room_move(&host, GY_NET_COLOR_RED, d, 99, 4200) == GY_NET_ERR_TURN);
+    CHECK(gy_net_room_move(&host, GY_NET_COLOR_RED, d, 99, 0, 4200) == GY_NET_ERR_TURN);
 
     gy_net_room_snapshot(&host, &snap);
     gy_net_room_init_client(&client, 1005, 0);
@@ -349,10 +377,30 @@ static int test_room_place(void)
     gy_net_room_init_host(&host, 1005, 0, 2);
     CHECK(start_game(&host, &token) == 0);
     host.view.game.coins[GY_NET_COLOR_RED] = 10;
-    CHECK(gy_net_room_place(&host, GY_NET_COLOR_BLUE, 0, 4000) == GY_NET_ERR_TURN);
-    CHECK(gy_net_room_place(&host, GY_NET_COLOR_RED, -1, 4100) == GY_NET_ERR_ACTION);
-    CHECK(gy_net_room_place(&host, GY_NET_COLOR_RED, 0, 4200) == GY_NET_OK);
+    CHECK(gy_net_room_place(&host, GY_NET_COLOR_BLUE, 0, 0, 4000) == GY_NET_ERR_TURN);
+    CHECK(gy_net_room_place(&host, GY_NET_COLOR_RED, -1, -1, 4100) == GY_NET_ERR_ACTION);
+    CHECK(gy_net_room_place(&host, GY_NET_COLOR_RED, host.view.game.config.size-1, 0, 4200) == GY_NET_OK);
     CHECK(host.view.game.turn == GY_NET_COLOR_BLUE);
+    /* REQ-320-C: 二维落点允许外围非己方底线格（顶行 col0 空）。 */
+    {
+        GyNetRoom top;
+        GyCell block = {GY_NUMBER, 0, 0, 2};
+        gy_net_room_init_host(&top, 1006, 0, 2);
+        CHECK(start_game(&top, &token) == 0);
+        top.view.game.coins[GY_NET_COLOR_RED] = 10;
+        CHECK(gy_net_room_place(&top, GY_NET_COLOR_RED, 0, 0, 4300) == GY_NET_OK);
+        CHECK(top.view.game.cells[0][0].kind == GY_SOLDIER);
+        /* row/column 交换后仍可能是合法外围格；用 (1,3) 与 (3,1) 区分。 */
+        gy_net_room_init_host(&top, 1006, 0, 2);
+        CHECK(start_game(&top, &token) == 0);
+        top.view.game.coins[GY_NET_COLOR_RED] = 10;
+        top.view.game.cells[0][3] = block;
+        memset(&top.view.game.cells[1][3], 0, sizeof(GyCell));
+        memset(&top.view.game.cells[3][1], 0, sizeof(GyCell));
+        CHECK(gy_net_room_place(&top, GY_NET_COLOR_RED, 1, 3, 4400) == GY_NET_OK);
+        CHECK(top.view.game.cells[1][3].kind == GY_SOLDIER);
+        CHECK(top.view.game.cells[3][1].kind != GY_SOLDIER);
+    }
     return 0;
 }
 
@@ -366,12 +414,36 @@ static int test_room_state_sync(void)
     gy_net_room_init_host(&host, 1011, 0, 2);
     CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0, 0, &token, &color) == GY_NET_OK);
     gy_net_room_state(&host, &state);
+    CHECK(state.seat_online == 0x03);
     gy_net_room_init_client(&client, 1011, 0);
     CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
     CHECK(client.view.player_count == 2);
     CHECK(client.view.host_color == host.view.host_color);
     CHECK(client.view.guest_color == host.view.guest_color);
+    CHECK(client.seats[GY_NET_COLOR_RED].connected == 1);
+    CHECK(client.seats[GY_NET_COLOR_BLUE].connected == 1);
     CHECK(gy_net_room_apply_room_state(&client, &state) == 0);
+    /* 房主权威下发客席断线：旁观者也能从 ROOM_STATE 得到在线位/倒计时。 */
+    CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
+    gy_net_room_state(&host, &state);
+    CHECK(state.seat_online == 0x01);
+    CHECK(state.seat_reconnect_s[GY_NET_COLOR_BLUE] == 10);
+    CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
+    CHECK(client.seats[GY_NET_COLOR_BLUE].connected == 0);
+    CHECK(client.view.seat_reconnect_s[GY_NET_COLOR_BLUE] == 10);
+    CHECK(gy_net_room_rejoin(&host, token, 0, 5000, &color) == GY_NET_OK);
+    gy_net_room_state(&host, &state);
+    CHECK(state.seat_online == 0x03);
+    CHECK(state.seat_reconnect_s[GY_NET_COLOR_BLUE] == 0);
+    CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
+    CHECK(client.seats[GY_NET_COLOR_BLUE].connected == 1);
+    /* 同一 seq 的周期状态必须刷新倒计时，否则旁观者永远停在 10s。 */
+    state.seat_reconnect_s[GY_NET_COLOR_BLUE] = 9;
+    CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
+    CHECK(client.view.seat_reconnect_s[GY_NET_COLOR_BLUE] == 9);
+    state.seat_reconnect_s[GY_NET_COLOR_BLUE] = 8;
+    CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
+    CHECK(client.view.seat_reconnect_s[GY_NET_COLOR_BLUE] == 8);
     state.seq++;
     CHECK(gy_net_room_apply_room_state(&client, &state) == 1);
     /* 慢到的旧 ROOM_STATE 不能把 phase/seq 拉回 STARTING。 */

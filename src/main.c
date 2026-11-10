@@ -107,7 +107,7 @@ int main(void)
                (int)lv_display_get_vertical_resolution(NULL));
     int board_ready=gy_board_start()==0;
     if(!board_ready)rt_kprintf("[geyi:board] FAIL worker start, touch remains available\n");
-    rt_kprintf("[geyi:board] Keep board still ~1 second. KEY2 short=confirm/place (KEY1 is power)\n");
+    rt_kprintf("[geyi:board] KEY2 short=confirm/place (KEY1 is power); tilt directly\n");
     while(1){
         if(board_ready)gy_board_poll();
         lv_timer_handler();

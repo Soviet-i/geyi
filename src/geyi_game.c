@@ -140,6 +140,19 @@ int gy_eligible_count(const GyGame *g, int direction)
     if (!g || direction < 0 || direction > 3 || g->outcome != GY_PLAYING) return 0;
     return simulate_actions(g, direction, acted);
 }
+int gy_direction_legal(const GyGame *g, int direction)
+{
+    GyGame tmp;
+    unsigned char none[GY_MAX][GY_MAX] = {{0}};
+    if (!g || direction < 0 || direction > 3 || g->outcome != GY_PLAYING) return 0;
+    if (gy_eligible_count(g, direction) > 0) return 1;
+    /* 没有可行动士兵时，数字仍可能滑动/合并。这里用同一 move_pass 精确模拟，
+     * 避免“直接前邻可走”与实际合并/阻挡不一致，导致 UI 永远不出现预览。 */
+    tmp = *g;
+    move_pass(&tmp, direction, none, NULL, NULL);
+    return memcmp(tmp.cells, g->cells, sizeof(tmp.cells)) != 0 ||
+           tmp.coins[0] != g->coins[0] || tmp.coins[1] != g->coins[1];
+}
 static void finish(GyGame *g)
 {
     int alive[2] = {0}, x, y;
@@ -155,6 +168,26 @@ static void finish(GyGame *g)
     else if (!alive[0]) g->outcome = GY_BLUE_WIN;
     else if (!alive[1]) g->outcome = GY_RED_WIN;
 }
+/* 方向边上的指示点。aim 把指示点从边中点偏到一侧，用于同方向内选最近士兵；
+ * 坐标使用双倍格坐标，和下面的距离排序保持一致。 */
+static void aim_point(int d, int n, int aim, int *cx, int *cy)
+{
+    int span = n - 1;
+    int pos;
+    if (aim < -100) aim = -100;
+    if (aim > 100) aim = 100;
+    /* 与放兵横向映射共用同一取整：aim=0 落在右中列（n=6 为第 3 列）。 */
+    pos = (span * (aim + 100) + 100) / 200;
+    if (pos < 0) pos = 0;
+    if (pos > span) pos = span;
+    if (d == GY_UP || d == GY_DOWN) {
+        *cx = 2 * pos;
+        *cy = d == GY_UP ? -1 : 2 * n - 1;
+    } else {
+        *cy = 2 * pos;
+        *cx = d == GY_LEFT ? -1 : 2 * n - 1;
+    }
+}
 /* Apply a move to the copy in a. before is the untouched source board used
  * only for the no-change check. Does not spawn or toggle the turn. */
 static int apply_move(GyGame *a, const GyGame *before, GyMove m)
@@ -168,13 +201,21 @@ static int apply_move(GyGame *a, const GyGame *before, GyMove m)
     (void)simulate_actions(a, d, acted);
     for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (acted[y][x]) ++total;
     if (m.count > total || (m.count == 0 && total > 0)) return 0;
-    /* Doubled coordinates retain half-cell edge centers without floats. */
-    cx = d == GY_LEFT ? -1 : (d == GY_RIGHT ? 2*n-1 : n-1);
-    cy = d == GY_UP ? -1 : (d == GY_DOWN ? 2*n-1 : n-1);
+    /* Doubled coordinates retain half-cell edge centers without floats.
+     * aim 只移动边上的指示点，不改变方向或数量。 */
+    aim_point(d, n, m.aim, &cx, &cy);
     {
         int sel_count = 0;
         for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (acted[y][x]) {
-            int distance = abs(2*x-cx) + abs(2*y-cy);
+            /* 先按到方位线的横向距离，再按到目的边的深度；深度不能
+             * 压过方位，否则“偏左”会被更靠前的中间兵抢走。 */
+            int lateral, depth, distance;
+            if (d == GY_UP || d == GY_DOWN) {
+                lateral = abs(2*x-cx); depth = abs(2*y-cy);
+            } else {
+                lateral = abs(2*y-cy); depth = abs(2*x-cx);
+            }
+            distance = lateral * (2 * GY_MAX + 2) + depth;
             i = sel_count++;
             while (i > 0 && dist[i-1] > distance) {
                 ids[i] = ids[i-1]; dist[i] = dist[i-1]; --i;
@@ -224,16 +265,37 @@ int gy_commit(GyGame *g, const GyPreview *p)
     if (!g || !p || !p->valid || memcmp(g,&p->before,sizeof(*g))) return 0;
     *g = p->after; return 1;
 }
-int gy_place(GyGame *g, int column)
+int gy_place_legal(const GyGame *g, int row, int column)
 {
-    int row; GyCell *cell;
-    if (!g || g->outcome != GY_PLAYING || column < 0 || column >= g->config.size ||
-        g->coins[g->turn] < g->config.cost) return 0;
-    row = g->turn == 0 ? g->config.size-1 : 0;
+    int i, n;
+    if (!g || g->outcome != GY_PLAYING ||
+        row < 0 || row >= g->config.size || column < 0 || column >= g->config.size ||
+        g->coins[g->turn] < g->config.cost ||
+        g->cells[row][column].kind != GY_EMPTY) return 0;
+    n = g->config.size;
+    /* 从四条外边缘沿行/列进入，遇到的第一个空格才可放。 */
+    for (i = 0; i < row; ++i) if (g->cells[i][column].kind == GY_EMPTY) break;
+    if (i == row) return 1;
+    for (i = n - 1; i > row; --i) if (g->cells[i][column].kind == GY_EMPTY) break;
+    if (i == row) return 1;
+    for (i = 0; i < column; ++i) if (g->cells[row][i].kind == GY_EMPTY) break;
+    if (i == column) return 1;
+    for (i = n - 1; i > column; --i) if (g->cells[row][i].kind == GY_EMPTY) break;
+    if (i == column) return 1;
+    return 0;
+}
+int gy_place_at(GyGame *g, int row, int column)
+{
+    GyCell *cell;
+    if (!g || !gy_place_legal(g, row, column)) return 0;
     cell = &g->cells[row][column];
-    if (cell->kind != GY_EMPTY) return 0;
     cell->kind = GY_SOLDIER; cell->owner = g->turn; cell->hp = g->config.hp;
     g->coins[g->turn] -= g->config.cost; g->turn ^= 1; ++g->revision; return 1;
+}
+int gy_place(GyGame *g, int column)
+{
+    if (!g) return 0;
+    return gy_place_at(g, g->turn == 0 ? g->config.size-1 : 0, column);
 }
 int gy_resign(GyGame *g)
 {
@@ -252,7 +314,7 @@ int gy_selftest(void)
     /* Boot-only workspace in BSS, not on the small RT-Thread main stack. */
     static GyGame g, copy, sim;
     static GyPreview p;
-    GyMove m = {GY_UP,1};
+    GyMove m = {GY_UP,1,0};
     if (!gy_init(&g,gy_default_config(),1)) return 0;
     copy = g;
     if (!gy_preview(&g,m,&p) || memcmp(&g,&copy,sizeof(g))) return 0;

@@ -1,0 +1,43 @@
+\documentclass[tikz,border=8pt]{standalone}
+\input{_preamble}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  st/.style={core, minimum width=2.20cm, minimum height=1.05cm, rounded corners=10pt}]
+
+  \node[st] (center) at (-7.60,2.20) {\textbf{回中}\\[-1pt]\scriptsize 幅度 $<4^\circ$};
+  \node[st] (arming) at (-4.70,2.20) {\textbf{稳定计时}\\[-1pt]\scriptsize 200 ms};
+  \node[st] (preview) at (-1.50,2.20) {\textbf{可见选择}\\[-1pt]\scriptsize 方向 / 数量};
+  \node[st] (confirm) at (1.90,2.20) {\textbf{已确认}\\[-1pt]\scriptsize 按键锁存};
+  \node[st] (placing) at (-7.60,0.00) {\textbf{放兵选格}\\[-1pt]\scriptsize 外围边 / 列};
+
+  \draw[arr] (center) -- node[lab, above]{$\ge 6^\circ$} (arming);
+  \draw[arr] (arming) -- node[lab, above]{200 ms} (preview);
+  \draw[arr] (preview) -- node[lab, above]{确认} (confirm);
+
+  % 预览期间的变化：旧预览保留
+  \draw[arr] (preview.north) to[loop above, looseness=8] (preview.north);
+  \node[lab, anchor=west] at (-0.15,3.05) {方向 / 数量变化：200 ms 后 UPDATE};
+
+  % 预览取消：沿左侧绕回，避开放兵状态
+  \draw[arr] (preview.south) -- (-1.50,-0.70) -- (-8.85,-0.70)
+    -- (-8.85,2.35) -- (center.west);
+  \node[lab, above] at (-4.40,-0.70) {回中 / 无样本 / 无合法方向};
+
+  % 确认后的解锁：再外一层
+  \draw[arr] (confirm.south) -- (1.90,-1.35) -- (-9.05,-1.35)
+    -- (-9.05,2.00) -- ([yshift=-0.15cm]center.west);
+  \node[lab, above] at (-2.20,-1.35) {释放按键并回中 $<4^\circ$};
+
+  % 放兵模式
+  \draw[arr] (-7.85,1.55) -- node[lab, left]{空闲时 KEY2} (-7.85,0.65);
+  \draw[arr] (-7.35,0.65) -- node[lab, right]{确认 / 退出} (-7.35,1.55);
+
+  % 约束说明
+  \node[draw=ink!20, fill=ink!3, rounded corners=3pt, align=left,
+        font=\scriptsize, text=ink!85, inner sep=5pt] at (1.30,-2.35)
+    {进入 $6^\circ$、退出 $4^\circ$，形成 $2^\circ$ 回差；\\
+     方向或数量变化时旧预览保持可见，新选择稳定 200 ms 后才切换；\\
+     AI 回合由 UI 预览约 500 ms 后自动确认，不经过本状态机。};
+
+\end{tikzpicture}
+\end{document}

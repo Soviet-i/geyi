@@ -1,0 +1,20 @@
+msh />msh />[geyi:light] event=1
+[geyi:light] event=1
+[geyi:motion] x=12 y=-9 key2=0 revision=0
+[geyi:motion] x=-74 y=-38 key2=0 revision=0
+[geyi:tilt] x=-2845 y=-157 dir=3 count=2 preview=1 event=1
+[geyi:motion] x=-3189 y=-169 key2=0 revision=0
+[geyi:motion] x=874 y=-177 key2=0 revision=0
+[geyi:tilt] x=2928 y=-181 dir=1 count=2 preview=1 event=1
+[geyi:motion] x=872 y=-248 key2=0 revision=0
+[geyi:tilt] x=-286 y=-3080 dir=0 count=2 preview=1 event=1
+[geyi:motion] x=-360 y=-3429 key2=0 revision=0
+[geyi:motion] x=287 y=924 key2=0 revision=0
+[geyi:motion] x=34 y=-116 key2=0 revision=0
+[geyi:tilt] x=-90 y=-1207 dir=0 count=1 preview=1 event=1
+[geyi:tilt] x=-683 y=-1851 dir=0 count=2 preview=1 event=8
+[geyi:motion] x=-622 y=-1792 key2=0 revision=0
+[geyi:tilt] x=-281 y=-1317 dir=0 count=1 preview=1 event=8
+[geyi:motion] x=1185 y=-939 key2=0 revision=0
+[geyi:tilt] x=1274 y=-810 dir=1 count=1 preview=1 event=8
+[

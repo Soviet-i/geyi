@@ -33,7 +33,7 @@ from net_board_test import Board, wait_state  # noqa: E402
 
 RX = "47594e45-542d-5258-2d43484152303031"
 TX = "47594e45-542d-5458-2d43484152303031"
-VERSION = 2
+VERSION = 4
 JOIN_REQ, LEAVE = 2, 7
 REASON_LEFT = 3
 
@@ -176,8 +176,8 @@ def main() -> int:
     b = Board("B", args.port_b)
     try:
         time.sleep(args.boot_wait)
-        require(a.wait_for("Keep board still", 15), "A UI not ready")
-        require(b.wait_for("Keep board still", 15), "B UI not ready")
+        require(a.wait_for("[geyi:lcd] READY", 15), "A UI not ready")
+        require(b.wait_for("[geyi:lcd] READY", 15), "B UI not ready")
         time.sleep(1.0)
         a.send("gy_net host")
         wait_state(a, lambda s: s.get("active") == "1" and s.get("adv") == "1", 6, "host")

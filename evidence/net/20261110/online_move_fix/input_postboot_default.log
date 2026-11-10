@@ -1,0 +1,16 @@
+host=COM7 guest=COM5
+[move 1] turn=0 actor=A (host) local=0/1 rev=0
+  A tilt UP -> preview dir=0 count=1
+  OK rev 0 -> 1
+[move 2] turn=1 actor=B (guest) local=0/1 rev=1
+  B tilt UP -> preview dir=0 count=0
+  OK rev 1 -> 2
+[move 3] turn=0 actor=A (host) local=0/1 rev=2
+  A tilt UP -> preview dir=0 count=1
+  OK rev 2 -> 3
+[move 4] turn=1 actor=B (guest) local=0/1 rev=3
+  B tilt UP -> preview dir=0 count=0
+  OK rev 3 -> 4
+game finished after 4 input moves; outcome=1
+PASS: tilt + KEY2 moves accepted for both seats
+evidence: D:\233\code\course_starter\evidence\net\20261110\input_20261110_185250

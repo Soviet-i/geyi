@@ -15,12 +15,12 @@ static void soldier(GyGame *g,int x,int y,int owner,int hp)
 static void number(GyGame *g,int x,int y,uint32_t value)
 { GyCell c={GY_NUMBER,0,0,value};g->cells[y][x]=c; }
 static int act(GyGame *g,int d,int count)
-{ GyPreview p;GyMove m={d,count};return gy_preview(g,m,&p)&&gy_commit(g,&p); }
+{ GyPreview p;GyMove m={d,count,0};return gy_preview(g,m,&p)&&gy_commit(g,&p); }
 static int count_kind(const GyGame *g,int kind)
 { int n=0,x,y;for(y=0;y<g->config.size;++y)for(x=0;x<g->config.size;++x)n+=g->cells[y][x].kind==kind;return n; }
 int main(void)
 {
-    GyGame g,h; GyPreview p;GyMove m={GY_UP,1}; int d,i,k;
+    GyGame g,h; GyPreview p;GyMove m={GY_UP,1,0}; int d,i,k;
     CHECK(gy_selftest());
     CHECK(gy_init(&g,gy_default_config(),123));
     CHECK(gy_init(&h,gy_default_config(),123));CHECK(!memcmp(&g,&h,sizeof(g)));
@@ -32,7 +32,7 @@ int main(void)
     /* TC-303-05: a number behind the moving soldier follows into its old cell. */
     g=empty();soldier(&g,3,1,0,8);number(&g,1,1,2);soldier(&g,5,5,1,8);
     CHECK(gy_eligible_count(&g,GY_RIGHT)==1);
-    {GyPreview q;GyMove mv={GY_RIGHT,1};
+    {GyPreview q;GyMove mv={GY_RIGHT,1,0};
      CHECK(gy_preview(&g,mv,&q));
      CHECK(q.visible.cells[1][2].kind==GY_EMPTY);
      CHECK(q.visible.cells[1][3].kind==GY_NUMBER&&q.visible.cells[1][3].value==2);
@@ -43,7 +43,7 @@ int main(void)
     g=empty();g.turn=1;soldier(&g,1,1,1,8);soldier(&g,4,1,1,8);
     number(&g,0,1,2);number(&g,2,1,2);soldier(&g,5,5,0,8);
     CHECK(gy_eligible_count(&g,GY_RIGHT)==2);
-    {GyPreview q;GyMove mv={GY_RIGHT,2};
+    {GyPreview q;GyMove mv={GY_RIGHT,2,0};
      CHECK(gy_preview(&g,mv,&q));
      CHECK(q.visible.cells[1][0].kind==GY_EMPTY);
      CHECK(q.visible.cells[1][1].kind==GY_NUMBER&&q.visible.cells[1][1].value==2);
@@ -56,7 +56,7 @@ int main(void)
     g=empty();g.turn=1;soldier(&g,1,1,1,8);number(&g,2,1,2);
     soldier(&g,4,1,0,8);soldier(&g,5,5,0,8);
     CHECK(gy_eligible_count(&g,GY_RIGHT)==1);
-    {GyPreview q;GyMove mv={GY_RIGHT,1};
+    {GyPreview q;GyMove mv={GY_RIGHT,1,0};
      CHECK(gy_preview(&g,mv,&q));
      CHECK(q.visible.cells[1][1].kind==GY_EMPTY);
      CHECK(q.visible.cells[1][2].kind==GY_SOLDIER&&q.visible.cells[1][2].owner==1);
@@ -97,13 +97,71 @@ int main(void)
     CHECK(!gy_place(&g,-1));CHECK(!gy_place(&g,6));CHECK(gy_place(&g,2));
     CHECK(g.coins[0]==0&&g.turn==1&&g.moves==0&&count_kind(&g,GY_NUMBER)==0);
     h=g;CHECK(!gy_place(&g,3));CHECK(!memcmp(&g,&h,sizeof(g)));
+    /* REQ-320-A/C: numeric-only direction is legal even with zero soldiers;
+     * two-dimensional placement accepts any empty cell, not just own row. */
+    g=empty();number(&g,1,2,2);number(&g,1,3,2);
+    CHECK(gy_eligible_count(&g,GY_UP)==0);
+    CHECK(gy_direction_legal(&g,GY_UP));
+    CHECK(act(&g,GY_UP,0));
+    CHECK(g.cells[0][1].kind==GY_NUMBER&&g.cells[0][1].value==4);
+    g=empty();soldier(&g,0,0,0,8);
+    CHECK(gy_eligible_count(&g,GY_UP)==0);
+    CHECK(gy_direction_legal(&g,GY_UP)==0);
+    /* 四方向都要能只移动数字（无士兵时 count=0）。 */
+    for(d=0;d<4;++d){
+        int ax=d==GY_RIGHT?5:d==GY_LEFT?0:2;
+        int ay=d==GY_DOWN?5:d==GY_UP?0:2;
+        int bx=d==GY_RIGHT?4:d==GY_LEFT?1:2;
+        int by=d==GY_DOWN?4:d==GY_UP?1:2;
+        g=empty();number(&g,ax,ay,2);number(&g,bx,by,2);
+        CHECK(gy_eligible_count(&g,d)==0);
+        CHECK(gy_direction_legal(&g,d));
+        CHECK(act(&g,d,0));
+        CHECK(count_kind(&g,GY_NUMBER)==1);
+    }
+    g=empty();g.coins[0]=4;
+    CHECK(gy_place_at(&g,0,0));CHECK(g.cells[0][0].kind==GY_SOLDIER&&g.turn==1);
+    g=empty();g.coins[0]=4;g.coins[1]=4;
+    CHECK(!gy_place_at(&g,2,2));CHECK(g.cells[2][2].kind==GY_EMPTY);
+    CHECK(gy_place_at(&g,2,0));CHECK(g.cells[2][0].kind==GY_SOLDIER);
+    g=empty();g.coins[0]=4;soldier(&g,0,0,1,8);
+    h=g;CHECK(!gy_place_at(&g,0,0));CHECK(!memcmp(&g,&h,sizeof(g)));
+    /* REQ-320-B: aim biases selection within the same direction. */
+    g=empty();g.turn=0;
+    soldier(&g,1,5,0,8);soldier(&g,3,5,0,8);soldier(&g,4,5,0,8);
+    soldier(&g,5,0,1,8);
+    {GyPreview q;
+     CHECK(gy_preview(&g,(GyMove){GY_UP,1,-100},&q));
+     CHECK(q.visible.cells[4][1].kind==GY_SOLDIER);
+     CHECK(q.visible.cells[5][3].kind==GY_SOLDIER);
+     CHECK(gy_preview(&g,(GyMove){GY_UP,1,0},&q));
+     CHECK(q.visible.cells[4][3].kind==GY_SOLDIER);
+     CHECK(q.visible.cells[5][1].kind==GY_SOLDIER);
+     CHECK(gy_preview(&g,(GyMove){GY_UP,1,100},&q));
+     CHECK(q.visible.cells[4][4].kind==GY_SOLDIER);
+     CHECK(q.visible.cells[5][1].kind==GY_SOLDIER);
+     /* aim 不改变四方向判定；水平方向仍按 y 比例选上下。 */
+     CHECK(gy_preview(&g,(GyMove){GY_RIGHT,1,100},&q));
+     CHECK(q.visible.cells[5][5].kind==GY_SOLDIER);
+     /* 偶数尺寸中央并列：aim=0 取右中列，不取左中列。 */
+     g=empty();soldier(&g,2,5,0,8);soldier(&g,3,5,0,8);soldier(&g,5,0,1,8);
+     CHECK(gy_preview(&g,(GyMove){GY_UP,1,0},&q));
+     CHECK(q.visible.cells[4][3].kind==GY_SOLDIER);
+     CHECK(q.visible.cells[5][2].kind==GY_SOLDIER);
+     /* 方位优先于深度：偏左时，后排左兵优先于更靠前的中间兵。 */
+     g=empty();soldier(&g,1,5,0,8);soldier(&g,3,2,0,8);soldier(&g,5,0,1,8);
+     CHECK(gy_preview(&g,(GyMove){GY_UP,1,-100},&q));
+     CHECK(q.visible.cells[4][1].kind==GY_SOLDIER);
+     CHECK(q.visible.cells[2][3].kind==GY_SOLDIER);
+    }
+    g=empty();g.turn=1;
     CHECK(gy_resign(&g));CHECK(g.outcome==GY_RED_WIN);CHECK(!gy_resign(&g));
     g=empty();soldier(&g,0,0,0,8);soldier(&g,5,5,1,8);h=g;
     CHECK(!act(&g,GY_UP,1));CHECK(!memcmp(&g,&h,sizeof(g)));
     m.direction=99;CHECK(!gy_preview(&g,m,&p));CHECK(!memcmp(&g,&h,sizeof(g)));
-    /* Equidistant eligible soldiers: row/column tie breaks consistently. */
+    /* aim=0 取右中列；对称的远列不抢中列。 */
     g=empty();soldier(&g,1,2,0,8);soldier(&g,4,2,0,8);soldier(&g,5,5,1,8);
-    CHECK(act(&g,GY_UP,1));CHECK(g.cells[1][1].kind==GY_SOLDIER&&g.cells[2][4].kind==GY_SOLDIER);
+    CHECK(act(&g,GY_UP,1));CHECK(g.cells[2][1].kind==GY_SOLDIER&&g.cells[1][4].kind==GY_SOLDIER);
     for(k=0;k<30;++k) {
         GyGame replay;
         gy_init(&g,gy_default_config(),(uint32_t)(k+1));replay=g;
@@ -112,7 +170,7 @@ int main(void)
             for(d=0;d<4&&!accepted;++d) {
                 int n;
                 for(n=0;n<=4&&!accepted;++n) {
-                    GyMove action={d,n};
+                    GyMove action={d,n,0};
                     if(gy_preview(&g,action,&p)) {CHECK(gy_commit(&g,&p));CHECK(act(&replay,d,n));accepted=1;}
                 }
             }

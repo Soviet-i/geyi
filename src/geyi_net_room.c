@@ -178,6 +178,8 @@ int gy_net_room_promote_client(GyNetRoom *client, uint8_t new_host_color, uint32
     client->view.result = GY_PLAYING;
     client->view.result_reason = GY_NET_REASON_NORMAL;
     client->view.local_terminal = 0;
+    client->view.seat_reconnect_s[0] = 0;
+    client->view.seat_reconnect_s[1] = 0;
     client->view.spectator_count = 0;
     client->view.seq++;
     memset(client->spectators, 0, sizeof(client->spectators));
@@ -405,7 +407,7 @@ int gy_net_room_tick(GyNetRoom *room, uint32_t now_ms)
     return changed;
 }
 
-int gy_net_room_move(GyNetRoom *host, uint8_t color, int direction, int count, uint32_t now_ms)
+int gy_net_room_move(GyNetRoom *host, uint8_t color, int direction, int count, int aim, uint32_t now_ms)
 {
     GyMove move;
     GyPreview preview;
@@ -416,6 +418,7 @@ int gy_net_room_move(GyNetRoom *host, uint8_t color, int direction, int count, u
         return GY_NET_ERR_TURN;
     move.direction = direction;
     move.count = count;
+    move.aim = aim;
     if (!gy_preview(&host->view.game, move, &preview)) return GY_NET_ERR_ACTION;
     if (!gy_commit(&host->view.game, &preview)) return GY_NET_ERR_ACTION;
     host->view.seq++;
@@ -427,14 +430,14 @@ int gy_net_room_move(GyNetRoom *host, uint8_t color, int direction, int count, u
     return GY_NET_OK;
 }
 
-int gy_net_room_place(GyNetRoom *host, uint8_t color, int column, uint32_t now_ms)
+int gy_net_room_place(GyNetRoom *host, uint8_t color, int row, int column, uint32_t now_ms)
 {
     if (!host) return GY_NET_ERR_ARG;
     if (host->view.phase != GY_NET_PHASE_PLAYING || !host->view.game_valid)
         return GY_NET_ERR_STATE;
     if (!color_valid(color) || color != (uint8_t)host->view.game.turn)
         return GY_NET_ERR_TURN;
-    if (!gy_place(&host->view.game, column)) return GY_NET_ERR_ACTION;
+    if (!gy_place_at(&host->view.game, row, column)) return GY_NET_ERR_ACTION;
     host->view.seq++;
     host->now_ms = now_ms;
     host->seats[color].last_seq = host->view.seq;
@@ -469,18 +472,38 @@ int gy_net_room_apply_snapshot(GyNetRoom *client, const GyNetSnapshot *snapshot)
 {
     if (!client || !snapshot) return GY_NET_ERR_ARG;
     if (snapshot->seq <= client->last_snapshot_seq) return 0;
-    /* 慢到的旧快照不能把已由更新 ROOM_STATE 推进的 seq/阶段拉回去。 */
-    if (snapshot->seq < client->view.seq) return 0;
+    /* ROOM_STATE 的 seq 可能因准备/换座先于棋盘快照推进；如果快照携带
+     * 更新的 game.revision（或客户端刚 START、棋盘尚无效），必须接受，
+     * 否则客方会永远停在旧棋盘/pending。只有同 revision 的旧 seq 才拒绝。 */
+    if (snapshot->seq < client->view.seq &&
+        (!snapshot->game.config.size ||
+         (client->view.game_valid &&
+          snapshot->game.revision <= client->view.game.revision))) return 0;
     client->view.game = snapshot->game;
     client->view.game_valid = 1;
-    client->view.seq = snapshot->seq;
+    /* 房间 seq 已可能被 ROOM_STATE/REJOIN 推高；快照的棋盘 revision
+     * 更新时必须接受，但不能让 view.seq 因旧快照回退。 */
+    if (snapshot->seq > client->view.seq) client->view.seq = snapshot->seq;
     client->last_snapshot_seq = snapshot->seq;
-    if (snapshot->seq > client->last_seq) client->last_seq = snapshot->seq;
-    client->view.phase = snapshot->game.outcome ? GY_NET_PHASE_RESULT : GY_NET_PHASE_PLAYING;
+    /* 已收到 RESULT 后，旧棋盘快照（outcome=0）不能把结算页拉回 PLAYING。 */
+    if (!(client->view.phase == GY_NET_PHASE_RESULT && !snapshot->game.outcome))
+        client->view.phase = snapshot->game.outcome ? GY_NET_PHASE_RESULT : GY_NET_PHASE_PLAYING;
     client->view.result = (uint8_t)snapshot->game.outcome;
     client->view.local_terminal = 0;
     client->host_absent = 0;
     return 1;
+}
+
+static uint8_t seat_reconnect_seconds(const GyNetRoom *host, uint8_t color)
+{
+    const GyNetSeat *s;
+    uint32_t elapsed;
+    if (!host || !color_valid(color)) return 0;
+    s = &host->seats[color];
+    if (s->connected || !s->token || !host->seat_disconnect_ms[color]) return 0;
+    elapsed = (uint32_t)(host->now_ms - host->seat_disconnect_ms[color]);
+    if (elapsed >= GY_NET_RECONNECT_MS) return 0;
+    return (uint8_t)((GY_NET_RECONNECT_MS - elapsed + 999u) / 1000u);
 }
 
 void gy_net_room_state(const GyNetRoom *host, GyNetRoomState *out)
@@ -498,14 +521,42 @@ void gy_net_room_state(const GyNetRoom *host, GyNetRoomState *out)
     out->guest_id = gy_net_room_seat_id(host, host->view.guest_color);
     out->room_id = host->view.room_id;
     out->seq = host->view.seq;
+    out->seat_online = (uint8_t)((host->seats[GY_NET_COLOR_RED].connected ? 1u : 0u) |
+                                 (host->seats[GY_NET_COLOR_BLUE].connected ? 2u : 0u));
+    out->seat_reconnect_s[GY_NET_COLOR_RED] =
+        seat_reconnect_seconds(host, GY_NET_COLOR_RED);
+    out->seat_reconnect_s[GY_NET_COLOR_BLUE] =
+        seat_reconnect_seconds(host, GY_NET_COLOR_BLUE);
 }
 
 int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
 {
+    int transient_changed = 0;
+    int c;
     if (!client || !state) return GY_NET_ERR_ARG;
-    if (state->seq <= client->last_room_seq) return 0;
+    if (state->seq < client->last_room_seq) return 0;
     /* 慢到的 ROOM_STATE 不能把已从 SNAPSHOT 前进的 phase/seq 拉回去。 */
     if (state->seq < client->view.seq) return 0;
+    /* 同一 seq 的周期性 ROOM_STATE 只用于刷新断线倒计时/座位在线位；
+     * 房主每秒重发一次，不能因为 seq 不变就把 10s 固定住。权威 phase/
+     * ready/玩家 ID 仍只接受更高 seq。 */
+    if (state->seq == client->last_room_seq && client->last_room_seq != 0) {
+        for (c = 0; c < 2; ++c) {
+            int online = (state->seat_online >> c) & 1;
+            int sec = state->seat_reconnect_s[c];
+            if (client->seats[c].connected != online) {
+                client->seats[c].connected = (uint8_t)online;
+                transient_changed = 1;
+            }
+            /* 只接受更小的倒计时；0 可能来自延迟包，恢复在线走更高 seq。 */
+            if (sec && (client->view.seat_reconnect_s[c] == 0 ||
+                        sec < client->view.seat_reconnect_s[c])) {
+                client->view.seat_reconnect_s[c] = (uint8_t)sec;
+                transient_changed = 1;
+            }
+        }
+        return transient_changed;
+    }
     if (!color_valid(state->host_color) || !color_valid(state->guest_color) ||
         state->host_color == state->guest_color ||
         state->phase > GY_NET_PHASE_CLOSED) return GY_NET_ERR_RANGE;
@@ -520,10 +571,15 @@ int gy_net_room_apply_room_state(GyNetRoom *client, const GyNetRoomState *state)
     client->view.guest_id = state->guest_id;
     client->seats[state->host_color].player_id = state->host_id;
     client->seats[state->guest_color].player_id = state->guest_id;
+    client->seats[GY_NET_COLOR_RED].connected =
+        (state->seat_online & 0x01u) ? 1 : 0;
+    client->seats[GY_NET_COLOR_BLUE].connected =
+        (state->seat_online & 0x02u) ? 1 : 0;
+    client->view.seat_reconnect_s[GY_NET_COLOR_RED] = state->seat_reconnect_s[0];
+    client->view.seat_reconnect_s[GY_NET_COLOR_BLUE] = state->seat_reconnect_s[1];
     client->view.room_id = state->room_id;
     client->view.seq = state->seq;
     client->last_room_seq = state->seq;
-    if (state->seq > client->last_seq) client->last_seq = state->seq;
     client->view.local_terminal = 0;
     return 1;
 }
@@ -539,7 +595,6 @@ int gy_net_room_apply_result(GyNetRoom *client, const GyNetResult *result)
     client->view.result_reason = result->reason;
     if (result->seq) client->view.seq = result->seq;
     if (result->seq) client->last_result_seq = result->seq;
-    if (result->seq && result->seq > client->last_seq) client->last_seq = result->seq;
     client->view.local_terminal = 0;
     return 1;
 }
@@ -553,6 +608,8 @@ int gy_net_room_preview(GyNetRoom *host, const GyNetPreview *preview)
         host->preview[preview->side].direction == preview->direction &&
         host->preview[preview->side].count == preview->count &&
         host->preview[preview->side].column == preview->column &&
+        host->preview[preview->side].row == preview->row &&
+        host->preview[preview->side].aim == preview->aim &&
         host->preview[preview->side].indicator == preview->indicator)
         return 0;
     host->preview[preview->side] = *preview;
@@ -582,6 +639,7 @@ int gy_net_room_disconnect_token(GyNetRoom *host, uint32_t token, uint32_t now_m
 {
     int i;
     if (!host || !token) return GY_NET_ERR_ARG;
+    host->now_ms = now_ms;
     for (i = 0; i < 2; ++i) {
         if (host->seats[i].token == token && host->seats[i].connected) {
             /* 链路断开（不是显式 LEAVE）一律保留席位 10s：房间页/对局页
@@ -654,6 +712,8 @@ int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
         host->seats[i].last_seq = last_seq;
         host->seat_disconnect_ms[i] = 0;
         sync_ready(host);
+        host->now_ms = now_ms;
+        host->view.seq++;
         *color_out = (uint8_t)i;
         return GY_NET_OK;
     }
@@ -666,6 +726,8 @@ int gy_net_room_rejoin(GyNetRoom *host, uint32_t token, uint32_t last_seq,
         host->spectators[i].connected = 1;
         host->spectators[i].last_seq = last_seq;
         host->spectator_disconnect_ms[i] = 0;
+        host->now_ms = now_ms;
+        host->view.seq++;
         *color_out = GY_NET_COLOR_NONE;
         return GY_NET_OK;
     }

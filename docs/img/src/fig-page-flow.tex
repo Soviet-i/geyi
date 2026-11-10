@@ -2,47 +2,48 @@
 \input{_preamble}
 \begin{document}
 \begin{tikzpicture}[x=1cm,y=1cm,
-  card/.style={draw,rounded corners=6pt,fill=green!6,draw=green!45!black,minimum width=3.2cm,minimum height=1.55cm,align=center,font=\small},
-  side/.style={draw,rounded corners=6pt,fill=orange!6,draw=orange!55!black,minimum width=3.0cm,minimum height=1.1cm,align=center,font=\small},
-  planned/.style={draw,rounded corners=6pt,fill=gray!8,draw=gray!55!black,dashed,minimum width=3.0cm,minimum height=1.1cm,align=center,font=\small},
-  flow/.style={-{Latex[length=2.2mm]},thick},
-  happy/.style={-{Latex[length=2.4mm]},very thick,green!45!black},
-  back/.style={-{Latex[length=1.8mm]},thick,dashed,gray!65!black}]
+  page/.style={ui, minimum width=2.1cm, minimum height=0.95cm},
+  branch/.style={ui, minimum width=1.95cm, minimum height=0.90cm},
+  todo/.style={plan, minimum width=2.1cm, minimum height=0.95cm}]
 
-  \node[card] (home) at (-8.0,3.0) {\textbf{首页}\\ 开始游戏 · 参数 · 历史\\ \scriptsize 触摸大按钮；未开放项禁用};
-  \node[card] (modes) at (-4.0,3.0) {\textbf{模式页}\\ 单机 · 人机 · 联机\\ \scriptsize 单机直达对局；菜单中倾斜无效};
-  \node[card] (prep) at (0.0,3.0) {\textbf{准备页 / 大厅}\\ 先后手 · 房间 · 准备\\ \scriptsize 准备页已实现；大厅为计划};
-  \node[card] (game) at (4.0,3.0) {\textbf{对局页}\\ 棋盘 · 预览 · 金币 · 回合\\ \scriptsize 倾斜选方向/数量；KEY2 确认};
-  \node[card] (result) at (8.0,3.0) {\textbf{结算页}\\ 胜负 · 原因 · 返回\\ \scriptsize RGB 提示；可重开/返回};
+  \node[page] (home) at (-6.30,2.00) {\textbf{首页}\\[-1pt]\scriptsize 四个入口};
+  \node[page] (mode) at (-3.70,2.00) {\textbf{模式页}\\[-1pt]\scriptsize 单机 / 人机 / 联机};
+  \node[branch] (prep) at (-0.60,3.35) {\textbf{人机准备页}\\[-1pt]\scriptsize 选择先后手};
+  \node[branch] (lobby) at (-0.60,0.75) {\textbf{联机大厅}\\[-1pt]\scriptsize 房间列表};
+  \node[branch] (room) at (1.90,0.75) {\textbf{房间页}\\[-1pt]\scriptsize 准备 / 旁观};
+  \node[page] (game) at (2.60,2.00) {\textbf{对局页}\\[-1pt]\scriptsize 棋盘 / 预览 / 确认};
+  \node[page] (result) at (5.55,2.00) {\textbf{结算页}\\[-1pt]\scriptsize 胜负 / 原因};
+  \node[branch] (param) at (-6.30,0.40) {\textbf{参数页}\\[-1pt]\scriptsize 模式 / 分页 / 重置};
+  \node[branch] (rules) at (-6.30,-0.85) {\textbf{规则页}\\[-1pt]\scriptsize 4 页说明};
+  \node[todo] (history) at (-3.30,-0.85) {\textbf{历史页}\\[-1pt]\scriptsize 未实现};
+  \node[todo, draw=cred!60!black, fill=cred!5] (reconn) at (4.15,3.35)
+    {\textbf{断线覆盖层}\\[-1pt]\scriptsize 10 s 倒计时};
 
-  \draw[happy] (home) -- node[lbl,above]{开始} (modes);
-  \draw[happy] (modes) -- (prep);
-  \node[lbl,above] at (-2.0,3.95) {人机 / 联机};
-  \draw[happy] (prep) -- node[lbl,above]{开始} (game);
-  \draw[happy] (game) -- node[lbl,above]{终局} (result);
+  \draw[arr] (home) -- node[lab, above]{开始} (mode);
+  \draw[arr] (mode) -- node[lab, above]{单机} (game);
+  \draw[arr] (mode.east) -- (prep.south west);
+  \node[lab, anchor=east] at (-2.35,2.95) {人机};
+  \draw[arr] (mode.east) -- (lobby.north west);
+  \node[lab, anchor=east] at (-2.35,1.05) {联机};
+  \draw[arr] (prep.east) -- (2.60,3.35) -- (game.north);
+  \node[lab, above] at (1.60,3.35) {开始};
+  \draw[arr] (lobby) -- (room);
+  \draw[arr] (room.north) -- (1.90,1.525) -- (game.south);
+  \node[lab, anchor=east] at (1.55,1.42) {准备 3 s};
+  \draw[arr] (game) -- node[lab, above]{终局 / 认输} (result);
+  \draw[arr] (result.north) -- (5.55,4.35) -- (-6.30,4.35) -- node[lab, above, pos=0.55]{返回首页} (home.north);
+  \draw[arr] (result.south) -- (5.55,1.25) -- (2.875,1.25) -- (room.north east);
+  \draw[arr] (home.south) -- (param.north);
+  \draw[arr] (home.west) -- (-7.45,2.00) -- (-7.45,-0.85) -- node[lab, left, pos=0.55]{规则} (rules.west);
+  \draw[darr] (home.south) -- (-5.00,1.45) -- (-5.00,-0.30) -- (history.north);
+  \node[lab, anchor=south west] at (-4.95,0.05) {历史};
+  \draw[darr, draw=cred!65!black] (game.north east) -- (reconn.south west);
 
-  \node[side] (params) at (-8.0,0.7) {\textbf{参数页}\\ 模式 · 分页 · 加减 · 重置};
-  \node[planned] (history) at (-4.0,0.7) {\textbf{历史页（计划）}\\ 最近 $N$ 局 · 单局计时};
-  \node[planned] (reconn) at (4.0,0.7) {\textbf{断线覆盖层（计划）}\\ 10\,s 倒计时 · 重连};
+  % 图例
+  \node[ui, minimum width=0.95cm, minimum height=0.38cm, font=\scriptsize] at (-5.20,-1.55) {已实现};
+  \node[plan, minimum width=0.95cm, minimum height=0.38cm, font=\scriptsize] at (-3.85,-1.55) {未实现};
+  \node[draw=cred!60!black, fill=cred!5, rounded corners=2pt, minimum width=1.25cm,
+        minimum height=0.38cm, font=\scriptsize] at (-2.35,-1.55) {恢复覆盖层};
 
-  \draw[flow] (home.south) -- node[lbl,left]{参数} (params.north);
-  \draw[flow] (home.south) -- node[lbl,right]{历史} (history.north);
-  \draw[flow] (game.south) -- node[lbl,right]{断线} (reconn.north);
-  \draw[back] (-4.0,2.225) -- (-4.0,2.05) -- (4.0,2.05) -- (game.south);
-  \node[lbl,above] at (-1.5,2.12) {单机直达};
-  \draw[back] (8.0,2.225) -- (8.0,1.95) -- (0.0,1.95) -- (prep.south);
-  \node[lbl,above] at (6.0,1.88) {联机结算→大厅};
-  \draw[back] (result.north) -- (8.0,4.4) -- (-8.0,4.4) -- (home.north);
-  \node[lbl,above] at (0.0,4.48) {结算后返回首页};
-
-  \node[draw,rounded corners=6pt,fill=blue!4,draw=blue!35!black,align=left,font=\scriptsize,text width=15.6cm]
-    at (0,-1.7)
-    {\textbf{图例}：绿色/橙色实线 = 已实现；灰色虚线 = 计划页面或返回/重开路径。\\
-     \textbf{核心交互（倾斜 + 按键）}：回中 $\to$ 倾斜选方向 $\to$ 继续倾斜选数量 $\to$
-     屏幕显示高亮预览 $\to$ KEY2 确认 / 板子回中取消。手指不接触棋盘，避免遮挡；
-     200\,ms 稳定窗口过滤误触。\\
-     \textbf{可恢复性}：预览可取消；返回首页/重开丢弃未提交预览；AI 预览 500\,ms 内可取消；
-     断线覆盖层不丢失当前页面上下文。\\
-     \textbf{首次使用目标}：不看说明书，3 分钟内完成一局（首页 $\to$ 人机 $\to$ 对局 $\to$ 结算）。};
 \end{tikzpicture}
 \end{document}

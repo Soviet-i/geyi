@@ -1,0 +1,25 @@
+{
+  "firmware": "main.bin",
+  "size": 1090260,
+  "lcpu_size": 6384,
+  "protocol": 4,
+  "worktree_dirty": true,
+  "sha256": {
+    "src/geyi_game.c": "3faec9201742a9fae6ba93f93fd9824b299ae5e756f1582ef55b23d35217fe51",
+    "src/geyi_game.h": "a1ab419a2272e279d85e5bb03d5c0ec3b72d0fb4833f9f1b3056dd705b7b5926",
+    "src/geyi_input.c": "11c67f32a57c33d8defd1e6728c573415ffec82bb493f5da81b5ef3df717c90f",
+    "src/geyi_input.h": "5a3fb7ca2aac34172450b3c5202ad9da0c0f5c3f913d466cb495dc4ddce1c27b",
+    "src/geyi_board.c": "1febdef879f8194eabf8f956e4db08c03f203096169d81ac86dd0ee0e31d3ec2",
+    "src/geyi_ui.c": "5debe787798eb49a590d555a399320e18052e5785ca5ece950857c42143eb029",
+    "src/geyi_ui.h": "cef6e37fe053e68159a3225c7e7973412b213e3ccdfefa5289fbf57f9ad4e498",
+    "src/geyi_ai.c": "f847f1ce91f13781bf3f12aed367d2eb68d470375233a74567c94ce684b28245",
+    "src/geyi_net_proto.c": "cde510925f39338a5bba8377c8c07f1490e6a815d3f763e9c34390a2fd9ef3a1",
+    "src/geyi_net_proto.h": "2995f83b6dcb0e4a3c4e6a274eb6558779f973d9f18aa9ee814a88d65757d808",
+    "src/geyi_net_room.c": "6cf7e5aee3b884c4a3ff469038967f5e3891c587b92381a64183f342b4ce8dc2",
+    "src/geyi_net_room.h": "f81532b3738a1ee2bdf8d33a2244a480915372be40d7071d620778c3309e0a4a",
+    "src/geyi_net_app.c": "4e42403d58e44d90e23de1866da2327193f74d0b0fca55484fb7096a5c22cfb1",
+    "src/geyi_net_app.h": "62aee85065e0deff440b8767b2860bebd60142794f2d6c4d69deb1704475741c",
+    "project/build_sf32lb52-lchspi-ulp_hcpu/main.bin": "bd9710248faf963cb22f4c9cf7f0a69c0beda24dfa9bc115e1cdba47776c4a1e"
+  },
+  "git_head": "a953ddbb5e15cf35189d7d755cee01b3d8fc6da3"
+}

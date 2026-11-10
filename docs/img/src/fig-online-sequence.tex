@@ -2,57 +2,67 @@
 \input{_preamble}
 \begin{document}
 \begin{tikzpicture}[x=1cm,y=1cm,
-  life/.style={draw,rounded corners=4pt,minimum width=2.6cm,minimum height=0.6cm,align=center,font=\small},
-  msg/.style={font=\scriptsize,align=center,fill=white,inner sep=1.5pt,text width=4.6cm},
-  phase/.style={font=\scriptsize,anchor=east,text=black!60}]
+  life/.style={font=\small\bfseries, text=ink},
+  msg/.style={-{Latex[length=2.0mm]}, draw=ink!75, line width=0.7pt},
+  grp/.style={font=\scriptsize\bfseries, text=cgray!85, anchor=east}]
 
-  \node[life,fill=red!6,draw=red!55!black] (h) at (-6,0.4) {\textbf{房主}};
-  \node[life,fill=blue!6,draw=blue!50!black] (o) at (0,0.4) {\textbf{对手}};
-  \node[life,fill=orange!8,draw=orange!55!black] (s) at (6,0.4) {\textbf{旁观}};
-  \foreach \x in {-6,0,6} \draw[dashed,gray!55] (\x,-0.1) -- (\x,-12.6);
+  % 三条生命线
+  \foreach \x/\n in {-5.00/房主, 0.00/对手, 5.00/旁观} {
+    \node[life] at (\x,0.55) {\n};
+    \draw[dashed, draw=ink!30] (\x,0.25) -- (\x,-10.90);
+  }
 
-  % 阶段标签
-  \node[phase] at (-8.6,-3.3) {加入 / 准备};
-  \node[phase] at (-8.6,-7.3) {对局};
-  \node[phase] at (-8.6,-10.3) {断线 / 恢复};
-  \node[phase] at (-8.6,-12.0) {结算};
+  % 分组
+  \node[grp] at (-7.20,-1.30) {加入与准备};
+  \node[grp] at (-7.20,-4.90) {对局同步};
+  \node[grp] at (-7.20,-6.60) {预览路由};
+  \node[grp] at (-7.20,-8.50) {断线重连};
+  \node[grp] at (-7.20,-10.25) {结算};
 
   % 加入与准备
-  \draw[arr] (-6,-1.2) -- node[msg,above]{ADV\_ROOM（广播，1\,s）} (0,-1.2);
-  \draw[arr] (-6,-1.2) -- (6,-1.2);
-  \draw[arr] (0,-2.0) -- node[msg,above]{JOIN\_REQ} (-6,-2.0);
-  \draw[arr] (-6,-2.7) -- node[msg,above]{JOIN\_ACK(token, seat)} (0,-2.7);
-  \draw[arr] (6,-3.4) -- node[msg,above]{JOIN\_REQ（旁观）} (-6,-3.4);
-  \draw[arr] (-6,-4.1) -- node[msg,above]{JOIN\_ACK(spectator, room state)} (6,-4.1);
-  \draw[arr] (0,-4.8) -- node[msg,above]{READY} (-6,-4.8);
-  \draw[arr] (-6,-5.5) -- node[msg,above]{ROOM\_STATE（双方 ready）} (0,-5.5);
-  \draw[arr] (-6,-5.5) -- (6,-5.5);
-  \draw[arr] (-6,-6.2) -- node[msg,above]{START(colors, seed)} (0,-6.2);
-  \draw[arr] (-6,-6.2) -- (6,-6.2);
+  \draw[darr] (-5.00,-0.45) -- node[lab, above]{ADV\_ROOM（广播 1 s）} (0.00,-0.45);
+  \draw[darr] (-5.00,-0.45) -- (5.00,-0.45);
+  \draw[msg] (0.00,-1.10) -- node[lab, above]{JOIN\_REQ} (-5.00,-1.10);
+  \draw[msg] (-5.00,-1.50) -- node[lab, above]{JOIN\_ACK（token / 席位）} (0.00,-1.50);
+  \draw[msg] (5.00,-2.00) -- node[lab, above]{JOIN\_REQ（旁观）} (-5.00,-2.00);
+  \draw[msg] (-5.00,-2.40) -- node[lab, above]{JOIN\_ACK（只读）} (5.00,-2.40);
+  \draw[msg] (0.00,-2.85) -- node[lab, above]{READY} (-5.00,-2.85);
+  \draw[msg] (-5.00,-3.25) -- node[lab, above]{ROOM\_STATE} (0.00,-3.25);
+  \draw[msg] (-5.00,-3.25) -- (5.00,-3.25);
+  \draw[msg] (-5.00,-3.70) -- node[lab, above]{START（颜色 / 种子）} (0.00,-3.70);
+  \draw[msg] (-5.00,-3.70) -- (5.00,-3.70);
 
-  % 对局
-  \draw[arr] (0,-6.9) -- node[msg,above]{MOVE\_REQ(seq, dir, count)} (-6,-6.9);
-  \draw[arr] (-6,-7.6) -- node[msg,above]{SNAPSHOT(seq, 全量状态，广播)} (0,-7.6);
-  \draw[arr] (-6,-7.6) -- (6,-7.6);
-  \draw[arr] (0,-8.3) -- node[msg,above]{PREVIEW(dir, count)} (-6,-8.3);
-  \draw[arr] (-6,-9.0) -- node[msg,above]{PREVIEW（只转发旁观）} (6,-9.0);
-  \node[font=\scriptsize,text=red!60!black,anchor=west] at (0.2,-9.0) {对手不接收};
+  % 对局同步
+  \draw[msg] (0.00,-4.55) -- node[lab, above]{MOVE\_REQ（seq / 方向 / 数量）} (-5.00,-4.55);
+  \draw[msg] (-5.00,-5.05) -- node[lab, above]{SNAPSHOT（全量 / seq）} (0.00,-5.05);
+  \draw[msg] (-5.00,-5.05) -- (5.00,-5.05);
 
-  % 断线与恢复
-  \draw[red,dashed,thick] (-6,-10.0) -- (0,-10.0);
-  \node[red,font=\small] at (0,-10.0) {$\times$};
-  \node[msg,above] at (-3,-9.85) {BLE 断开（10\,s 重连窗口）};
-  \draw[<->,thick,dashed] (0,-10.7) -- node[msg,below]{REJOIN(token, last\_seq) / RESUME(SNAPSHOT)} (-6,-10.7);
+  % 预览路由：对手收到的是“被拦截”的虚线，旁观收到实线
+  \draw[msg, draw=cpurple!75!black] (0.00,-6.05)
+    -- node[lab, above, text=cpurple!75!black]{PREVIEW} (-5.00,-6.05);
+  \draw[darr, draw=ink!35] (-5.00,-6.35) -- (-0.20,-6.35);
+  \node[font=\small\bfseries, text=cred] at (0.00,-6.35) {$\times$};
+  \node[lab, text=cred, right] at (0.10,-6.35) {不转发给对手};
+  \draw[msg, draw=cpurple!75!black] (-5.00,-6.75)
+    -- node[lab, above, text=cpurple!75!black]{PREVIEW（仅转发旁观）} (5.00,-6.75);
+
+  % 断线重连
+  \node[font=\small\bfseries, text=cred] at (0.00,-7.35) {$\times$};
+  \node[lab, text=cred, left] at (-0.10,-7.35) {BLE 断开};
+  \draw[msg] (0.00,-8.05) -- node[lab, above]{REJOIN（token / last\_seq）} (-5.00,-8.05);
+  \draw[msg] (-5.00,-8.50) -- node[lab, above]{RESUME（快照）} (0.00,-8.50);
 
   % 结算
-  \draw[arr] (-6,-11.6) -- node[msg,above]{RESULT（胜负 + 原因）} (0,-11.6);
-  \draw[arr] (-6,-11.6) -- (6,-11.6);
+  \draw[msg] (-5.00,-9.55) -- node[lab, above]{RESULT（胜负 / 原因）} (0.00,-9.55);
+  \draw[msg] (-5.00,-9.55) -- (5.00,-9.55);
+  \draw[msg] (-5.00,-10.05) -- node[lab, above]{ROOM\_STATE（回 WAIT）} (0.00,-10.05);
+  \draw[msg] (-5.00,-10.05) -- (5.00,-10.05);
 
-  \node[draw,rounded corners=5pt,fill=black!2,draw=black!35,align=left,font=\scriptsize,text width=15.2cm]
-    at (0,-13.2)
-    {\textbf{协议约束}：所有消息带 \texttt{version} 与单调 \texttt{seq}；重复包按 \texttt{seq} 幂等；
-     非法/过期/未知版本拒绝并给原因。\\
-     \textbf{隐私}：\texttt{PREVIEW} 只发房主，房主只转发给旁观者；对手不接收、不回传。
-     \textbf{恢复}：断线窗口内不判负；超时由在场方判缺席方负；房主掉线由客方 10\,s 重试后判负。};
+  % 说明
+  \node[draw=ink!20, fill=ink!3, rounded corners=3pt, align=left,
+        font=\scriptsize, text=ink!85, inner sep=4pt] at (-1.00,-11.45)
+    {所有消息带 version 与单调 seq；重复包按 seq 幂等，旧包丢弃。\\
+     断线后 10 s 内 REJOIN 不判负；超时由在场方判缺席方负。};
+
 \end{tikzpicture}
 \end{document}

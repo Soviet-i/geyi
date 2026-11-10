@@ -9,7 +9,10 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8',errors='replace')
 
 root=Path(__file__).resolve().parents[1]
-sdk=Path(os.environ.get('SIFLI_SDK',r'D:\sifli\SiFli-SDK'))
+_sdk=[]
+if os.environ.get('SIFLI_SDK'):_sdk.append(Path(os.environ['SIFLI_SDK']))
+_sdk+=[Path(r'D:\233\SiFli-SDK\v2.5.1'),Path(r'D:\sifli\SiFli-SDK')]
+sdk=next((p for p in _sdk if (p/'external/lvgl_v9/lvgl.h').exists()),_sdk[-1])
 lvgl=sdk/'external/lvgl_v9'
 out=root/'build/desktop'
 out.mkdir(parents=True,exist_ok=True)
@@ -32,7 +35,40 @@ for candidate in candidates:
         found=candidate/'VC/Auxiliary/Build/vcvars64.bat'
     if found:
         vcvars=found; break
-if not vcvars or not (lvgl/'lvgl.h').exists():raise SystemExit('MSVC or SDK LVGL v9 not found')
+if not (lvgl/'lvgl.h').exists():raise SystemExit('SDK LVGL v9 not found')
+app=[root/'src/geyi_game.c',root/'src/geyi_feedback.c',root/'src/geyi_ai.c',
+     root/'src/geyi_ai_task.c',root/'src/geyi_config.c',root/'src/geyi_param_ui.c',
+     root/'src/geyi_net_proto.c',root/'src/geyi_net_room.c',root/'src/geyi_net_link.c',
+     root/'src/geyi_net_app.c',root/'src/geyi_nav.c',
+     root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',root/'tools/geyi_desktop.c']
+if not vcvars:
+    # 没装 VS2022 时用 gcc/clang 回退；Windows 桌面驱动仍用 Win32 GDI，不引入 SDL。
+    gcc=shutil.which('gcc') or shutil.which('clang')
+    if not gcc:raise SystemExit('MSVC/gcc/clang not found')
+    flags=['-std=c11','-O1','-DLV_KCONFIG_IGNORE','-DLV_CONF_INCLUDE_SIMPLE',
+           '-I'+str(root/'tools/desktop'),'-I'+str(root/'src'),'-I'+str(lvgl)]
+    def gcc_obj(p,extra=()):
+        obj=out/(hashlib.sha256(str(p).encode()).hexdigest()[:16]+'.o')
+        if not obj.exists() or obj.stat().st_mtime<p.stat().st_mtime:
+            r=subprocess.run([gcc,*flags,*extra,'-c',str(p),'-o',str(obj)],cwd=out,capture_output=True,text=True)
+            if r.returncode:raise RuntimeError(r.stdout+r.stderr)
+        return obj
+    try:
+        sources=sorted((lvgl/'src').rglob('*.c'))
+        print('Compiling',len(sources),'SDK LVGL sources with',gcc,'...',flush=True)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+            objs=list(pool.map(gcc_obj,sources))
+        objs+=[gcc_obj(p,('-DGEYI_WITH_LVGL',)) for p in app]
+        r=subprocess.run([gcc,*[str(o) for o in objs],'-o',str(executable),
+                          '-luser32','-lgdi32','-mwindows'],cwd=out,capture_output=True,text=True)
+        if r.returncode:raise RuntimeError(r.stdout+r.stderr)
+        r=subprocess.run([str(executable),'--test'],cwd=out,capture_output=True,timeout=60)
+        logs.append(r.stdout+r.stderr);print(logs[-1])
+        if r.returncode:raise RuntimeError('UI tests failed, exit '+str(r.returncode))
+    except Exception as exc:
+        logs.append(str(exc));print(str(exc));(out/'desktop-test.log').write_text('\n'.join(logs),encoding='utf-8');raise SystemExit(1)
+    (out/'desktop-test.log').write_text('\n'.join(logs),encoding='utf-8')
+    print('Ready:',executable);raise SystemExit(0)
 result=subprocess.run('cmd.exe /d /s /c "call "'+str(vcvars)+'" >nul && set"',capture_output=True)
 if result.returncode:raise SystemExit(result.stderr.decode(errors='replace'))
 env=os.environ.copy()
@@ -64,11 +100,6 @@ try:
     response.write_text('\n'.join('"'+str(p)+'"' for p in objs),encoding='utf-8-sig')
     r=subprocess.run([lib,'/nologo','/OUT:'+str(out/'lvgl.lib'),'@'+str(response)],cwd=out,env=env,capture_output=True)
     if r.returncode:raise RuntimeError(r.stdout.decode('mbcs',errors='replace'))
-    app=[root/'src/geyi_game.c',root/'src/geyi_feedback.c',root/'src/geyi_ai.c',
-         root/'src/geyi_ai_task.c',root/'src/geyi_config.c',root/'src/geyi_param_ui.c',
-         root/'src/geyi_net_proto.c',root/'src/geyi_net_room.c',root/'src/geyi_net_link.c',
-         root/'src/geyi_net_app.c',
-         root/'src/geyi_ui.c',root/'src/geyi_font_cn16.c',root/'tools/geyi_desktop.c']
     app_objects=[compile_one(p) for p in app]
     command=[cc,'/nologo',*[str(p) for p in app_objects],str(out/'lvgl.lib'),
              '/Fe:'+str(executable),'/link','/SUBSYSTEM:WINDOWS','user32.lib','gdi32.lib']

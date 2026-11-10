@@ -371,7 +371,7 @@ static int setup_spawn_board(GyGame *g, int interval)
 static int test_simulate_respects_spawn_interval(void)
 {
     GyGame g, next;
-    GyMove m = {GY_RIGHT, 1};
+    GyMove m = {GY_RIGHT, 1, 0};
 
     /* 间隔 3：第 1 次有效移动不生成 */
     CHECK(setup_spawn_board(&g, 3));
@@ -432,7 +432,7 @@ static int test_input_buffer_wired(void)
 
     /* 行为验证：纵轴 2000 已稳定后，用横轴 2100（强 5%）试探。
      * 阈值 0%  → 应当切换到横轴；阈值 50% → 应当保持原方向。
-     * 注意：输入模块要求先"回中"解除 latched（见 gy_input_selftest 的做法），
+     * 注意：输入模块要求先"回中"解除 locked（见 gy_input_selftest 的做法），
      * 所以每段都以水平样例开头，不能直接上倾斜。 */
     {
         int dir_switch, dir_hold;
@@ -441,20 +441,20 @@ static int test_input_buffer_wired(void)
         gy_input_reset(&s);
         gy_input_configure(&s, 0, 10);
         t = 0;
-        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a);        /* 回中，解除 latched */
-        for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a);    /* 稳定指向 UP */
+        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a, 0xF);        /* 回中，解除 locked */
+        for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a, 0xF);    /* 稳定指向 UP */
         CHECK(s.direction == GY_UP);
-        for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a); /* 指向 RIGHT，仅强 5% */
+        for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a, 0xF); /* 指向 RIGHT，仅强 5% */
         dir_switch = s.direction;
 
         /* 阈值 50%：完全相同的输入应保持原方向 */
         gy_input_reset(&s);
         gy_input_configure(&s, 50, 10);
         t = 0;
-        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a);
-        for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a);
+        for (; t <= 30; t += 5)  gy_input_update(&s, 0, 0, 0, t, a, 0xF);
+        for (; t <= 280; t += 5) gy_input_update(&s, 0, -2000, 0, t, a, 0xF);
         CHECK(s.direction == GY_UP);
-        for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a);
+        for (; t <= 580; t += 5) gy_input_update(&s, 2100, -2000, 0, t, a, 0xF);
         dir_hold = s.direction;
 
         CHECK(dir_switch == GY_RIGHT);      /* 阈值 0 时切走 */

@@ -2,78 +2,64 @@
 \input{_preamble}
 \begin{document}
 \begin{tikzpicture}[x=1cm,y=1cm]
-  % 三条泳道（右侧留出 UI，左侧放泳道名）
-  \draw[rounded corners=6pt,fill=green!3,draw=green!35!black] (-8.0,3.55) rectangle (8.0,1.95);
-  \draw[rounded corners=6pt,fill=blue!3,draw=blue!30!black] (-8.0,1.75) rectangle (8.0,0.10);
-  \draw[rounded corners=6pt,fill=orange!3,draw=orange!35!black] (-8.0,-0.10) rectangle (8.0,-1.70);
-  \node[anchor=east,font=\small\bfseries,text=green!35!black] at (-8.15,2.75) {输入与交互};
-  \node[anchor=east,font=\small\bfseries,text=blue!40!black] at (-8.15,0.85) {规则与决策};
-  \node[anchor=east,font=\small\bfseries,text=orange!50!black] at (-8.15,-0.85) {数据、反馈与联机};
 
-  % 输入与交互
-  \node[existing,minimum width=2.2cm,minimum height=0.85cm] (sensor) at (-6.6,2.75)
-    {\textbf{IMU / 按键}\\ \scriptsize 20\,ms 采样};
-  \node[existing,minimum width=2.3cm,minimum height=0.85cm] (ism) at (-3.3,2.75)
-    {\textbf{输入状态机}\\ \scriptsize 200\,ms 稳定 + 滞回};
-  \node[existing,minimum width=2.2cm,minimum height=0.85cm] (prev) at (0.0,2.75)
-    {\textbf{本地预览}\\ \scriptsize 方向 / 数量 / 高亮};
-  \node[existing,minimum width=1.8cm,minimum height=0.85cm] (confirm) at (3.2,2.75)
-    {\textbf{确认事件}\\ \scriptsize commit};
-  \node[ui,minimum width=2.2cm,minimum height=0.85cm] (render) at (6.5,2.75)
-    {\textbf{UI 渲染}\\ \scriptsize LVGL 主线程};
+  % 两条数据带
+  \draw[band=cgreen] (-8.6,1.55) rectangle (7.7,3.25);
+  \draw[band=corange] (-8.6,-0.35) rectangle (7.7,1.35);
+  \node[anchor=east, font=\scriptsize\bfseries, text=cgreen!45!black] at (-8.7,2.90) {交互主线};
+  \node[anchor=east, font=\scriptsize\bfseries, text=corange!55!black] at (-8.7,1.00) {旁路与外部};
 
-  \draw[arr] (sensor) -- node[lbl,above]{角度} (ism);
-  \draw[arr] (ism) -- node[lbl,above]{事件} (prev);
-  \draw[arr] (prev) -- node[lbl,above]{GyMove} (confirm);
+  % 交互主线
+  \node[ext, minimum width=1.90cm] (sensor) at (-7.45,2.40)
+    {\textbf{IMU / KEY2}\\[-1pt]\scriptsize 20 ms 采样};
+  \node[core, minimum width=1.90cm] (input) at (-5.00,2.40)
+    {\textbf{输入状态机}\\[-1pt]\scriptsize 200 ms 稳定};
+  \node[core, minimum width=1.70cm] (preview) at (-2.45,2.40)
+    {\textbf{本地预览}\\[-1pt]\scriptsize 方向 / 数量};
+  \node[core, minimum width=1.60cm] (confirm) at (0.00,2.40)
+    {\textbf{确认}\\[-1pt]\scriptsize KEY2 / 触摸};
+  \node[core, minimum width=1.90cm] (game) at (2.55,2.40)
+    {\textbf{规则核心}\\[-1pt]\scriptsize 预览 / 提交 / 结算};
+  \node[ui, minimum width=1.70cm] (ui) at (5.75,2.40)
+    {\textbf{UI 渲染}\\[-1pt]\scriptsize LVGL 主线程};
 
-  % 规则与决策
-  \node[existing,minimum width=2.8cm,minimum height=1.0cm] (game) at (-3.0,0.85)
-    {\textbf{规则核心 \texttt{gy\_game.c}}\\ \scriptsize 棋盘 / 金币 / 回合 / RNG\\ \scriptsize revision / outcome};
-  \node[existing,minimum width=2.4cm,minimum height=1.0cm] (ai) at (1.0,0.85)
-    {\textbf{AI 任务}\\ \scriptsize \texttt{gy\_ai\_task.c}\\ \scriptsize 快照 $\to$ 搜索 $\to$ 动作};
-  \node[existing,minimum width=2.0cm,minimum height=0.85cm] (aiprev) at (5.6,0.85)
-    {\textbf{AI 预览}\\ \scriptsize 500\,ms 后提交};
+  \draw[arr] (sensor) -- (input);
+  \draw[arr] (input) -- node[lab, above]{选择} (preview);
+  \draw[arr] (preview) -- node[lab, above]{预览} (confirm);
+  \draw[arr] (confirm) -- node[lab, above]{动作} (game);
+  \draw[arr] (game) -- node[lab, above]{状态} (ui);
 
-  \draw[arr] (confirm.south) -- (3.2,1.90) -- (-3.0,1.90) -- (game.north);
-  \node[lbl,left] at (3.1,2.10) {commit};
-  \draw[arr] (game.north) -- (0.0,1.75) -- (prev.south);
-  \node[lbl,below] at (-1.4,1.68) {可见状态};
-  \draw[arr] (game) -- node[lbl,above]{快照} (ai);
-  \draw[arr] (ai) -- node[lbl,above]{GyMove} (aiprev);
-  \draw[arr] (aiprev.north) -- (5.6,1.90) -- (3.2,1.90) -- (confirm.south);
-  \node[lbl,left] at (5.5,1.55) {自动提交};
+  % 旁路
+  \node[core, minimum width=2.20cm] (param) at (-6.70,0.45)
+    {\textbf{参数配置}\\[-1pt]\scriptsize 10 项 / 三模式};
+  \node[core, minimum width=1.65cm] (fb) at (0.10,0.45)
+    {\textbf{RGB 反馈}\\[-1pt]\scriptsize 行动 / 终局};
+  \node[core, minimum width=2.15cm] (ai) at (2.55,0.45)
+    {\textbf{AI 任务}\\[-1pt]\scriptsize 快照 $\to$ 动作};
+  \node[core, minimum width=1.85cm] (net) at (5.75,0.45)
+    {\textbf{联机 net\_room}\\[-1pt]\scriptsize 房主权威 / seq};
 
-  % 规则核心到 UI 的可见快照总线
-  \draw[arr] (game.east) -- (-1.0,0.85) -- (-1.0,1.85) -- (6.5,1.85) -- (render.south);
-  \node[lbl,above] at (2.4,1.88) {GySnapshot};
+  % 规则核心与 AI
+  \draw[arr] ([xshift=-0.50cm]game.south) -- node[lab, left]{快照} ([xshift=-0.50cm]ai.north);
+  \draw[arr] ([xshift=0.50cm]ai.north) -- node[lab, right]{动作} ([xshift=0.50cm]game.south);
 
-  % 数据、反馈与联机
-  \node[existing,minimum width=2.4cm,minimum height=0.95cm] (cfg) at (-5.9,-0.85)
-    {\textbf{参数配置}\\ \scriptsize 10 项 / 三模式\\ \scriptsize 新开一局写入 game/input/AI};
-  \node[planned,minimum width=2.5cm,minimum height=0.95cm] (hist) at (-2.0,-0.85)
-    {\textbf{历史 / 计时（计划）}\\ \scriptsize 最近 $N$ 局\\ \scriptsize result/moves/ms/ts};
-  \node[existing,minimum width=2.0cm,minimum height=0.95cm] (fb) at (1.2,-0.85)
-    {\textbf{RGB 反馈}\\ \scriptsize 行动 / 终局\\ \scriptsize 120\,ms / 3 闪};
-  \node[planned,minimum width=2.8cm,minimum height=0.95cm] (net) at (4.8,-0.85)
-    {\textbf{联机 net\_room（计划）}\\ \scriptsize 房主权威 / 全量快照\\ \scriptsize seq 幂等 / 10\,s 重连};
+  % 规则核心到反馈与联机
+  \draw[arr] (1.55,1.90) -- (1.55,1.15) -- (0.10,1.15) -- (fb.north);
+  \node[lab, anchor=east] at (0.45,1.35) {反馈};
+  \draw[arr] (3.50,2.40) -- (4.60,2.40) -- (4.60,0.85)
+    -- (5.75,0.85) -- (net.north);
 
-  % 规则核心向数据层发布的事件总线
-  \draw[thick] (game.south) -- (-3.0,-0.15) -- (4.8,-0.15);
-  \draw[arr] (-2.0,-0.15) -- (hist.north);
-  \draw[arr] (1.2,-0.15) -- (fb.north);
-  \draw[arr] (4.8,-0.15) -- (net.north);
-  \node[font=\tiny,fill=white,inner sep=0.3pt] at (-2.5,-0.04) {终局};
-  \node[font=\tiny,fill=white,inner sep=0.3pt] at (0.7,-0.04) {行动};
-  \node[font=\tiny,fill=white,inner sep=0.3pt] at (3.9,-0.04) {权威};
-  % 联机快照回到 UI（虚线，表示非本地权威状态）
-  \draw[arr,darr] (net.north) -- (4.2,-0.15) -- (4.2,1.80) -- (6.5,1.80) -- (render.south);
-  \node[lbl,left] at (4.15,0.55) {快照 / 事件};
+  % 参数在开局时写入 input / AI / game（preview 不是独立配置对象）
+  \draw[darr, draw=cblue!60!black] (param.south) -- (-6.70,-0.85)
+    -- (3.85,-0.85) -- (3.85,2.40) -- (game.east);
+  \draw[darr, draw=cblue!60!black] (-5.00,-0.85) -- (-5.00,-0.10) -- (input.south);
+  \draw[darr, draw=cblue!60!black] (2.55,-0.85) -- (2.55,-0.10) -- (ai.south);
+  \node[lab, anchor=north west] at (-3.90,-0.92) {参数（新开一局生效）};
 
-  % 数据格式注记
-  \node[font=\scriptsize,align=left,anchor=north west,text width=15.6cm] at (-8.0,-1.80)
-    {\textbf{关键数据结构}（带 * 为计划类型）：\texttt{GyInputEvent\{dir,count,confirm\}}；
-     \texttt{GyMove\{dir,count\}}；\texttt{GySnapshot*\{seq,cells[8][8],coins,turn,outcome\}}；
-     \texttt{GyHistory*\{result,moves,duration\_ms,timestamp\}}。\\
-     \textbf{线程约束}：LVGL 只在主线程；IMU 线程 20\,ms 发布快照；AI 线程只返回动作；网络 RX 线程只入队事件。};
+  % 图例
+  \node[core, minimum width=1.10cm, minimum height=0.38cm, font=\scriptsize] at (-6.60,-1.45) {业务模块};
+  \node[ui, minimum width=0.95cm, minimum height=0.38cm, font=\scriptsize] at (-5.15,-1.45) {界面};
+  \node[ext, minimum width=1.10cm, minimum height=0.38cm, font=\scriptsize] at (-3.65,-1.45) {输入/外部};
+
 \end{tikzpicture}
 \end{document}

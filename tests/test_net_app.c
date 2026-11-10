@@ -732,6 +732,295 @@ static int test_expired_seat_not_spectator(void)
     return 0;
 }
 
+static int test_spectator_sees_guest_disconnect(void)
+{
+    GyNetRoom host;
+    GyNetRoomState s;
+    GyNetMsg m;
+    uint32_t token = 0;
+    uint8_t color = GY_NET_COLOR_NONE;
+
+    gy_net_room_init_host(&host, 0x2024, 0, 2);
+    CHECK(gy_net_room_join(&host, GY_NET_ROLE_PLAYER, 0x2222, 0, &token, &color) ==
+          GY_NET_OK);
+    gy_net_room_state(&host, &s);
+    CHECK(s.seat_online == 0x03);
+
+    /* 模拟旁观者的客户端镜像：只通过 ROOM_STATE 获知座位状态。 */
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_SPECTATOR;
+    g.local_color = GY_NET_COLOR_NONE;
+    g.room_id = s.room_id;
+    gy_net_room_init_client(&g.room, s.room_id, 0);
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(gy_net_app_seat_online(GY_NET_COLOR_RED) == 1);
+    CHECK(gy_net_app_seat_online(GY_NET_COLOR_BLUE) == 1);
+    CHECK(gy_net_app_offline_seat() == -1);
+
+    /* 房主感知客席断线并广播：旁观者必须得到蓝方离线/倒计时。 */
+    CHECK(gy_net_room_disconnect_token(&host, token, 1000) == GY_NET_OK);
+    gy_net_room_state(&host, &s);
+    CHECK(s.seat_online == 0x01);
+    CHECK(s.seat_reconnect_s[GY_NET_COLOR_BLUE] == 10);
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(gy_net_app_seat_online(GY_NET_COLOR_RED) == 1);
+    CHECK(gy_net_app_seat_online(GY_NET_COLOR_BLUE) == 0);
+    CHECK(gy_net_app_offline_seat() == GY_NET_COLOR_BLUE);
+    CHECK(gy_net_app_seat_reconnect_seconds(GY_NET_COLOR_BLUE) == 10);
+    CHECK(gy_net_app_remote_reconnect_seconds() == 10);
+
+    /* 房主 REJOIN 后 seq 必须前进，旁观者才能应用“恢复在线”。 */
+    CHECK(gy_net_room_rejoin(&host, token, 0, 5000, &color) == GY_NET_OK);
+    gy_net_room_state(&host, &s);
+    CHECK(s.seat_online == 0x03);
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(gy_net_app_seat_online(GY_NET_COLOR_BLUE) == 1);
+    CHECK(gy_net_app_offline_seat() == -1);
+    CHECK(gy_net_app_remote_reconnect_seconds() == 0);
+    return 0;
+}
+
+static int test_spectator_preview_cleared_on_phase(void)
+{
+    GyNetRoomState s;
+    GyNetSnapshot snap;
+    GyGame board;
+    GyNetMsg m;
+
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_SPECTATOR;
+    g.room_id = 0x2025;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    g.preview_valid[GY_NET_COLOR_RED] = 1;
+    g.preview_valid[GY_NET_COLOR_BLUE] = 1;
+    g.placing = 1;
+    g.place_row = 2;
+    g.place_col = 2;
+    g.pending_move = 1;
+
+    memset(&s, 0, sizeof(s));
+    s.phase = GY_NET_PHASE_RESULT;
+    s.host_color = GY_NET_COLOR_RED;
+    s.guest_color = GY_NET_COLOR_BLUE;
+    s.player_count = 2;
+    s.room_id = g.room_id;
+    s.seq = 1;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.preview_valid[GY_NET_COLOR_RED] == 0);
+    CHECK(g.preview_valid[GY_NET_COLOR_BLUE] == 0);
+
+    g.preview_valid[GY_NET_COLOR_RED] = 1;
+    g.preview_valid[GY_NET_COLOR_BLUE] = 1;
+    memset(&snap, 0, sizeof(snap));
+    CHECK(gy_init(&board, gy_default_config(), 1));
+    snap.game = board;
+    snap.seq = 10;
+    CHECK(gy_net_pack_snapshot(&m, &snap) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.preview_valid[GY_NET_COLOR_RED] == 0);
+    CHECK(g.preview_valid[GY_NET_COLOR_BLUE] == 0);
+
+    /* RESULT 也要清掉放兵/pending，避免结算后残留旧意图。 */
+    {
+        GyNetResult r;
+        g.preview_valid[GY_NET_COLOR_RED] = 1;
+        g.placing = 1; g.place_row = 2; g.place_col = 2;
+        g.pending_move = 1;
+        memset(&r, 0, sizeof(r));
+        r.outcome = GY_RED_WIN;
+        r.seq = 11;
+        CHECK(gy_net_pack_result(&m, &r) == GY_NET_OK);
+        client_process(&m);
+        CHECK(g.placing == 0 && g.place_row == -1 && g.place_col == -1);
+        CHECK(g.pending_move == 0);
+        CHECK(g.preview_valid[GY_NET_COLOR_RED] == 0);
+    }
+    return 0;
+}
+
+static int test_starting_countdown_not_reset_by_seq(void)
+{
+    GyNetRoomState s;
+    GyNetMsg m;
+
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.room_id = 0x2026;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    memset(&s, 0, sizeof(s));
+    s.phase = GY_NET_PHASE_STARTING;
+    s.host_color = GY_NET_COLOR_RED;
+    s.guest_color = GY_NET_COLOR_BLUE;
+    s.player_count = 2;
+    s.host_ready = 1;
+    s.guest_ready = 1;
+    s.room_id = g.room_id;
+    s.seq = 1;
+    g.now = 1000;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.room.view.phase_since_ms == 1000);
+    /* STARTING 中 REJOIN 让 seq++；不能把 3s 倒计时重置为 3。 */
+    s.seq = 2;
+    g.now = 2000;
+    CHECK(gy_net_pack_room_state(&m, &s) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.room.view.phase_since_ms == 1000);
+    CHECK(gy_net_app_countdown_seconds() == 2);
+    return 0;
+}
+
+/* 客方会话进入 PLAYING：直接喂一帧权威快照，避免测试依赖 BLE。 */
+static int setup_client_playing(uint32_t room_id)
+{
+    GyGame board;
+    GyNetSnapshot snap;
+    GyNetMsg m;
+
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_RED;
+    g.room_id = room_id;
+    gy_net_room_init_client(&g.room, room_id, 0);
+    if (!gy_init(&board, gy_default_config(), 1)) return 1;
+    board.turn = GY_NET_COLOR_RED;
+    memset(&snap, 0, sizeof(snap));
+    snap.seq = 1;
+    snap.game = board;
+    if (gy_net_pack_snapshot(&m, &snap) != GY_NET_OK) return 1;
+    client_process(&m);
+    return g.room.view.phase == GY_NET_PHASE_PLAYING && g.room.view.game_valid ? 0 : 1;
+}
+
+static int test_guest_request_kind_fields(void)
+{
+    CHECK(setup_client_playing(0x2030) == 0);
+    /* 移动请求：只填移动字段；放兵字段的旧值（-1）不参与打包。 */
+    g.dir = GY_UP; g.count = 1; g.aim = 0;
+    g.placing = 0; g.place_row = -1; g.place_col = -1;
+    CHECK(guest_send_move_req() == 1);
+    CHECK(g.pending_move == 1);
+
+    /* 放兵请求：只填行/列；方向/数量/方位的旧值不参与打包。 */
+    g.pending_move = 0;
+    g.placing = 1;
+    g.place_row = g.room.view.game.config.size - 1;
+    g.place_col = 0;
+    g.dir = -1; g.count = -1; g.aim = -128;
+    CHECK(guest_send_move_req() == 1);
+    CHECK(g.pending_move == 1);
+    CHECK(g.placing == 0 && g.place_row == -1 && g.place_col == -1);
+
+    /* 越界移动参数必须拒绝，不能回绕成合法值。 */
+    g.pending_move = 0;
+    g.placing = 0;
+    g.dir = GY_UP; g.count = 1; g.aim = 101;
+    CHECK(guest_send_move_req() == 0);
+    CHECK(g.pending_move == 0);
+    return 0;
+}
+
+static int test_snapshot_preserves_placement(void)
+{
+    GyNetSnapshot snap;
+    GyNetMsg m;
+
+    CHECK(setup_client_playing(0x2031) == 0);
+    g.placing = 1; g.place_row = 2; g.place_col = 3;
+    g.last_preview_valid = 1;
+    g.preview_valid[GY_NET_COLOR_RED] = 1;
+    g.preview_valid[GY_NET_COLOR_BLUE] = 1;
+    g.pending_move = 1;
+    g.pending_move_at = 100;
+
+    /* 同 revision 的重同步快照：清 pending，但不能打断放兵/预览。 */
+    memset(&snap, 0, sizeof(snap));
+    snap.seq = g.room.view.seq + 1;
+    snap.game = g.room.view.game;
+    CHECK(gy_net_pack_snapshot(&m, &snap) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.pending_move == 0);
+    CHECK(g.placing == 1 && g.place_row == 2 && g.place_col == 3);
+    CHECK(g.last_preview_valid == 1);
+    CHECK(g.preview_valid[GY_NET_COLOR_RED] == 1);
+    CHECK(g.preview_valid[GY_NET_COLOR_BLUE] == 1);
+
+    /* 棋盘 revision 真的前进：必须清掉本地放兵/预览。 */
+    snap.seq++;
+    snap.game.revision++;
+    CHECK(gy_net_pack_snapshot(&m, &snap) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.placing == 0 && g.place_row == -1 && g.place_col == -1);
+    CHECK(g.last_preview_valid == 0);
+    CHECK(g.preview_valid[GY_NET_COLOR_RED] == 0);
+    CHECK(g.preview_valid[GY_NET_COLOR_BLUE] == 0);
+    return 0;
+}
+
+static int test_preview_clears_placement(void)
+{
+    CHECK(setup_client_playing(0x2032) == 0);
+    g.placing = 1; g.place_row = 1; g.place_col = 1;
+    g.last_preview_valid = 0;
+    CHECK(gy_net_app_preview(GY_UP, 1, 0) == 1);
+    CHECK(g.placing == 0 && g.place_row == -1 && g.place_col == -1);
+    return 0;
+}
+
+static int test_pending_move_timeout(void)
+{
+    CHECK(setup_client_playing(0x2033) == 0);
+    g.pending_move = 1;
+    g.pending_move_at = 100;
+    gy_net_app_tick(1099);
+    CHECK(g.pending_move == 1);
+    gy_net_app_tick(1100);
+    CHECK(g.pending_move == 0);
+    return 0;
+}
+
+static int test_rejoin_wait_does_not_send_stale_snapshot(void)
+{
+    GyNetRejoin rj;
+    GyNetMsg m;
+    uint32_t token;
+    int i, saw_snapshot = 0;
+
+    CHECK(setup_host(0x2034) == 0);
+    CHECK(host_join_player(1) == 0);
+    CHECK(host_ready(1, 1) == 0);
+    CHECK(host_starts() == 0);
+    token = g.room.seats[GY_NET_COLOR_BLUE].token;
+    CHECK(token != 0);
+
+    /* 模拟结算后回到 WAIT：棋盘已作废，但 view.game 仍是终局棋盘。 */
+    g.room.view.phase = GY_NET_PHASE_WAIT;
+    g.room.view.game_valid = 0;
+    g.room.view.game.outcome = GY_RED_WIN;
+    CHECK(gy_net_room_disconnect_token(&g.room, token, 1000) == GY_NET_OK);
+
+    app_test_tx_count = 0;
+    memset(&rj, 0, sizeof(rj));
+    rj.token = token;
+    rj.last_seq = g.room.view.seq;
+    CHECK(gy_net_pack_rejoin(&m, &rj) == GY_NET_OK);
+    feed_host(1, &m);
+    for (i = 0; i < app_test_tx_count; ++i)
+        if (app_test_tx[i] == GY_NET_SNAPSHOT) saw_snapshot = 1;
+    CHECK(!saw_snapshot);
+    CHECK(g.room.seats[GY_NET_COLOR_BLUE].connected == 1);
+    return 0;
+}
+
 int main(void)
 {
     if (test_swap_ready_and_move_color()) return 1;
@@ -762,6 +1051,14 @@ int main(void)
     if (test_starting_disconnect_releases_seat()) return 26;
     if (test_expired_seat_not_spectator()) return 28;
     if (test_side_relation_identity()) return 29;
+    if (test_spectator_sees_guest_disconnect()) return 30;
+    if (test_spectator_preview_cleared_on_phase()) return 31;
+    if (test_starting_countdown_not_reset_by_seq()) return 32;
+    if (test_guest_request_kind_fields()) return 33;
+    if (test_snapshot_preserves_placement()) return 34;
+    if (test_preview_clears_placement()) return 35;
+    if (test_pending_move_timeout()) return 36;
+    if (test_rejoin_wait_does_not_send_stale_snapshot()) return 37;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }

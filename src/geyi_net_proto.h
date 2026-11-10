@@ -14,8 +14,11 @@
 #include "geyi_game.h"
 
 /* v2：JOIN_REQ/JOIN_ACK/ROOM_STATE 增加 16-bit 玩家唯一 ID，
- * 用于房间页显示真实玩家名而不是对端不可知的“玩家/对手”。 */
-#define GY_NET_VERSION       2
+ * 用于房间页显示真实玩家名而不是对端不可知的“玩家/对手”。
+ * v3：ROOM_STATE 增加两个座位的在线位与断线剩余秒数，旁观者也能看到
+ * 房客断线/重连，不再只能由房主本地感知。
+ * v4：MOVE_REQ/PREVIEW 增加方位角 aim 与放兵行 row，房主按同一二维落点结算。 */
+#define GY_NET_VERSION       4
 #define GY_NET_MAGIC0        'G'
 #define GY_NET_MAGIC1        'Y'
 #define GY_NET_HEADER_SIZE   12
@@ -109,6 +112,8 @@ typedef struct {
     uint16_t guest_id;      /* guest_color 座位的玩家 ID；空位为 0 */
     uint32_t room_id;
     uint32_t seq;
+    uint8_t  seat_online;       /* bit0=红方座位在线，bit1=蓝方座位在线 */
+    uint8_t  seat_reconnect_s[2]; /* 0=在线/空位；1..10=剩余重连秒数 */
 } GyNetRoomState;
 
 typedef struct {
@@ -136,6 +141,8 @@ typedef struct {
     uint8_t  direction;     /* 移动方向 0..3 */
     uint8_t  count;         /* 移动数量 */
     uint8_t  column;        /* 放兵列 */
+    uint8_t  row;           /* 放兵行 */
+    int8_t   aim;           /* -100..100 横向方位比例 */
     uint32_t seq;
 } GyNetMoveReq;
 
@@ -155,6 +162,8 @@ typedef struct {
     uint8_t  direction;
     uint8_t  count;
     uint8_t  column;
+    uint8_t  row;
+    int8_t   aim;
     uint16_t indicator;     /* 指示点/受影响格摘要，具体编码由 UI 约定 */
     uint32_t seq;
 } GyNetPreview;
