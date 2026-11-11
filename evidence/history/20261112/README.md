@@ -14,6 +14,7 @@ python tools/build_desktop.py        # 桌面 LVGL 构建并跑 --test
 
 | 文件 | 内容 |
 |---|---|
+| `serial_boot.log` | **板端**启动日志（COM3，1000000 baud）：`history=PASS timer=PASS`、`[geyi:lcd] READY 390 x 450`、IMU `WHO_AM_I=6a`；固件 1,095,412 B / SHA256 `169A8BDE…EBCDFF6`，源码 `e94b99e1` |
 | `desktop-test.log` | 桌面 `--test` 输出，含 `TC-601~TC-606 history list/detail/clear and single record per match` 的 PASS 行 |
 | `history_empty.png` | 首页进入“历史记录”后的空状态（“暂无对局”） |
 | `history_list.png` | 一局结束后列表出现该局：`蓝方胜 单机 00:01` |
