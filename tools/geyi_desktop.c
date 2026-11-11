@@ -2,6 +2,8 @@
 #include <windows.h>
 #include "geyi_ui.h"
 #include "geyi_ai.h"
+#include "geyi_history.h"
+#include "geyi_timer.h"
 #include "geyi_net_app.h"
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
@@ -219,6 +221,44 @@ static int second_game_tests(void)
     puts("PASS: REQ-320-D second game tilt session stable");
     return 0;
 }
+static void history_tests(void)
+{
+    gy_history_clear();
+    check(gy_history_count()==0,"history empty after clear");
+    gy_ui_action(GY_UI_MODES);
+    gy_ui_action(GY_UI_SINGLE);
+    check(gy_ui_is_playing(),"single starts for the history case");
+    Sleep(1100);gy_ui_tick();
+    gy_ui_action(GY_UI_RESIGN);
+    check(gy_history_count()==1,"resign writes exactly one record");
+    {const GyRecord *r=gy_history_at(0);
+     check(r!=NULL,"newest record exists");
+     check(r->outcome==GY_BLUE_WIN,"record keeps the winner");
+     check(r->ended_by==GY_END_RED_RESIGN,"record keeps who resigned");
+     check(r->duration_ms>=1000,"record keeps measured duration");
+     check(r->mode==GY_MODE_SINGLE,"record keeps the mode");
+     check(r->size==6,"record keeps the board size");}
+    gy_ui_tick();
+    check(gy_history_count()==1,"finished match is recorded only once");
+    gy_ui_action(GY_UI_HOME);
+    gy_ui_action(GY_UI_HISTORY);
+    screenshot("history_list.bmp");
+    click(160,78);
+    screenshot("history_detail.bmp");
+    click(107,409);
+    check(gy_history_count()==1,"detail back keeps the record");
+    click(299,361);
+    check(gy_history_count()==1,"first clear press only asks for confirmation");
+    click(299,361);
+    check(gy_history_count()==0,"second clear press empties the history");
+    screenshot("history_empty.bmp");
+    click(195,412);
+    gy_ui_action(GY_UI_MODES);
+    gy_ui_action(GY_UI_SINGLE);
+    gy_ui_action(GY_UI_RESTART);
+    check(gy_history_count()==0,"restart does not record anything");
+    gy_ui_action(GY_UI_HOME);
+}
 static int tests(void)
 {
     GyGame before;GyPreview p;GyMove m={GY_UP,1,0};
@@ -230,7 +270,11 @@ static int tests(void)
     check(!gy_ui_has_preview()&&!memcmp(&before,gy_ui_game(),sizeof(before)),"menu ignores game input");
     check(gy_ui_take_feedback()==GY_FX_NONE,"menu game actions do not flash");
     click(160,268);
-    check(!gy_ui_is_playing(),"history placeholder disabled");
+    check(!gy_ui_is_playing(),"history opens instead of staying home");
+    check(gy_ui_corner_clip_count(48)==0,"history page corner safe");
+    screenshot("history_empty.bmp");
+    click(195,412);
+    check(!gy_ui_is_playing()&&!gy_ui_rules_active(),"history back returns home");
     check(gy_ui_corner_clip_count(48)==0,"home corner safe");
     click(160,323);
     check(gy_ui_rules_active()&&gy_ui_rules_page()==0,"rules opens on page 1");
@@ -415,6 +459,8 @@ done: ;
     key2_tests();
     second_game_tests();
     param_tests();
+    history_tests();
+    puts("PASS: TC-601~TC-606 history list/detail/clear and single record per match");
     puts("PASS: TC-407 parameter page navigation/edit/reset/apply and size-7 board");
     puts("PASS: KEY2-only confirm/placing state machine (KEY1 untested as game key)");
     puts("PASS: TC-314 light timeline/selftest and real UI feedback events (no physical LED)");

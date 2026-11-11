@@ -5,6 +5,8 @@
 #include "geyi_config.h"
 #include "geyi_param_ui.h"
 #include "geyi_nav.h"
+#include "geyi_history.h"
+#include "geyi_timer.h"
 #include "geyi_net_app.h"
 #include "geyi_font_cn16.h"
 #include <stdint.h>
@@ -24,6 +26,18 @@ static int placing=0, place_row=-1, place_column=-1, ready=0;
 static GyNav nav;
 /* 页面/新局代次：板端发现变化即重置倾斜会话，避免第二局沿用上一局状态。 */
 static uint32_t ui_session;
+/* 历史记录与单局计时（REQ-601~REQ-606）。 */
+static lv_obj_t *history_page,*history_detail_page;
+static lv_obj_t *hist_rows[5],*hist_row_labels[5],*hist_empty_label;
+static lv_obj_t *hist_clear_button,*hist_clear_label;
+static lv_obj_t *hist_detail_lines[6];
+static int hist_index,hist_confirm_clear;
+static GyTimer match_timer;
+static int match_recorded,match_resigner;
+static void history_refresh(void);
+static void history_reset_confirm(void);
+static void history_detail_open(int index);
+static void history_record_if_finished(void);
 static lv_obj_t *ui_page;
 static lv_obj_t *tiles[GY_MAX][GY_MAX], *labels[GY_MAX][GY_MAX], *health[GY_MAX][GY_MAX];
 static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
@@ -124,6 +138,8 @@ static void show_page(lv_obj_t *page)
     if(rules_page)lv_obj_add_flag(rules_page,LV_OBJ_FLAG_HIDDEN);
     if(net_lobby_page)lv_obj_add_flag(net_lobby_page,LV_OBJ_FLAG_HIDDEN);
     if(net_room_page)lv_obj_add_flag(net_room_page,LV_OBJ_FLAG_HIDDEN);
+    if(history_page)lv_obj_add_flag(history_page,LV_OBJ_FLAG_HIDDEN);
+    if(history_detail_page)lv_obj_add_flag(history_detail_page,LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(page,LV_OBJ_FLAG_HIDDEN);
     playing=page==game_page;
     prep_active=page==prep_page;
@@ -864,13 +880,41 @@ void gy_ui_action(int a)
     if(a==GY_UI_PREP_START){
         ai_side=prep_human_red?1:0;game_mode=GY_MODE_PVE;show_page(game_page);a=GY_UI_RESTART;
     }
+    if(a==GY_UI_HISTORY){
+        feedback=GY_FX_CLEAR;
+        if(gy_net_app_active())gy_net_app_leave();
+        gy_net_app_lobby_stop();
+        ai_side=-1;gy_nav_clear(&nav);
+        hist_index=0;history_reset_confirm();history_refresh();
+        show_page(history_page);return;
+    }
+    if(a==GY_UI_HISTORY_BACK){history_reset_confirm();history_refresh();show_page(history_page);return;}
+    if(a==GY_UI_HISTORY_PREV){
+        if(hist_index>0)--hist_index;
+        history_reset_confirm();history_refresh();return;
+    }
+    if(a==GY_UI_HISTORY_NEXT){
+        if((hist_index+1)*5<gy_history_count())++hist_index;
+        history_reset_confirm();history_refresh();return;
+    }
+    if(a==GY_UI_HISTORY_CLEAR){
+        if(!hist_confirm_clear){
+            hist_confirm_clear=1;
+            if(hist_clear_label)lv_label_set_text(hist_clear_label,"确认清空");
+        }else{
+            gy_history_clear();hist_index=0;history_reset_confirm();
+        }
+        history_refresh();return;
+    }
     if(a==GY_UI_RESIGN&&!gy_net_app_active()){
         if(game.outcome){ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);show_page(home_page);}
         else if(playing){
+            match_resigner=game.turn;
             gy_resign(&game);reset_selection_ui();
             gy_nav_clear(&nav);
             if(game.outcome)feedback=game.outcome==GY_RED_WIN?GY_FX_RED:
                 game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
+            history_record_if_finished();
             render();
         }
         return;
@@ -937,6 +981,9 @@ void gy_ui_action(int a)
         ++ui_session;
         amount=1;reset_selection_ui();
         gy_nav_clear(&nav);
+        gy_timer_start(&match_timer,lv_tick_get());
+        match_recorded=0;match_resigner=-1;
+        history_reset_confirm();
         status("先选方向 再确认");
     } else if(ai_thinking||!human_turn()) {
         render();return;
@@ -960,6 +1007,7 @@ void gy_ui_action(int a)
     if(!old_outcome&&game.outcome)
         feedback=game.outcome==GY_RED_WIN?GY_FX_RED:game.outcome==GY_BLUE_WIN?GY_FX_BLUE:GY_FX_DRAW;
     else if(a==GY_UI_CONFIRM&&game.revision!=old_revision)feedback=GY_FX_MOVE;
+    history_record_if_finished();
     render();
     if(!game.outcome&&ai_side>=0&&game.turn==ai_side)start_ai();
 }
@@ -1101,10 +1149,88 @@ static lv_obj_t *page(lv_obj_t *root)
     lv_obj_set_style_bg_opa(p,LV_OPA_TRANSP,0);
     lv_obj_remove_flag(p,LV_OBJ_FLAG_SCROLLABLE);return p;
 }
-static void unavailable(lv_obj_t *root,const char *name,int y)
+static const char *history_outcome_text(const GyRecord *r)
 {
-    lv_obj_t *b=button(root,name,32,y,326,48,GY_UI_HOME);
-    lv_obj_add_state(b,LV_STATE_DISABLED);lv_obj_set_style_opa(b,LV_OPA_40,LV_STATE_DISABLED);
+    return r->outcome==GY_RED_WIN?"红方胜":r->outcome==GY_BLUE_WIN?"蓝方胜":"平局";
+}
+static const char *history_mode_text(int mode)
+{
+    return mode==GY_MODE_PVE?"人机":mode==GY_MODE_PVP?"联机":"单机";
+}
+static const char *history_ended_text(int ended_by)
+{
+    return ended_by==GY_END_RED_RESIGN?"红方认输":ended_by==GY_END_BLUE_RESIGN?"蓝方认输":"全灭";
+}
+static void history_reset_confirm(void)
+{
+    hist_confirm_clear=0;
+    if(hist_clear_label)lv_label_set_text(hist_clear_label,"清空");
+}
+static void history_refresh(void)
+{
+    char value[56],duration[8];
+    int i,total=gy_history_count(),pages=(total+4)/5;
+    if(pages<1)pages=1;
+    if(hist_index>pages-1)hist_index=pages-1;
+    if(hist_index<0)hist_index=0;
+    if(hist_empty_label)lv_label_set_text(hist_empty_label,total?"":"暂无对局");
+    for(i=0;i<5;++i){
+        int index=hist_index*5+i;
+        if(index<total&&index>=0){
+            const GyRecord *r=gy_history_at(index);
+            gy_timer_format(r->duration_ms,duration,(int)sizeof(duration));
+            lv_snprintf(value,sizeof(value),"%s  %s  %s",history_outcome_text(r),
+                        history_mode_text(r->mode),duration);
+            lv_label_set_text(hist_row_labels[i],value);
+            lv_obj_remove_flag(hist_rows[i],LV_OBJ_FLAG_HIDDEN);
+        }else lv_obj_add_flag(hist_rows[i],LV_OBJ_FLAG_HIDDEN);
+    }
+}
+static void history_detail_open(int index)
+{
+    const GyRecord *r=gy_history_at(index);
+    char value[48],duration[8],clock_text[8];
+    if(!r)return;
+    gy_timer_format(r->duration_ms,duration,(int)sizeof(duration));
+    gy_timer_format(r->ts_sec*1000u,clock_text,(int)sizeof(clock_text));
+    lv_snprintf(value,sizeof(value),"结果  %s",history_outcome_text(r));
+    lv_label_set_text(hist_detail_lines[0],value);
+    lv_snprintf(value,sizeof(value),"模式  %s",history_mode_text(r->mode));
+    lv_label_set_text(hist_detail_lines[1],value);
+    lv_snprintf(value,sizeof(value),"棋盘  %u x %u",(unsigned)r->size,(unsigned)r->size);
+    lv_label_set_text(hist_detail_lines[2],value);
+    lv_snprintf(value,sizeof(value),"步数  %u",(unsigned)r->moves);
+    lv_label_set_text(hist_detail_lines[3],value);
+    lv_snprintf(value,sizeof(value),"时长  %s",duration);
+    lv_label_set_text(hist_detail_lines[4],value);
+    lv_snprintf(value,sizeof(value),"时间  开机%s",clock_text);
+    lv_label_set_text(hist_detail_lines[5],value);
+    show_page(history_detail_page);
+}
+static void history_row_event(lv_event_t *e)
+{
+    int row=(int)(intptr_t)lv_event_get_user_data(e);
+    history_detail_open(hist_index*5+row);
+}
+/* 终局后写一条记录；由 tick 与动作处理共同调用，match_recorded 保证只写一次（REQ-602）。 */
+static void history_record_if_finished(void)
+{
+    GyRecord record;
+    if(!playing||match_recorded||game.outcome==GY_PLAYING)return;
+    if(gy_net_app_active())return;   /* 联机对局走独立的网络状态机，本版不记 */
+    match_recorded=1;
+    gy_timer_stop(&match_timer,lv_tick_get());
+    memset(&record,0,sizeof(record));
+    record.mode=(uint8_t)game_mode;
+    record.size=(uint8_t)game.config.size;
+    record.outcome=(uint8_t)game.outcome;
+    record.winner=(uint8_t)(game.outcome==GY_RED_WIN?0u:game.outcome==GY_BLUE_WIN?1u:2u);
+    record.ended_by=(uint8_t)(match_resigner==0?GY_END_RED_RESIGN:
+                              match_resigner==1?GY_END_BLUE_RESIGN:GY_END_KNOCKOUT);
+    record.moves=(uint16_t)(game.moves>0xFFFFu?0xFFFFu:game.moves);
+    record.duration_ms=gy_timer_elapsed(&match_timer,lv_tick_get());
+    record.ts_sec=lv_tick_get()/1000u;
+    gy_history_add(&record);
 }
 void gy_ui_create(void)
 {
@@ -1119,7 +1245,7 @@ void gy_ui_create(void)
     text(home_page,"倾斜棋盘  轮流对战",32,76);
     button(home_page,"开始游戏",32,120,326,52,GY_UI_MODES);
     button(home_page,"自定义游戏参数",32,186,326,48,GY_UI_PARAMS);
-    unavailable(home_page,"历史记录 - 暂未开放",244);
+    button(home_page,"历史记录",32,244,326,48,GY_UI_HISTORY);
     button(home_page,"游戏规则",32,300,326,46,GY_UI_RULES);
     text(home_page,"单机 / 人机 / 联机",32,392);
     text(rules_page,"游戏规则",28,22);
@@ -1132,6 +1258,29 @@ void gy_ui_create(void)
     button(rules_page,"返回",20,378,88,40,GY_UI_RULES_BACK);
     button(rules_page,"上一页",118,378,96,40,GY_UI_RULES_PREV);
     button(rules_page,"下一页",256,378,96,40,GY_UI_RULES_NEXT);
+    history_page=page(root);history_detail_page=page(root);
+    text(history_page,"历史记录",28,22);
+    hist_empty_label=text(history_page,"暂无对局",32,120);
+    for(row=0;row<5;++row){
+        lv_obj_t *b=lv_button_create(history_page);
+        lv_obj_set_pos(b,32,56+row*52);lv_obj_set_size(b,326,44);
+        lv_obj_set_style_bg_color(b,lv_color_hex(0x344760),0);
+        lv_obj_set_style_radius(b,8,0);lv_obj_set_style_shadow_width(b,0,0);
+        hist_rows[row]=b;
+        hist_row_labels[row]=lv_label_create(b);
+        lv_label_set_text(hist_row_labels[row],"");
+        lv_obj_align(hist_row_labels[row],LV_ALIGN_LEFT_MID,12,0);
+        lv_obj_add_event_cb(b,history_row_event,LV_EVENT_CLICKED,(void*)(intptr_t)row);
+    }
+    button(history_page,"上一页",32,340,100,42,GY_UI_HISTORY_PREV);
+    button(history_page,"下一页",136,340,100,42,GY_UI_HISTORY_NEXT);
+    hist_clear_button=button(history_page,"清空",240,340,118,42,GY_UI_HISTORY_CLEAR);
+    hist_clear_label=lv_obj_get_child(hist_clear_button,0);
+    button(history_page,"返回",32,392,326,40,GY_UI_HOME);
+    text(history_detail_page,"对局详情",28,22);
+    for(row=0;row<6;++row)hist_detail_lines[row]=text(history_detail_page,"",32,64+row*44);
+    button(history_detail_page,"返回列表",32,388,150,42,GY_UI_HISTORY_BACK);
+    button(history_detail_page,"首页",196,388,162,42,GY_UI_HOME);
     text(mode_page,"选择游戏模式",32,36);
     text(mode_page,"单机、人机或联机,开始一局对战",32,70);
     button(mode_page,"单机对战",32,104,326,44,GY_UI_SINGLE);
@@ -1637,6 +1786,7 @@ void gy_ui_tick(void)
 {
     GyAiResult r;
     uint32_t now=lv_tick_get();
+    history_record_if_finished();
     run_test_command();
     gy_net_app_tick(now);
     if(net_lobby_active)net_lobby_refresh();
