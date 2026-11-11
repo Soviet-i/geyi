@@ -50,6 +50,8 @@ targets = [
     ('geyi-net-app-tests', ['src/geyi_game.c', 'src/geyi_config.c',
                             'src/geyi_net_proto.c', 'src/geyi_net_room.c',
                             'src/geyi_net_link.c', 'tests/test_net_app.c']),
+    ('geyi-history-tests', ['src/geyi_game.c', 'src/geyi_history.c', 'src/geyi_timer.c',
+                            'tests/test_history.c']),
     ('geyi-balance-tests', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tests/test_balance.c']),
     ('geyi-balance-scan', ['src/geyi_game.c', 'tools/geyi_balance.c', 'tools/geyi_balance_scan.c']),
     ('geyi-ai-bench', ['src/geyi_game.c', 'src/geyi_ai.c', 'tools/geyi_ai_bench.c']),
@@ -64,8 +66,14 @@ for name, relative_sources in targets:
     if cc:
         run([cc,'-std=c11','-Wall','-Wextra','-Werror','-I'+str(root/'src'),'-I'+str(root/'tools'),*sources,'-o',str(exe)])
     else:
-        base = Path(os.environ.get('ProgramFiles', r'C:\Program Files'))/'Microsoft Visual Studio'/'2022'
-        scripts = list(base.glob('*/VC/Auxiliary/Build/vcvars64.bat'))
+        roots = []
+        if os.environ.get('VS_ROOT'):
+            roots.append(Path(os.environ['VS_ROOT']))
+        roots.append(Path(os.environ.get('ProgramFiles', r'C:\Program Files'))/'Microsoft Visual Studio'/'2022')
+        scripts = []
+        for base in roots:
+            direct = base/'VC/Auxiliary/Build/vcvars64.bat'
+            scripts += [direct] if direct.exists() else list(base.glob('*/VC/Auxiliary/Build/vcvars64.bat'))
         if not scripts: raise SystemExit('MSVC/gcc/clang not found; no tests were run.')
         command = f'call "{scripts[0]}" >nul && cl /nologo /std:c11 /W4 /WX /utf-8 /I"{root / "src"}" /I"{root / "tools"}" ' + ' '.join(f'"{s}"' for s in sources) + f' /Fe:"{exe}"'
         run('cmd.exe /d /s /c "' + command + '"')
