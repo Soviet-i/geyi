@@ -1595,6 +1595,7 @@ int gy_net_app_join_rejected(void) { return g.join_rejected; }
 int gy_net_app_join_reason(void) { return g.join_reason; }
 int gy_net_app_spectator_lost(void) { return g.spectator_lost; }
 int gy_net_app_result(void) { return g.room.view.result; }
+int gy_net_app_result_reason(void) { return g.room.view.result_reason; }
 int gy_net_app_local_turn(void)
 {
     if (g.role != GY_NET_ROLE_HOST && g.role != GY_NET_ROLE_PLAYER) return 0;
@@ -1658,6 +1659,13 @@ const GyNetAppRoom *gy_net_app_room_at(int index)
 int gy_net_app_create_room(uint32_t room_id)
 {
     gy_net_app_leave();
+#ifdef GEYI_WITH_RTTHREAD
+    /* 从大厅“创建房间”时扫描可能仍在进行；控制器会以
+     * GAP_ERR_COMMAND_DISALLOWED(0x43/67) 拒绝创建可连接广播，
+     * 其他板就永远扫不到房间。先停扫描并给协议栈一点收尾时间。 */
+    gy_net_app_lobby_stop();
+    rt_thread_mdelay(30);
+#endif
     if (!room_id) room_id = 0x1001u + (g.now & 0x0fffu);
     g.room_id = room_id;
     gy_net_room_init_host(&g.room, room_id, g.now, 2);

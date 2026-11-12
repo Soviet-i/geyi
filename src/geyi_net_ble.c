@@ -139,6 +139,7 @@ static uint8_t g_cccd_ok;
 static uint8_t g_adv_active;
 static uint8_t g_adv_started;   /* ADV_STARTED 事件已到，才允许 update */
 static uint8_t g_adv_inited;    /* init 成功，协议栈可自动重启广播 */
+static uint8_t g_adv_rebuild;   /* CREATE_ADV 失败后强制删实例再 init */
 static uint8_t g_adv_stopping;
 static uint8_t g_scan_active;
 static uint8_t g_pending_host, g_pending_scan;
@@ -670,7 +671,21 @@ static uint8_t geyi_adv_event(uint8_t event, void *context, void *data)
         uint8_t status = evt ? evt->status : 0;
         g_adv_active = (status == 0) ? 1 : 0;
         g_adv_started = g_adv_active;
-        if (g_adv_active) { g_adv_stopped_at = 0; g_adv_stopping = 0; }
+        if (g_adv_active) {
+            g_adv_stopped_at = 0;
+            g_adv_stopping = 0;
+            g_adv_rebuild = 0;
+        } else {
+            /* CREATE_ADV 失败（例如 0x43 COMMAND_DISALLOWED）时不能继续
+             * 对同一个 IDLE 实例重复 start，否则每秒刷一次 status=67。
+             * 标记下次走 stop/delete/init 的完整重建。 */
+            g_adv_stopping = 0;
+            g_adv_inited = 0;
+            g_adv_rebuild = 1;
+            g_adv_restart_at = 0;
+            g_adv_stopped_at = rt_tick_get();
+            BLE_LOG("adv failed reset status=%d", status);
+        }
         BLE_LOG("adv started status=%d", status);
         if (g_adv_active && g_mode == 0) {
             /* host_stop 与在途 start 竞争：已经关房就立刻再停掉。 */
@@ -711,14 +726,17 @@ static int adv_start(int connectable)
     BLE_LOG("adv_start connectable=%d", connectable);
     g_adv_stopping = 1;
     g_adv_stopped_at = 0;
-    if (g_adv_active) {
+    /* CREATE_ADV 失败后 g_adv_active 可能已被事件置 0，但协议栈里仍有一个
+     * 活跃广告实例；重建时必须无条件 stop，再 delete，否则会一直 0x43。 */
+    if (g_adv_active || g_adv_rebuild) {
         sibles_advertising_stop(g_geyi_adv_ctx);
         g_adv_active = 0;
     }
-    if (g_adv_inited) {
+    if (g_adv_inited || g_adv_rebuild) {
         sibles_advertising_delete(g_geyi_adv_ctx);
         g_adv_inited = 0;
-        rt_thread_mdelay(20);   /* 等协议栈释放 adv 实例 */
+        g_adv_rebuild = 0;
+        rt_thread_mdelay(50);   /* 等协议栈释放 adv 实例 */
     }
     g_adv_started = 0;
     memset(&para, 0, sizeof(para));
@@ -829,6 +847,7 @@ void gy_net_ble_host_stop(void)
     g_adv_active = 0;
     g_adv_started = 0;
     g_adv_inited = 0;
+    g_adv_rebuild = 0;
     g_adv_dirty = 0;
     g_adv_stopping = 0;
 }
