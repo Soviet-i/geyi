@@ -417,6 +417,7 @@ static int test_resign_keeps_conn_and_room_loop(void)
     CHECK(gy_net_pack_leave(&m, &l) == GY_NET_OK);
     feed_host(1, &m);
     CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(gy_net_app_result_reason() == GY_NET_REASON_RESIGN);
     /* 仅认输不能把客人的 ConnMap 丢掉，否则结算后 READY 收不到。 */
     CHECK(g.conns[0].used == 1);
     gy_net_app_tick(3100 + GY_NET_RESULT_KEEP_MS);
@@ -834,9 +835,11 @@ static int test_spectator_preview_cleared_on_phase(void)
         g.pending_move = 1;
         memset(&r, 0, sizeof(r));
         r.outcome = GY_RED_WIN;
+        r.reason = GY_NET_REASON_RESIGN;
         r.seq = 11;
         CHECK(gy_net_pack_result(&m, &r) == GY_NET_OK);
         client_process(&m);
+        CHECK(gy_net_app_result_reason() == GY_NET_REASON_RESIGN);
         CHECK(g.placing == 0 && g.place_row == -1 && g.place_col == -1);
         CHECK(g.pending_move == 0);
         CHECK(g.preview_valid[GY_NET_COLOR_RED] == 0);

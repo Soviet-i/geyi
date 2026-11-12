@@ -24,6 +24,7 @@ static GyRecord make(int mode, int size, int outcome, int ended_by, int moves, u
 int main(void)
 {
     GyRecord r;
+    GyHistoryStore store;
     GyTimer timer;
     int i;
 
@@ -42,10 +43,13 @@ int main(void)
     CHECK(gy_history_at(0)->outcome == GY_RED_WIN);
     CHECK(gy_history_at(0)->duration_ms == 65000u);
     CHECK(gy_history_at(0)->version == GY_HISTORY_VERSION);
+    CHECK(gy_history_at(0)->winner_identity == GY_IDENTITY_NONE);
 
     r = make(1, 6, GY_BLUE_WIN, GY_END_RED_RESIGN, 3, 1000u);
+    r.winner_identity = GY_IDENTITY_AI;
     CHECK(gy_history_add(&r) >= 0);
     CHECK(gy_history_at(0)->outcome == GY_BLUE_WIN);
+    CHECK(gy_history_at(0)->winner_identity == GY_IDENTITY_AI);
     CHECK(gy_history_at(1)->moves == 12);
 
     /* REQ-602：非法字段拒绝且不破坏已有记录。 */
@@ -55,6 +59,9 @@ int main(void)
     r = make(0, 3, GY_DRAW, GY_END_KNOCKOUT, 1, 1u);   /* 棋盘过小 */
     CHECK(gy_history_add(&r) == -1);
     r = make(0, 6, GY_DRAW, 9, 1, 1u);                 /* 结束方式非法 */
+    CHECK(gy_history_add(&r) == -1);
+    r = make(0, 6, GY_RED_WIN, GY_END_KNOCKOUT, 1, 1u);
+    r.winner_identity = GY_IDENTITY_AI;                 /* 单机不能带身份 */
     CHECK(gy_history_add(&r) == -1);
     CHECK(gy_history_count() == 2);
 
@@ -75,6 +82,43 @@ int main(void)
     gy_history_clear();
     CHECK(gy_history_count() == 0);
     CHECK(gy_history_at(0) == NULL);
+
+    /* REQ-602/REQ-606：持久化快照往返与损坏拒绝。 */
+    gy_history_reset();
+    r = make(1, 6, GY_RED_WIN, GY_END_KNOCKOUT, 7, 3000u);
+    r.winner_identity = GY_IDENTITY_HUMAN;
+    CHECK(gy_history_add(&r) >= 0);
+    CHECK(gy_history_store_pack(&store) == 0);
+    gy_history_reset();
+    CHECK(gy_history_store_unpack(&store) == 0);
+    CHECK(gy_history_count() == 1);
+    CHECK(gy_history_at(0)->winner_identity == GY_IDENTITY_HUMAN);
+    store.magic = 0;
+    CHECK(gy_history_store_unpack(&store) == -1);
+    store.magic = GY_HISTORY_STORE_MAGIC;
+    store.store_version = 99;
+    CHECK(gy_history_store_unpack(&store) == -1);
+    store.store_version = GY_HISTORY_STORE_VERSION;
+    store.count = GY_HISTORY_CAPACITY + 1;
+    CHECK(gy_history_store_unpack(&store) == -1);
+
+    /* 单条损坏记录跳过，其余保留（REQ-606）。 */
+    r = make(0, 6, GY_BLUE_WIN, GY_END_KNOCKOUT, 8, 4000u);
+    CHECK(gy_history_add(&r) >= 0);
+    CHECK(gy_history_store_pack(&store) == 0);
+    store.items[0].version = 0;
+    CHECK(gy_history_store_unpack(&store) == 0);
+    CHECK(gy_history_count() == 1);
+
+    /* 人机/联机身份与认输方映射。 */
+    CHECK(gy_history_identity_pve(GY_RED_WIN, 0) == GY_IDENTITY_AI);
+    CHECK(gy_history_identity_pve(GY_RED_WIN, 1) == GY_IDENTITY_HUMAN);
+    CHECK(gy_history_identity_pve(GY_DRAW, 0) == GY_IDENTITY_NONE);
+    CHECK(gy_history_identity_pvp(GY_RED_WIN, 0) == GY_IDENTITY_OWNER);
+    CHECK(gy_history_identity_pvp(GY_BLUE_WIN, 0) == GY_IDENTITY_OPPONENT);
+    CHECK(gy_history_identity_pvp(GY_DRAW, 0) == GY_IDENTITY_NONE);
+    CHECK(gy_history_ended_by_resign(GY_RED_WIN) == GY_END_BLUE_RESIGN);
+    CHECK(gy_history_ended_by_resign(GY_BLUE_WIN) == GY_END_RED_RESIGN);
 
     /* REQ-604：计时与回绕。 */
     gy_timer_reset(&timer);

@@ -237,7 +237,8 @@ static void history_tests(void)
      check(r->ended_by==GY_END_RED_RESIGN,"record keeps who resigned");
      check(r->duration_ms>=1000,"record keeps measured duration");
      check(r->mode==GY_MODE_SINGLE,"record keeps the mode");
-     check(r->size==6,"record keeps the board size");}
+     check(r->size==6,"record keeps the board size");
+     check(r->winner_identity==GY_IDENTITY_NONE,"single record has no winner identity");}
     gy_ui_tick();
     check(gy_history_count()==1,"finished match is recorded only once");
     gy_ui_action(GY_UI_HOME);
@@ -446,6 +447,12 @@ done: ;
     check(!gy_ui_is_playing(),"home during AI thinking");
     gy_ui_tick();
     check(!gy_ui_is_playing(),"stale AI result discarded after home");
+    /* PVE 中只有人能认输：AI 回合点认输也必须判人负（AI 胜）。 */
+    enter_ai_mode(0);
+    check(gy_ui_ai_thinking(),"AI red starts for human resign test");
+    gy_ui_action(GY_UI_RESIGN);
+    check(gy_ui_game()->outcome==GY_RED_WIN,"human resign during AI turn loses to AI");
+    check(!gy_ui_ai_thinking(),"human resign cancels AI thinking");
     /* REQ-316: leaving during AI preview cancels the delayed commit. */
     enter_ai_mode(0);
     check(gy_ui_ai_thinking(),"AI red starts for preview cancel");
