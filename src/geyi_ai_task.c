@@ -6,7 +6,12 @@
 
 static struct rt_semaphore ai_sem;
 static struct rt_mutex ai_lock;
-static rt_thread_t ai_thread;
+static struct rt_thread ai_thread_obj;
+/* 放在 PSRAM（8 MB）里的静态 AI 栈：不占 HCPU 堆，也不挤压 BLE/LVGL。
+ * 栈由 geyi_ai_stack.S 以 NOBITS 段定义，不能用普通 C 数组的 section
+ * 属性，否则会被链接成 PROGBITS，objcopy 会填出 1.3 GB 的 main.bin。 */
+#define GY_AI_STACK_SIZE 16384
+extern rt_uint8_t geyi_ai_stack[];
 static int initialized; /* 1 = ready, -1 = init failed, 0 = not tried */
 static GyGame snapshot;
 static GyAiConfig config;
@@ -70,9 +75,14 @@ static int ensure_initialized(void)
     if (rt_sem_init(&ai_sem, "gy_ai_sem", 0, RT_IPC_FLAG_PRIO) != RT_EOK) {
         initialized = -1; return -1;
     }
-    ai_thread = rt_thread_create("gy_ai", ai_thread_entry, RT_NULL, 16384, 20, 10);
-    if (!ai_thread) { initialized = -1; return -1; }
-    rt_thread_startup(ai_thread);
+    /* 搜索工作区 GyAiSearch 是静态对象；沿用原来的 16 KB 栈余量，
+     * 栈放在 PSRAM 的 NOBITS 段，不占 HCPU 堆。 */
+    if (rt_thread_init(&ai_thread_obj, "gy_ai", ai_thread_entry, RT_NULL,
+                       geyi_ai_stack, GY_AI_STACK_SIZE, 20, 10) != RT_EOK) {
+        rt_kprintf("[geyi:ai] thread init FAIL\n");
+        initialized = -1; return -1;
+    }
+    rt_thread_startup(&ai_thread_obj);
     initialized = 1;
     return 0;
 }
