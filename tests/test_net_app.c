@@ -447,6 +447,19 @@ static int test_leave_after_resign_releases_seat(void)
     return 0;
 }
 
+static int test_lobby_start_clears_ghost_rooms(void)
+{
+    gy_net_app_init();
+    g.active = 0;
+    g.room_count = 1;
+    memset(&g.rooms[0], 0, sizeof(g.rooms[0]));
+    g.rooms[0].room_id = 0x1234;
+    CHECK(gy_net_app_lobby_start() == 0);
+    CHECK(g.room_count == 0);
+    CHECK(gy_net_app_room_at(0) == NULL);
+    return 0;
+}
+
 static int test_client_result_timeout_returns_room(void)
 {
     GyNetResult r;
@@ -1076,6 +1089,7 @@ int main(void)
     if (test_client_countdown_from_starting_state()) return 20;
     if (test_ignore_state_from_other_room()) return 21;
     if (test_client_result_timeout_returns_room()) return 27;
+    if (test_lobby_start_clears_ghost_rooms()) return 28;
     if (test_leave_clears_spectator_flag()) return 22;
     if (test_link_gen_reuse_reclaims_seat()) return 23;
     if (test_immediate_leave_then_rejoin()) return 24;

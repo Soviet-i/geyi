@@ -306,6 +306,12 @@ int gy_net_ble_adv_recv(GyNetBleAdv *out)
     q_unlock();
     return ok;
 }
+void gy_net_ble_adv_flush(void)
+{
+    q_lock();
+    g_adv_head = g_adv_tail = g_adv_count = 0;
+    q_unlock();
+}
 
 static void frag_input(uint8_t conn_idx, const uint8_t *data, uint16_t len)
 {
@@ -856,6 +862,9 @@ int gy_net_ble_scan_start(void)
 {
     ble_gap_scan_start_t p;
     int ret;
+    /* 上一轮大厅/房间的扫描结果可能还在队列里；不先清空会造成“没有
+     * 板子建房却显示幽灵房”。每次进入/重启扫描都从空队列开始。 */
+    gy_net_ble_adv_flush();
     if (g_scan_active || g_pending_scan) return 0;
     if (!g_power_on) { g_pending_scan = 1; BLE_LOG("scan pending power=0"); return 0; }
     memset(&p, 0, sizeof(p));
@@ -882,6 +891,7 @@ void gy_net_ble_scan_stop(void)
 {
     if (g_scan_active) { ble_gap_scan_stop(); g_scan_active = 0; }
     g_pending_scan = 0;
+    gy_net_ble_adv_flush();
 }
 
 int gy_net_ble_connect(const uint8_t addr[6], uint8_t addr_type)
@@ -1088,8 +1098,12 @@ static void ble_service_init(void)
 
 static void parse_adv(const ble_gap_ext_adv_report_ind_t *ind)
 {
-    const uint8_t *p = ind->data;
-    uint16_t left = ind->length;
+    const uint8_t *p;
+    uint16_t left;
+    /* 扫描停止后的迟到 report 不再入队；否则下次进大厅会被当成新房。 */
+    if (!g_scan_active) return;
+    p = ind->data;
+    left = ind->length;
     while (left >= 2) {
         uint8_t len = p[0];
         uint8_t type = p[1];

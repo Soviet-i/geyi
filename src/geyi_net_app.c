@@ -1663,8 +1663,12 @@ int gy_net_app_lobby_start(void)
     /* 上一次加入失败/被关房时可能还留着一条 BLE 链路；不清掉会让
      * 对方仍认为有连接、停止广播，自己也扫不到房间。刚发过 LEAVE
      * 时交给 TX 线程收尾，不要在这里把 LEAVE 截断。 */
-    if (!g.leaving)
+    if (!g.leaving) {
+        /* 从旧房/旧固件遗留下来的 host advertising 实例也要停掉，
+         * 否则本板自己可能在扫描时被当成“别人创建的房间”。 */
+        gy_net_ble_host_stop();
         gy_net_ble_client_abort();
+    }
     gy_net_ble_scan_start();
 #endif
     return 0;
