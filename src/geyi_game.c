@@ -207,15 +207,17 @@ static int apply_move(GyGame *a, const GyGame *before, GyMove m)
     {
         int sel_count = 0;
         for (y = 0; y < n; ++y) for (x = 0; x < n; ++x) if (acted[y][x]) {
-            /* 先按到方位线的横向距离，再按到目的边的深度；深度不能
-             * 压过方位，否则“偏左”会被更靠前的中间兵抢走。 */
+            /* 按到方位边指示点的欧氏距离排序（平方后比较，避免开方）：
+             * 同时考虑离目的边多远、离倾斜方位多近；横向优先的旧规则会让
+             * 大棋盘上更靠上的同列兵抢在近边兵之前（ADR-0013）。
+             * 距离相同按扫描顺序（先行后列）。 */
             int lateral, depth, distance;
             if (d == GY_UP || d == GY_DOWN) {
                 lateral = abs(2*x-cx); depth = abs(2*y-cy);
             } else {
                 lateral = abs(2*y-cy); depth = abs(2*x-cx);
             }
-            distance = lateral * (2 * GY_MAX + 2) + depth;
+            distance = lateral * lateral + depth * depth;
             i = sel_count++;
             while (i > 0 && dist[i-1] > distance) {
                 ids[i] = ids[i-1]; dist[i] = dist[i-1]; --i;
