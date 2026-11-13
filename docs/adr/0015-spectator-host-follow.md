@@ -65,7 +65,7 @@ UI 还没有 `spectator_lost` 自动退出。最近三个联机提交没有改�
 - 现有“旁观者确认房主丢失时先 abort 再回大厅”的文档需要改写；大厅/房间状态文案
   需要新增“房主已转移”。
 - 2026-11-13 学生真机确认：房主主动退出后客人接管、旁观者保持“观战 1 人”
-  （`evidence/net/20261113/spectator_follow/`）。房主直接断电、旁观者自身 RF 瞬断、
+  （`evidence/net/20261113/spectator_follow/`，含 B `promote self`、C `scan transfer=1`/`follow moved=1` 串口）。房主直接断电、旁观者自身 RF 瞬断、
   连续两次迁移、双旁观者容量仍未留证。
 - 风险：旧 host 关播前的 stale 广播（同 `room_id`）、无转移消息路径 3 s 后才
   开始扫描、新房主旁观容量满、旧席位 10 s 保留与 fresh JOIN 的交互。实现中必须

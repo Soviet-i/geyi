@@ -247,7 +247,7 @@ physical_verification:
     required_action: "三块板：WAIT 双人房房主退出，确认客人接管、旁观者保持旁观并显示观战 1 人"
     executed_at: "2026-11-13（学生本人真机操作并回传两张照片；精确时刻未单列）"
     evidence_path: "evidence/net/20261113/spectator_follow/README.md"
-    agent_conclusion: "学生确认“一切正常且通过真机测试”。照片显示 #F33A 退出后 #03EA 成为房主、#B7B0 仍显示“观战 1 人/旁观中 只读”。未回传三块板串口日志；房主直接断电、旁观者自身 RF 瞬断、连续两次迁移、双旁观者容量未留证，不能写成这些分支全部通过。"
+    agent_conclusion: "学生确认“一切正常且通过真机测试”。照片显示 #F33A 退出后 #03EA 成为房主、#B7B0 仍显示“观战 1 人/旁观中 只读”；三块板串口日志含 B promote self、C spectator scan transfer=1/follow moved=1。房主直接断电、旁观者自身 RF 瞬断、连续两次迁移、双旁观者容量未留证，不能写成这些分支全部通过。"
 
 test_results:
   - test_id: "TC-507-07/08/09+TC-510-05-THREE"
@@ -410,7 +410,7 @@ test_results:
   - test_id: "TC-510-06-SPECTATOR-FOLLOW"
     description: "WAIT 房主转移后旁观者扫描同 room_id 跟随新房主（三端）"
     expected: "客人接管且 room_id 不变；旁观者丢弃旧 host 残留广播，以 role=SPECTATOR 全新 JOIN 新房主；非 WAIT/无接管沿用 10s 窗口"
-    actual: "主机 453 checks PASS；学生 2026-11-13 真机确认房主主动退出场景（照片显示 #03EA 接管、#B7B0 观战 1 人）；未回传串口日志/断电场景"
+    actual: "主机 453 checks PASS；学生 2026-11-13 真机确认房主主动退出场景；照片显示 #03EA 接管、#B7B0 观战 1 人；三块板串口日志含 B promote self、C scan transfer=1/follow moved=1；断电/瞬断/连续迁移未留证"
     pass: true
     evidence_path: "evidence/net/20261113/spectator_follow/README.md"
 

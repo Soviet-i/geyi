@@ -18,9 +18,27 @@
 这两张照片证明：WAIT 双人房房主主动退出 → 客人 `#03EA` 接管 → 旁观者 `#B7B0`
 没有掉回大厅，而是重新加入同一房间并保持旁观身份（观战 1 人）。
 
-## 没有随照片回传的内容
+## 串口日志
 
-- 没有三块板的完整串口日志（无法核对 `spectator scan/follow` 的时间戳与 `moved=` 字段）。
-- 没有房主“直接断电”场景、旁观者自身 RF 瞬断、连续两次房主迁移、双旁观者容量的照片/日志。
-- 因此 R-083 记为 **学生本人真机确认（主动退出场景）+ 两张照片**；断电/瞬断/连续迁移
-  仍按 `docs/03` TC-510-06 的其余分支待补，不写成全部量化通过。
+`serial_A_host.log` / `serial_B_new_host.log` / `serial_C_spectator.log` 是同一轮
+`tools/net_spectator_test.py`（2026-11-13 20:33）的三块板完整串口日志。关键行：
+
+```text
+# B（COM8，新房主）
+[6610][geyi:net] promote self to host color=1 id=03EA
+
+# C（COM5，旁观者）
+[48936][geyi:net] spectator scan room id=00001f5d at 48935 transfer=1
+[48981][geyi:net] spectator follow host room id=00001f5d moved=1
+```
+
+`transfer=1` 表示来自房主转移 `ROOM_STATE` 的扫描（会丢弃旧 host 残留广播），
+`moved=1` 表示匹配到的是新房主地址；日志中没有 `spectator lost`。这三行与两张照片
+一起证明“房主主动退出 → 客人接管 → 旁观者跟随新房主”的主场景。
+
+## 没有随证据回传的内容
+
+- 没有房主“直接断电”（无转移 `ROOM_STATE`，3s 扫描路径）的日志/照片。
+- 没有旁观者自身 RF 瞬断、连续两次房主迁移、双旁观者容量的日志/照片。
+- 因此 R-083 记为 **学生本人真机确认（主动退出场景）+ 两张照片 + 三块板串口日志**；
+  断电/瞬断/连续迁移/双旁观者仍按 `docs/03` TC-510-06 的其余分支待补，不写成全部量化通过。
