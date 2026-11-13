@@ -11,7 +11,7 @@ submission:
   submitted_at: "2026-10-28T9:00:00+08:00"
 
 dev_agent:
-  tool: "Claude Code（本次 REQ-315~317；早期初始化/单机原型由 Codex 协助）"
+  tool: "Claude Code（2026-11-13 fix/renji 人机复核与文档核对；REQ-315~317；早期初始化/单机原型由 Codex 协助）"
   model: "deepseek-flash[1m]"
   session_log_path: "<完整会话记录文件路径，必须原始导出>"
   session_log_hash: "<可选：会话记录哈希>"
@@ -46,7 +46,7 @@ design:
 
 code:
   repo_url: "https://github.com/Soviet-i/geyi"
-  commit_range: "99a223b..e10d396"
+  commit_range: "99a223b..3cc306a"
 
 physical_verification:
   - item: "REQ-314 RGB灯反馈"
@@ -69,6 +69,11 @@ physical_verification:
     executed_at: "2026-11-07（学生提供 board_prep_1/2 照片）"
     evidence_path: "evidence/ui-prep/README.md"
     agent_conclusion: "照片显示红AI/蓝玩家和交换后的红玩家/蓝AI两种状态；标题、先手/后手、图标、玩家/AI 文字居中，图标中线一致，方框和按钮无裁切。点击动作未录屏，串口/耗时未测；agent 只核对照片布局，不冒充仪器测量。"
+  - item: "2026-11-13 历史/AI/联机/参数部分板端证据（郑瑞杭）"
+    required_action: "学生本人烧录并操作，记录历史持久化、四列身份、AI 搜索深度/认输、联机扫描、参数修改画面"
+    executed_at: "2026-11-13（学生提供照片/串口截图）"
+    evidence_path: "evidence/history/20261113/README.md、evidence/ai/20261113/README.md、evidence/net/20261113/README.md、evidence/param/20261113/README.md"
+    agent_conclusion: "学生本人确认（2026-11-13）：历史第11条淘汰/详情/旁观/清空重启、AI 预览/认输/参数设置、联机实际加入/完整对局/断线重连、参数板端生效均已验证；已有重启 count=10、records/01~08（前10/第11/清空/重启/旁观）、联机机主/对手、AI depth=1/6/5/4/3、参数层数 1/6 截图、双板扫描照片。AI 网盘视频已归档但 agent 未访问/解码；详情页/逐帧/耗时/栈证据留存不足。另发现房客认输后卡在对局界面，已登记未修复问题，不写成通过。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -103,6 +108,9 @@ test_results:
     evidence_path: "evidence/ui-prep/README.md"
 
 known_issues:
+  - "【2026-11-13，郑瑞杭】fix/history 已合并到 develop，当前 fix/renji 从 3cc306a 创建。复核“真人先手 AI 不动”为观察误判：AI 实际向后移动且已贴墙，画面变化不可见，未改 AI 代码。确认参数页 AI 搜索深度不是 UI 影子值：gy_param_ui_adjust -> s_params[GY_MODE_PVE].search_depth -> start_ai.cfg.max_depth；实际完成深度受 300ms/200000 节点上限限制，RAM 重启默认 3。板端证据见 evidence/history/20261113、evidence/ai/20261113、evidence/net/20261113、evidence/param/20261113。学生本人确认超过10条淘汰、详情页、旁观者不记录、清空后再重启、AI 预览/认输/参数设置、联机实际加入/完整对局/断线重连、参数板端生效均已验证；这些项因证据留存困难按学生定性确认记录。网盘视频 agent 未访问/解码，逐帧/参数设置值/耗时/栈证据仍不足。"
+  - "【2026-11-13，郑瑞杭】联机已知未修复问题：房客认输后卡在对局界面，房主可正常回房间；房主认输正常。已记录在 docs/06 R-078 和 evidence/net/20261113/tmp3-问题.md，需双板串口/录屏复现，不能写成通过。"
+  - "【2026-11-13，郑瑞杭】参数页 AI 搜索层数可设 1~6，但设 5/6 时串口实际完成 depth 可能为 4：max_depth 是上限，受 300ms/200000 节点限制；不是 UI 影子值。需同时记录设置值和实际完成深度，见 docs/06 R-079。"
   - "【2026-11-07】REQ-317 准备页视觉细化已实现：标题/提示居中、红框上方先手/蓝框上方后手、自绘人物/机器人图标+玩家/AI；学生指出第一版图标/文字偏右、第二版AI图标偏高后，已清除按钮 padding/border、用 TOP_MID 对齐并调整AI图标纵向位置使中线一致；桌面 TC-317 及回归 PASS，固件 847,944 B；学生 board_prep_1/2 照片确认默认/互换布局，点击动作未录屏、串口/耗时未测。"
   - "学生提供百度网盘视频链接作为 REQ-316/317 板端证据；agent 当前环境无法访问百度网盘，未独立核验视频画面，不能据此写成真机通过。"
   - "个人 submission 的 dev_agent.session_log_path 尚未填写；导出 logs/ 原始会话后补路径/哈希。"
@@ -121,7 +129,17 @@ self_review: |
   学生 board_prep_1/2 照片确认默认/互换布局，点击动作未录屏、串口/耗时未测。
   不确定/未完成：板端物理核验。学生提供了百度网盘视频链接，但 agent 当前环境
   无法访问 pan.baidu.com，未独立打开/解码视频，因此没有把真机项写成通过；
-  AI 评估权重未调参，线程耗时/栈高水位未测，自定义搜索深度未实现。
+  AI 评估权重未调参，线程耗时/栈高水位未测；自定义搜索深度参数已接入，
+  实际完成深度受 300ms/200000 节点上限限制。
+  2026-11-13 补记（郑瑞杭）：学生完成 fix/history → develop 合并，并从合并后的
+  develop 创建 fix/renji。复核“真人先手 AI 不动”为观察误判：AI 实际向后移动且已
+  贴墙，画面变化不可见，未改 AI 代码。确认参数页人机 AI 搜索深度不是 UI 影子值：
+  gy_param_ui_adjust 写入 s_params[GY_MODE_PVE].search_depth，start_ai 复制到
+  cfg.max_depth，gy_ai_choose 使用；实际完成深度受 300ms/200000 节点上限限制，
+  参数存 RAM、重启回默认 3。学生真机确认人机 AI、联机扫描/建房和历史保存可用；
+  2026-11-13 学生进一步确认历史第11条淘汰/详情/旁观/清空重启、AI 预览/认输/参数设置、
+  联机实际加入/完整对局/断线重连、参数板端生效均已验证。上述部分项目因单张图片难以
+  说明，证据留存不足；逐帧/参数设置值/耗时/栈和扩展项仍列为补证。
   关键决策由学生拍板；agent 自测发现终局分数取负错误并修正；学生尚未逐行审阅
   代码和本轮新增 UI，提交说明和最终个人信息需学生确认。
 
@@ -132,3 +150,7 @@ human_checkpoints:
     student_confirmation: "学生要求 AI 决策后先显示与倾斜相同的预览，约 0.5 秒后再自动确认，预览期间人类操作无效。"
   - decision_point: "人机对战先后手入口"
     student_confirmation: "学生要求改为首页→开始游戏→人机对战→准备页；左红先手默认玩家，右蓝后手默认 AI，点击方框互换，取消返回，开始后按选择进入游戏。"
+  - decision_point: "人机先手现象复核（2026-11-13，郑瑞杭）"
+    student_confirmation: "学生确认 AI 实际有动作，只是向后移动且已贴墙导致画面变化不可见；这是观察误判，不修改 AI 代码。"
+  - decision_point: "AI 搜索深度参数确认（2026-11-13，郑瑞杭）"
+    student_confirmation: "学生要求确认参数页搜索深度是否真正生效；agent 核对确认写入 s_params[GY_MODE_PVE].search_depth，并由 start_ai 传给 cfg.max_depth。实际完成深度受 300ms/200000 节点上限限制，参数重启回默认 3。"
