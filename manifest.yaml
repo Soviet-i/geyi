@@ -228,6 +228,17 @@ physical_verification:
     evidence_path: "evidence/net/20261110/refactor_cleanup/README.md"
     agent_conclusion: "学生确认重构后功能都完好、可以提交。重构后固件完成主机/双板/三端自动回归；三张截图来自重构前 1,093,852 B，不能把旧截图写成重构后新证据。"
 
+  - item: "R-081 8×8 向下倾斜选兵顺序（2026-11-13）"
+    required_action: "在 8×8 对局中让己方两兵处于不同行/列（上方更靠中列、下方更靠边），向正下方倾斜、数量 1，观察下方近边兵先动"
+    executed_at: "2026-11-13（学生回传对局页照片并明确确认“真机验证完全通过”；精确操作时刻未单独记录）"
+    evidence_path: "evidence/board/20261113_194341/README.md"
+    agent_conclusion: "学生确认 8×8 倾斜选兵通过；照片显示 8×8 对局页与倾斜预览（上1个），但未回传逐次倾斜视频/串口日志，不能写成逐帧或定量通过。固件为合并远程前的 1,091,836 B 修复构建。"
+  - item: "R-082 对局右上角认输/返回首页按钮命中率（2026-11-13）"
+    required_action: "对局中连续点击右上角按钮，确认每次都能触发认输/确认弹窗/返回首页；观察串口 [gy_ui] click action=10 日志"
+    executed_at: "2026-11-13（学生回传对局页照片并明确确认“真机验证完全通过”；精确点击次数未单列）"
+    evidence_path: "evidence/board/20261113_194341/README.md"
+    agent_conclusion: "学生确认点击流程完全通过；照片显示按钮已扩大/下移且未被圆角裁掉。未回传逐次点击串口日志，不能写成 10/10 计数通过。"
+
 test_results:
   - test_id: "TC-507-07/08/09+TC-510-05-THREE"
     description: "三块实体板旁观套件（协议 v3 座位在线位/倒计时）"
