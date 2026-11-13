@@ -94,7 +94,7 @@ python scripts/build_firmware.py      # 固件编译（需 SDK export）
 
 # course_starter —— 黄山派嵌入式产品开发课程脚手架
 
-本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。当前成员已加入，产品名为格弈；M2 人机对战已通过 PR 合入 `develop`，M3 进行中。具体状态见 `docs/00-项目计划与里程碑.md`。
+本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。当前成员已加入，产品名为格弈；M2 人机对战已通过 PR 合入 `develop`，M4 测试与交付准备中。具体状态见 `docs/00-项目计划与里程碑.md`。
 
 这是课程的**统一起点**：既是入门训练的练习场，也是你自己产品项目的基础工程。它内置：
 
