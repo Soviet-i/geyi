@@ -912,6 +912,12 @@ static void client_process(const GyNetMsg *msg)
         {
             uint8_t old_phase = g.room.view.phase;
             int applied = gy_net_room_apply_room_state(&g.room, &s);
+            if (applied && s.phase == GY_NET_PHASE_RESULT &&
+                old_phase != GY_NET_PHASE_RESULT) {
+                /* 结果状态也可能只通过 ROOM_STATE 到达；客户端超时兜底
+                 * 从这个时刻开始计算，避免沿用 PLAYING 的时间戳。 */
+                g.room.view.phase_since_ms = g.now;
+            }
             if (applied && s.phase == GY_NET_PHASE_STARTING &&
                 old_phase != GY_NET_PHASE_STARTING) {
                 /* ROOM_STATE 不带时间戳；客户端从首次进入 STARTING 的时刻
@@ -988,7 +994,8 @@ static void client_process(const GyNetMsg *msg)
     case GY_NET_RESULT: {
         GyNetResult r;
         if (gy_net_unpack_result(msg, &r) != GY_NET_OK) return;
-        gy_net_room_apply_result(&g.room, &r);
+        if (gy_net_room_apply_result(&g.room, &r))
+            g.room.view.phase_since_ms = g.now;
         g.pending_move = 0; g.pending_move_at = 0;
         clear_placement();
         clear_preview_state();
@@ -1396,6 +1403,26 @@ void gy_net_app_tick(uint32_t now_ms)
             g.client_gen = 0;
             g.rejoin_sent = 0;
             g.rejoin_at = 0;
+        }
+        /* 房主通常会在 RESULT 后 4s 发 WAIT。若最后那个 ROOM_STATE 丢失，
+         * 客方会永远停在结算页；这里给一个本地兜底，超时后回房间。
+         * 多留 1s 让权威 WAIT 优先到达。 */
+        if (g.room.view.phase == GY_NET_PHASE_RESULT &&
+            (uint32_t)(now_ms - g.room.view.phase_since_ms) >=
+                GY_NET_RESULT_KEEP_MS + 1000u) {
+            APP_LOG("client result timeout -> WAIT at %u",
+                    (unsigned)now_ms);
+            g.room.view.phase = GY_NET_PHASE_WAIT;
+            g.room.view.result = GY_PLAYING;
+            g.room.view.result_reason = GY_NET_REASON_NORMAL;
+            g.room.view.game_valid = 0;
+            g.room.view.phase_since_ms = now_ms;
+            g.room.view.seq++;
+            g.pending_move = 0;
+            g.pending_move_at = 0;
+            g.ready_pending = 0;
+            clear_placement();
+            clear_preview_state();
         }
     }
 }

@@ -447,6 +447,34 @@ static int test_leave_after_resign_releases_seat(void)
     return 0;
 }
 
+static int test_client_result_timeout_returns_room(void)
+{
+    GyNetResult r;
+    GyNetMsg m;
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.room_id = 0x2020;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    g.room.view.phase = GY_NET_PHASE_PLAYING;
+    g.room.view.game_valid = 1;
+    g.now = 1000;
+    memset(&r, 0, sizeof(r));
+    r.outcome = GY_RED_WIN;
+    r.reason = GY_NET_REASON_RESIGN;
+    r.seq = g.room.view.seq + 1;
+    CHECK(gy_net_pack_result(&m, &r) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(g.room.view.phase_since_ms == 1000);
+    g.now = 1000 + GY_NET_RESULT_KEEP_MS + 1000;
+    gy_net_app_tick(g.now);
+    CHECK(g.room.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(g.room.view.result == GY_PLAYING);
+    return 0;
+}
+
 static int test_ignore_state_from_other_room(void)
 {
     GyNetRoomState s;
@@ -1047,6 +1075,7 @@ int main(void)
     if (test_leave_after_resign_releases_seat()) return 19;
     if (test_client_countdown_from_starting_state()) return 20;
     if (test_ignore_state_from_other_room()) return 21;
+    if (test_client_result_timeout_returns_room()) return 27;
     if (test_leave_clears_spectator_flag()) return 22;
     if (test_link_gen_reuse_reclaims_seat()) return 23;
     if (test_immediate_leave_then_rejoin()) return 24;
