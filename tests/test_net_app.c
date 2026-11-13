@@ -417,6 +417,7 @@ static int test_resign_keeps_conn_and_room_loop(void)
     CHECK(gy_net_pack_leave(&m, &l) == GY_NET_OK);
     feed_host(1, &m);
     CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(gy_net_app_result_reason() == GY_NET_REASON_RESIGN);
     /* 仅认输不能把客人的 ConnMap 丢掉，否则结算后 READY 收不到。 */
     CHECK(g.conns[0].used == 1);
     gy_net_app_tick(3100 + GY_NET_RESULT_KEEP_MS);
@@ -443,6 +444,47 @@ static int test_leave_after_resign_releases_seat(void)
     CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
     CHECK(g.room.view.player_count == 1);
     CHECK(g.conns[0].used == 0);
+    return 0;
+}
+
+static int test_lobby_start_clears_ghost_rooms(void)
+{
+    gy_net_app_init();
+    g.active = 0;
+    g.room_count = 1;
+    memset(&g.rooms[0], 0, sizeof(g.rooms[0]));
+    g.rooms[0].room_id = 0x1234;
+    CHECK(gy_net_app_lobby_start() == 0);
+    CHECK(g.room_count == 0);
+    CHECK(gy_net_app_room_at(0) == NULL);
+    return 0;
+}
+
+static int test_client_result_timeout_returns_room(void)
+{
+    GyNetResult r;
+    GyNetMsg m;
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_PLAYER;
+    g.local_color = GY_NET_COLOR_BLUE;
+    g.room_id = 0x2020;
+    gy_net_room_init_client(&g.room, g.room_id, 0);
+    g.room.view.phase = GY_NET_PHASE_PLAYING;
+    g.room.view.game_valid = 1;
+    g.now = 1000;
+    memset(&r, 0, sizeof(r));
+    r.outcome = GY_RED_WIN;
+    r.reason = GY_NET_REASON_RESIGN;
+    r.seq = g.room.view.seq + 1;
+    CHECK(gy_net_pack_result(&m, &r) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.room.view.phase == GY_NET_PHASE_RESULT);
+    CHECK(g.room.view.phase_since_ms == 1000);
+    g.now = 1000 + GY_NET_RESULT_KEEP_MS + 1000;
+    gy_net_app_tick(g.now);
+    CHECK(g.room.view.phase == GY_NET_PHASE_WAIT);
+    CHECK(g.room.view.result == GY_PLAYING);
     return 0;
 }
 
@@ -834,9 +876,11 @@ static int test_spectator_preview_cleared_on_phase(void)
         g.pending_move = 1;
         memset(&r, 0, sizeof(r));
         r.outcome = GY_RED_WIN;
+        r.reason = GY_NET_REASON_RESIGN;
         r.seq = 11;
         CHECK(gy_net_pack_result(&m, &r) == GY_NET_OK);
         client_process(&m);
+        CHECK(gy_net_app_result_reason() == GY_NET_REASON_RESIGN);
         CHECK(g.placing == 0 && g.place_row == -1 && g.place_col == -1);
         CHECK(g.pending_move == 0);
         CHECK(g.preview_valid[GY_NET_COLOR_RED] == 0);
@@ -1044,6 +1088,8 @@ int main(void)
     if (test_leave_after_resign_releases_seat()) return 19;
     if (test_client_countdown_from_starting_state()) return 20;
     if (test_ignore_state_from_other_room()) return 21;
+    if (test_client_result_timeout_returns_room()) return 27;
+    if (test_lobby_start_clears_ghost_rooms()) return 28;
     if (test_leave_clears_spectator_flag()) return 22;
     if (test_link_gen_reuse_reclaims_seat()) return 23;
     if (test_immediate_leave_then_rejoin()) return 24;

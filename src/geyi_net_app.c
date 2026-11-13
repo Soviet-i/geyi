@@ -912,6 +912,12 @@ static void client_process(const GyNetMsg *msg)
         {
             uint8_t old_phase = g.room.view.phase;
             int applied = gy_net_room_apply_room_state(&g.room, &s);
+            if (applied && s.phase == GY_NET_PHASE_RESULT &&
+                old_phase != GY_NET_PHASE_RESULT) {
+                /* 结果状态也可能只通过 ROOM_STATE 到达；客户端超时兜底
+                 * 从这个时刻开始计算，避免沿用 PLAYING 的时间戳。 */
+                g.room.view.phase_since_ms = g.now;
+            }
             if (applied && s.phase == GY_NET_PHASE_STARTING &&
                 old_phase != GY_NET_PHASE_STARTING) {
                 /* ROOM_STATE 不带时间戳；客户端从首次进入 STARTING 的时刻
@@ -988,7 +994,8 @@ static void client_process(const GyNetMsg *msg)
     case GY_NET_RESULT: {
         GyNetResult r;
         if (gy_net_unpack_result(msg, &r) != GY_NET_OK) return;
-        gy_net_room_apply_result(&g.room, &r);
+        if (gy_net_room_apply_result(&g.room, &r))
+            g.room.view.phase_since_ms = g.now;
         g.pending_move = 0; g.pending_move_at = 0;
         clear_placement();
         clear_preview_state();
@@ -1397,6 +1404,26 @@ void gy_net_app_tick(uint32_t now_ms)
             g.rejoin_sent = 0;
             g.rejoin_at = 0;
         }
+        /* 房主通常会在 RESULT 后 4s 发 WAIT。若最后那个 ROOM_STATE 丢失，
+         * 客方会永远停在结算页；这里给一个本地兜底，超时后回房间。
+         * 多留 1s 让权威 WAIT 优先到达。 */
+        if (g.room.view.phase == GY_NET_PHASE_RESULT &&
+            (uint32_t)(now_ms - g.room.view.phase_since_ms) >=
+                GY_NET_RESULT_KEEP_MS + 1000u) {
+            APP_LOG("client result timeout -> WAIT at %u",
+                    (unsigned)now_ms);
+            g.room.view.phase = GY_NET_PHASE_WAIT;
+            g.room.view.result = GY_PLAYING;
+            g.room.view.result_reason = GY_NET_REASON_NORMAL;
+            g.room.view.game_valid = 0;
+            g.room.view.phase_since_ms = now_ms;
+            g.room.view.seq++;
+            g.pending_move = 0;
+            g.pending_move_at = 0;
+            g.ready_pending = 0;
+            clear_placement();
+            clear_preview_state();
+        }
     }
 }
 
@@ -1595,6 +1622,7 @@ int gy_net_app_join_rejected(void) { return g.join_rejected; }
 int gy_net_app_join_reason(void) { return g.join_reason; }
 int gy_net_app_spectator_lost(void) { return g.spectator_lost; }
 int gy_net_app_result(void) { return g.room.view.result; }
+int gy_net_app_result_reason(void) { return g.room.view.result_reason; }
 int gy_net_app_local_turn(void)
 {
     if (g.role != GY_NET_ROLE_HOST && g.role != GY_NET_ROLE_PLAYER) return 0;
@@ -1635,8 +1663,12 @@ int gy_net_app_lobby_start(void)
     /* 上一次加入失败/被关房时可能还留着一条 BLE 链路；不清掉会让
      * 对方仍认为有连接、停止广播，自己也扫不到房间。刚发过 LEAVE
      * 时交给 TX 线程收尾，不要在这里把 LEAVE 截断。 */
-    if (!g.leaving)
+    if (!g.leaving) {
+        /* 从旧房/旧固件遗留下来的 host advertising 实例也要停掉，
+         * 否则本板自己可能在扫描时被当成“别人创建的房间”。 */
+        gy_net_ble_host_stop();
         gy_net_ble_client_abort();
+    }
     gy_net_ble_scan_start();
 #endif
     return 0;
@@ -1658,6 +1690,13 @@ const GyNetAppRoom *gy_net_app_room_at(int index)
 int gy_net_app_create_room(uint32_t room_id)
 {
     gy_net_app_leave();
+#ifdef GEYI_WITH_RTTHREAD
+    /* 从大厅“创建房间”时扫描可能仍在进行；控制器会以
+     * GAP_ERR_COMMAND_DISALLOWED(0x43/67) 拒绝创建可连接广播，
+     * 其他板就永远扫不到房间。先停扫描并给协议栈一点收尾时间。 */
+    gy_net_app_lobby_stop();
+    rt_thread_mdelay(30);
+#endif
     if (!room_id) room_id = 0x1001u + (g.now & 0x0fffu);
     g.room_id = room_id;
     gy_net_room_init_host(&g.room, room_id, g.now, 2);

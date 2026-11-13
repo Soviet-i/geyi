@@ -74,6 +74,8 @@ int gy_net_app_join_rejected(void);
 int gy_net_app_join_reason(void);   /* GY_NET_JOIN_REASON_* */
 int gy_net_app_spectator_lost(void);
 int gy_net_app_result(void);
+/* 结算原因（GY_NET_REASON_*）；房主/客方都从本地房间视图读取。 */
+int gy_net_app_result_reason(void);
 int gy_net_app_local_turn(void);
 int gy_net_app_is_spectator(void);
 int gy_net_app_pending_move(void);

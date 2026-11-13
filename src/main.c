@@ -20,6 +20,7 @@
 #include "geyi_input.h"
 #include "geyi_feedback.h"
 #include "geyi_history.h"
+#include "geyi_history_store.h"
 #include "geyi_timer.h"
 #include "geyi_ai.h"
 #include "geyi_config.h"
@@ -88,9 +89,12 @@ int main(void)
                gy_selftest() ? "PASS" : "FAIL");
     rt_kprintf("[geyi:selftest] input=%s (simulated angles only)\n",
                gy_input_selftest() ? "PASS" : "FAIL");
-    rt_kprintf("[geyi:selftest] history=%s timer=%s (RAM only, cleared on reboot)\n",
+    rt_kprintf("[geyi:selftest] history=%s timer=%s\n",
                gy_history_selftest() ? "PASS" : "FAIL",
                gy_timer_selftest() ? "PASS" : "FAIL");
+    {int rc=gy_history_store_init();
+     rt_kprintf("[geyi:selftest] history_store=%s count=%d\n",
+                rc?"PASS":"FAIL",gy_history_count());}
     rt_kprintf("[geyi:selftest] ai=%s\n", gy_ai_selftest() ? "PASS" : "FAIL");
     {int rc=gy_param_selftest();rt_kprintf("[geyi:selftest] param=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
     {int rc=gy_param_ui_selftest();rt_kprintf("[geyi:selftest] paramui=%s rc=%d\n",rc?"FAIL":"PASS",rc);}

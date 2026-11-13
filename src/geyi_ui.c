@@ -16,6 +16,7 @@
 #ifdef GEYI_WITH_RTTHREAD
 #include "finsh.h"
 #include "geyi_board.h"
+#include "geyi_history_store.h"
 #endif
 
 static GyGame game;
@@ -28,16 +29,18 @@ static GyNav nav;
 static uint32_t ui_session;
 /* 历史记录与单局计时（REQ-601~REQ-606）。 */
 static lv_obj_t *history_page,*history_detail_page;
-static lv_obj_t *hist_rows[5],*hist_row_labels[5],*hist_empty_label;
+static lv_obj_t *hist_rows[5],*hist_row_cells[5][4],*hist_header[4],*hist_empty_label;
 static lv_obj_t *hist_clear_button,*hist_clear_label;
-static lv_obj_t *hist_detail_lines[6];
+static lv_obj_t *hist_detail_lines[7];
 static int hist_index,hist_confirm_clear;
 static GyTimer match_timer;
-static int match_recorded,match_resigner;
+static GyTimer net_match_timer;
+static int match_recorded,match_resigner,net_match_recorded;
 static void history_refresh(void);
 static void history_reset_confirm(void);
 static void history_detail_open(int index);
 static void history_record_if_finished(void);
+static void history_net_tick(uint32_t now);
 static lv_obj_t *ui_page;
 static lv_obj_t *tiles[GY_MAX][GY_MAX], *labels[GY_MAX][GY_MAX], *health[GY_MAX][GY_MAX];
 static lv_obj_t *turn_label,*money_label,*hint,*count_label,*confirm_button;
@@ -651,6 +654,10 @@ static void start_ai(void)
     cfg=gy_ai_default_config();
     {const GyParamSet *p=gy_param_mode(GY_MODE_PVE);
      if(p)cfg.max_depth=p->search_depth;}
+    /* 5/6 层是用户明确要求的搜索上限；300ms 默认预算会在更深迭代前
+     * 截断，导致串口只报告 depth=4。高深度使用节点上限兜底，不再用
+     * 300ms 提前终止，保证 5/6 层设置能实际跑完。 */
+    if(cfg.max_depth>=5)cfg.time_limit_ms=0;
     ++ai_generation;
     ai_revision=game.revision;
     if(gy_ai_task_start(&game,&cfg,ai_revision,ai_generation)==0)ai_thinking=1;
@@ -785,6 +792,11 @@ void gy_ui_action(int a)
 {
     uint32_t old_revision=game.revision;
     int old_outcome=game.outcome;
+#ifdef GEYI_WITH_RTTHREAD
+    /* 不在 AI 搜索/预览期间写 Flash，避免 FlashDB 擦写拖住 UI 线程。 */
+    if(!ai_thinking&&!ai_preview_pending)gy_history_store_flush(lv_tick_get());
+#endif
+    history_net_tick(lv_tick_get());
     if(a==GY_UI_NET_CONFIRM_NO){
         net_confirm_hide();return;
     }
@@ -909,7 +921,13 @@ void gy_ui_action(int a)
     if(a==GY_UI_RESIGN&&!gy_net_app_active()){
         if(game.outcome){ai_side=-1;feedback=GY_FX_CLEAR;gy_nav_clear(&nav);show_page(home_page);}
         else if(playing){
-            match_resigner=game.turn;
+            int resigner=game.turn;
+            /* 人机模式只有人能点认输：即使当前轮到 AI，也由人认输、判人负。
+             * 单机模式仍由当前回合方认输。 */
+            if(ai_side>=0)resigner=ai_side==0?1:0;
+            cancel_ai();
+            match_resigner=resigner;
+            if(game.turn!=resigner)game.turn=resigner;
             gy_resign(&game);reset_selection_ui();
             gy_nav_clear(&nav);
             if(game.outcome)feedback=game.outcome==GY_RED_WIN?GY_FX_RED:
@@ -1149,17 +1167,34 @@ static lv_obj_t *page(lv_obj_t *root)
     lv_obj_set_style_bg_opa(p,LV_OPA_TRANSP,0);
     lv_obj_remove_flag(p,LV_OBJ_FLAG_SCROLLABLE);return p;
 }
-static const char *history_outcome_text(const GyRecord *r)
+static const char *history_winner_text(const GyRecord *r)
 {
-    return r->outcome==GY_RED_WIN?"红方胜":r->outcome==GY_BLUE_WIN?"蓝方胜":"平局";
+    return r->outcome==GY_RED_WIN?"红方":r->outcome==GY_BLUE_WIN?"蓝方":"平局";
 }
 static const char *history_mode_text(int mode)
 {
     return mode==GY_MODE_PVE?"人机":mode==GY_MODE_PVP?"联机":"单机";
 }
+static const char *history_identity_text(int identity)
+{
+    switch(identity){
+    case GY_IDENTITY_AI:return "AI";
+    case GY_IDENTITY_HUMAN:return "真人";
+    case GY_IDENTITY_OWNER:return "机主";
+    case GY_IDENTITY_OPPONENT:return "对手";
+    default:return "";
+    }
+}
+static const char *history_identity_detail_text(int identity)
+{
+    const char *text=history_identity_text(identity);
+    return *text?text:"无";
+}
 static const char *history_ended_text(int ended_by)
 {
-    return ended_by==GY_END_RED_RESIGN?"红方认输":ended_by==GY_END_BLUE_RESIGN?"蓝方认输":"全灭";
+    return ended_by==GY_END_RED_RESIGN?"红方认输":
+           ended_by==GY_END_BLUE_RESIGN?"蓝方认输":
+           ended_by==GY_END_DISCONNECT?"断线":"全灭";
 }
 static void history_reset_confirm(void)
 {
@@ -1168,7 +1203,7 @@ static void history_reset_confirm(void)
 }
 static void history_refresh(void)
 {
-    char value[56],duration[8];
+    char duration[8];
     int i,total=gy_history_count(),pages=(total+4)/5;
     if(pages<1)pages=1;
     if(hist_index>pages-1)hist_index=pages-1;
@@ -1179,9 +1214,10 @@ static void history_refresh(void)
         if(index<total&&index>=0){
             const GyRecord *r=gy_history_at(index);
             gy_timer_format(r->duration_ms,duration,(int)sizeof(duration));
-            lv_snprintf(value,sizeof(value),"%s  %s  %s",history_outcome_text(r),
-                        history_mode_text(r->mode),duration);
-            lv_label_set_text(hist_row_labels[i],value);
+            lv_label_set_text(hist_row_cells[i][0],history_mode_text(r->mode));
+            lv_label_set_text(hist_row_cells[i][1],duration);
+            lv_label_set_text(hist_row_cells[i][2],history_winner_text(r));
+            lv_label_set_text(hist_row_cells[i][3],history_identity_text(r->winner_identity));
             lv_obj_remove_flag(hist_rows[i],LV_OBJ_FLAG_HIDDEN);
         }else lv_obj_add_flag(hist_rows[i],LV_OBJ_FLAG_HIDDEN);
     }
@@ -1193,18 +1229,20 @@ static void history_detail_open(int index)
     if(!r)return;
     gy_timer_format(r->duration_ms,duration,(int)sizeof(duration));
     gy_timer_format(r->ts_sec*1000u,clock_text,(int)sizeof(clock_text));
-    lv_snprintf(value,sizeof(value),"结果  %s",history_outcome_text(r));
+    lv_snprintf(value,sizeof(value),"类型  %s",history_mode_text(r->mode));
     lv_label_set_text(hist_detail_lines[0],value);
-    lv_snprintf(value,sizeof(value),"模式  %s",history_mode_text(r->mode));
+    lv_snprintf(value,sizeof(value),"胜方  %s",history_winner_text(r));
     lv_label_set_text(hist_detail_lines[1],value);
-    lv_snprintf(value,sizeof(value),"棋盘  %u x %u",(unsigned)r->size,(unsigned)r->size);
+    lv_snprintf(value,sizeof(value),"胜方身份  %s",history_identity_detail_text(r->winner_identity));
     lv_label_set_text(hist_detail_lines[2],value);
-    lv_snprintf(value,sizeof(value),"步数  %u",(unsigned)r->moves);
+    lv_snprintf(value,sizeof(value),"棋盘  %u x %u",(unsigned)r->size,(unsigned)r->size);
     lv_label_set_text(hist_detail_lines[3],value);
-    lv_snprintf(value,sizeof(value),"时长  %s",duration);
+    lv_snprintf(value,sizeof(value),"步数  %u",(unsigned)r->moves);
     lv_label_set_text(hist_detail_lines[4],value);
-    lv_snprintf(value,sizeof(value),"时间  开机%s",clock_text);
+    lv_snprintf(value,sizeof(value),"时长  %s",duration);
     lv_label_set_text(hist_detail_lines[5],value);
+    lv_snprintf(value,sizeof(value),"时间  开机%s",clock_text);
+    lv_label_set_text(hist_detail_lines[6],value);
     show_page(history_detail_page);
 }
 static void history_row_event(lv_event_t *e)
@@ -1227,9 +1265,71 @@ static void history_record_if_finished(void)
     record.winner=(uint8_t)(game.outcome==GY_RED_WIN?0u:game.outcome==GY_BLUE_WIN?1u:2u);
     record.ended_by=(uint8_t)(match_resigner==0?GY_END_RED_RESIGN:
                               match_resigner==1?GY_END_BLUE_RESIGN:GY_END_KNOCKOUT);
+    record.winner_identity=(uint8_t)(game_mode==GY_MODE_PVE?
+                                     gy_history_identity_pve(game.outcome,ai_side):
+                                     GY_IDENTITY_NONE);
     record.moves=(uint16_t)(game.moves>0xFFFFu?0xFFFFu:game.moves);
     record.duration_ms=gy_timer_elapsed(&match_timer,lv_tick_get());
     record.ts_sec=lv_tick_get()/1000u;
+    gy_history_add(&record);
+}
+/* 联机结算按本机视角写一条；房主和客方走同一入口。
+ * 必须在 gy_net_app_tick() 之后调用，且同时从 gy_ui_action() 进入，
+ * 避免玩家在结果页立即离开时错过最后一条记录。 */
+static void history_net_tick(uint32_t now)
+{
+    const GyGame *ng;
+    GyRecord record;
+    int phase,outcome,reason;
+    uint8_t identity;
+
+    if(!gy_net_app_active()){
+        net_match_recorded=0;
+        if(gy_timer_running(&net_match_timer))gy_timer_stop(&net_match_timer,now);
+        return;
+    }
+    if(gy_net_app_is_spectator())return;
+
+    phase=gy_net_app_phase();
+    if(phase==GY_NET_PHASE_PLAYING){
+        if(!gy_timer_running(&net_match_timer)){
+            gy_timer_start(&net_match_timer,now);
+            net_match_recorded=0;
+        }
+        return;
+    }
+    if(phase==GY_NET_PHASE_WAIT||phase==GY_NET_PHASE_CLOSED){
+        if(gy_timer_running(&net_match_timer))gy_timer_stop(&net_match_timer,now);
+        return;
+    }
+    if(phase!=GY_NET_PHASE_RESULT||net_match_recorded)return;
+
+    ng=gy_net_app_game();
+    outcome=gy_net_app_result();
+    if(!outcome&&ng)outcome=ng->outcome;
+    if(outcome<GY_RED_WIN||outcome>GY_DRAW)return;
+    if(!ng||ng->config.size<GY_SIZE_MIN||ng->config.size>GY_SIZE_MAX)return;
+
+    net_match_recorded=1;
+    if(gy_timer_running(&net_match_timer))gy_timer_stop(&net_match_timer,now);
+    identity=gy_history_identity_pvp(outcome,gy_net_app_local_color());
+    reason=gy_net_app_result_reason();
+
+    memset(&record,0,sizeof(record));
+    record.mode=GY_MODE_PVP;
+    record.size=(uint8_t)ng->config.size;
+    record.outcome=(uint8_t)outcome;
+    record.winner=(uint8_t)(outcome==GY_RED_WIN?0u:outcome==GY_BLUE_WIN?1u:2u);
+    record.winner_identity=identity;
+    if(reason==GY_NET_REASON_RESIGN)
+        record.ended_by=(uint8_t)gy_history_ended_by_resign(outcome);
+    else if(reason==GY_NET_REASON_NORMAL)
+        record.ended_by=GY_END_KNOCKOUT;
+    else
+        record.ended_by=GY_END_DISCONNECT;
+    record.moves=(uint16_t)(ng->moves>0xFFFFu?0xFFFFu:ng->moves);
+    record.duration_ms=gy_timer_elapsed(&net_match_timer,now);
+    record.ts_sec=now/1000u;
     gy_history_add(&record);
 }
 void gy_ui_create(void)
@@ -1260,16 +1360,32 @@ void gy_ui_create(void)
     button(rules_page,"下一页",256,378,96,40,GY_UI_RULES_NEXT);
     history_page=page(root);history_detail_page=page(root);
     text(history_page,"历史记录",28,22);
+    hist_header[0]=text(history_page,"类型",40,52);
+    hist_header[1]=text(history_page,"时长",100,52);
+    hist_header[2]=text(history_page,"胜方",170,52);
+    hist_header[3]=text(history_page,"胜方身份",230,52);
+    lv_obj_set_width(hist_header[0],60);
+    lv_obj_set_width(hist_header[1],70);
+    lv_obj_set_width(hist_header[2],60);
+    lv_obj_set_width(hist_header[3],120);
     hist_empty_label=text(history_page,"暂无对局",32,120);
     for(row=0;row<5;++row){
         lv_obj_t *b=lv_button_create(history_page);
-        lv_obj_set_pos(b,32,56+row*52);lv_obj_set_size(b,326,44);
+        int col;
+        lv_obj_set_pos(b,32,76+row*50);lv_obj_set_size(b,326,44);
+        lv_obj_set_style_pad_all(b,0,0);lv_obj_set_style_border_width(b,0,0);
         lv_obj_set_style_bg_color(b,lv_color_hex(0x344760),0);
         lv_obj_set_style_radius(b,8,0);lv_obj_set_style_shadow_width(b,0,0);
         hist_rows[row]=b;
-        hist_row_labels[row]=lv_label_create(b);
-        lv_label_set_text(hist_row_labels[row],"");
-        lv_obj_align(hist_row_labels[row],LV_ALIGN_LEFT_MID,12,0);
+        for(col=0;col<4;++col){
+            static const int x[4]={8,68,138,198};
+            static const int w[4]={60,70,60,120};
+            hist_row_cells[row][col]=lv_label_create(b);
+            lv_label_set_text(hist_row_cells[row][col],"");
+            lv_obj_set_width(hist_row_cells[row][col],w[col]);
+            lv_obj_set_style_text_align(hist_row_cells[row][col],LV_TEXT_ALIGN_LEFT,0);
+            lv_obj_align(hist_row_cells[row][col],LV_ALIGN_LEFT_MID,x[col],0);
+        }
         lv_obj_add_event_cb(b,history_row_event,LV_EVENT_CLICKED,(void*)(intptr_t)row);
     }
     button(history_page,"上一页",32,340,100,42,GY_UI_HISTORY_PREV);
@@ -1278,7 +1394,7 @@ void gy_ui_create(void)
     hist_clear_label=lv_obj_get_child(hist_clear_button,0);
     button(history_page,"返回",32,392,326,40,GY_UI_HOME);
     text(history_detail_page,"对局详情",28,22);
-    for(row=0;row<6;++row)hist_detail_lines[row]=text(history_detail_page,"",32,64+row*44);
+    for(row=0;row<7;++row)hist_detail_lines[row]=text(history_detail_page,"",32,64+row*40);
     button(history_detail_page,"返回列表",32,388,150,42,GY_UI_HISTORY_BACK);
     button(history_detail_page,"首页",196,388,162,42,GY_UI_HOME);
     text(mode_page,"选择游戏模式",32,36);
@@ -1786,9 +1902,14 @@ void gy_ui_tick(void)
 {
     GyAiResult r;
     uint32_t now=lv_tick_get();
+#ifdef GEYI_WITH_RTTHREAD
+    /* AI 思考/预览期间不占 UI 线程写 Flash；历史 dirty 会在回合结束后落盘。 */
+    if(!ai_thinking&&!ai_preview_pending)gy_history_store_flush(now);
+#endif
     history_record_if_finished();
     run_test_command();
     gy_net_app_tick(now);
+    history_net_tick(now);
     if(net_lobby_active)net_lobby_refresh();
     if(net_room_active&&gy_net_app_local_terminal()){
         /* 客方在房间页等房主 10s 未果：同样停留 2s 后回大厅。 */

@@ -1,0 +1,96 @@
+scons: Reading SConscript files ...
+Board: sf32lb52-lchspi-ulp_hcpu
+-----
+Adding ftab subproject for chip: SF32LB52X (ptab v1/v2)
+========
+Multi-Project Info
+--------
+full_name       main.bootloader
+parent          main
+bsp_root        D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\example\boot_loader\project\butterflmicro\ram_v2
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/bootloader
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\example/boot_loader/project/butterflmicro/ram_v2\link
+ptab            D:\IDE\Code\Program\geyi\project\sf32lb52-lchspi-ulp_hcpu\ptab.json
+embedded:       False
+--------
+full_name       main.lcpu
+parent          main
+bsp_root        D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\example\ble\lcpu_general\project\common
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/lcpu
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\drivers/cmsis/sf32lb52x/Templates/gcc/lcpu/link
+ptab            D:\IDE\Code\Program\geyi\project\sf32lb52-lchspi-ulp_hcpu\ptab.json
+embedded:       True
+--------
+full_name       main
+parent          
+bsp_root        D:\IDE\Code\Program\geyi\project
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\drivers/cmsis/sf32lb52x/Templates/gcc/hcpu/link
+ptab            D:\IDE\Code\Program\geyi\project\sf32lb52-lchspi-ulp_hcpu\ptab.json
+--------
+full_name       main.ftab
+parent          main
+bsp_root        D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\example\flash_table\sf32lb52x_common_v2
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/ftab
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\drivers/cmsis/sf32lb52x/Templates/gcc/hcpu/link
+ptab            D:\IDE\Code\Program\geyi\project\sf32lb52-lchspi-ulp_hcpu\ptab.json
+embedded:       False
+========
+scons: done reading SConscript files.
+scons: Building targets ...
+scons: building associated VariantDir targets: build_sf32lb52-lchspi-ulp_hcpu
+Generating build_sf32lb52-lchspi-ulp_hcpu\bootloader\link_copy.lds ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\lcpu\link_copy.lds ...
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\bootloader\compile_commands.json
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\compile_commands.json
+CC build_sf32lb52-lchspi-ulp_hcpu\src\geyi_ai_task.o
+Generating build_sf32lb52-lchspi-ulp_hcpu\link_copy.lds ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\link_copy.lds ...
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\ftab\compile_commands.json
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\lcpu\compile_commands.json
+LINK build_sf32lb52-lchspi-ulp_hcpu\main.elf
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: warning: build_sf32lb52-lchspi-ulp_hcpu\main.elf has a LOAD segment with RWX permissions
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.asm ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.bin ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.hex ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\board\ftab.c ...
+WARNING: img "dfu" not found
+Generating build_sf32lb52-lchspi-ulp_hcpu\download.bat ...
+Generated sftool param: build_sf32lb52-lchspi-ulp_hcpu/sftool_param.json
+scons: done building targets.
+
+                                              main                             
+┌──────────────────────────┬──────────────────┬──────────────────┬─────────────
+│ Region / Section         │            Total │             Used │             
+├──────────────────────────┼──────────────────┼──────────────────┼─────────────
+│ ROM                      │      8,388,608 B │      1,145,139 B │      7,243,4
+│   .text                  │        633,188 B │                  │             
+│   .rodata                │        480,635 B │                  │             
+│   other                  │            568 B │                  │             
+│ RAM                      │        523,264 B │        301,048 B │        222,2
+│   other                  │        197,416 B │                  │             
+│   .bss                   │         98,924 B │                  │             
+│   .data                  │          4,708 B │                  │             
+└──────────────────────────┴──────────────────┴──────────────────┴─────────────
+  Binary size: 1,098,364 B
+
+                                              lcpu                             
+┌──────────────────────────┬──────────────────┬──────────────────┬─────────────
+│ Region / Section         │            Total │             Used │             
+├──────────────────────────┼──────────────────┼──────────────────┼─────────────
+│ ROM                      │         12,288 B │          6,695 B │          5,5
+│   .text                  │          4,784 B │                  │             
+│   .rodata                │            815 B │                  │             
+│   other                  │              8 B │                  │             
+│ RAM                      │         23,552 B │          1,872 B │         21,6
+│   other                  │          1,028 B │                  │             
+│   .bss                   │            784 B │                  │             
+│   .data                  │             60 B │                  │             
+└──────────────────────────┴──────────────────┴──────────────────┴─────────────
+  Binary size: 6,424 B
+
+================================================================================
+Memory Usage Analysis
+================================================================================
+================================================================================
+
