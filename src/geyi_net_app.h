@@ -73,6 +73,8 @@ int gy_net_app_local_terminal(void);
 int gy_net_app_join_rejected(void);
 int gy_net_app_join_reason(void);   /* GY_NET_JOIN_REASON_* */
 int gy_net_app_spectator_lost(void);
+/* 旁观者正在跟随房主转移（扫描同 room_id 或已发起新房主 JOIN）。 */
+int gy_net_app_spectator_following(void);
 int gy_net_app_result(void);
 /* 结算原因（GY_NET_REASON_*）；房主/客方都从本地房间视图读取。 */
 int gy_net_app_result_reason(void);

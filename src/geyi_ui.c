@@ -19,6 +19,13 @@
 #include "geyi_history_store.h"
 #endif
 
+/* 触摸诊断：桌面/板端统一输出按钮点击与触点坐标，用于区分“没点到”与“逻辑未执行”。 */
+#ifdef GEYI_WITH_RTTHREAD
+#define GY_UI_LOG rt_kprintf
+#else
+#define GY_UI_LOG printf
+#endif
+
 static GyGame game;
 static GyPreview preview;
 static int direction=-1, amount=1, selected_count=1, aim=0;
@@ -304,7 +311,10 @@ static void net_room_refresh(void)
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_FULL?"房间已满":
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_TIMEOUT?"加入超时":"加入失败";
         int reconn=gy_net_app_remote_reconnect_seconds();
-        if(reconn>0)
+        if(gy_net_app_spectator_following())
+            lv_snprintf(text,sizeof(text),"房主已转移 正在重新加入 | 本机 #%04X",
+                        (unsigned)gy_net_app_local_id());
+        else if(reconn>0)
             lv_snprintf(text,sizeof(text),"%s 重连中 %ds | 本机 #%04X",
                         role==GY_NET_ROLE_HOST?"对手断线":
                         role==GY_NET_ROLE_SPECTATOR?
@@ -624,6 +634,7 @@ static void render(void)
             net_result_text(value,sizeof(value),netres,",即将返回房间");
             status(value);
         }
+        else if(gy_net_app_spectator_following())status("房主已转移 正在重新加入...");
         else if(reconn>0){
             net_reconn_text(value,sizeof(value),"等待对手重连",0);
             status(value);
@@ -1053,7 +1064,16 @@ void gy_ui_cell(int x,int y)
     place_row=y;place_column=x;ready=gy_place_legal(&game,y,x);render();
     if(!ready)status("该位置不可放置 请选择外围空格");
 }
-static void action_event(lv_event_t *e) {gy_ui_action((int)(intptr_t)lv_event_get_user_data(e));}
+static void action_event(lv_event_t *e)
+{
+    int action=(int)(intptr_t)lv_event_get_user_data(e);
+    lv_point_t p={0,0};
+    lv_indev_t *indev=lv_indev_active();
+    if(indev)lv_indev_get_point(indev,&p);
+    /* 每次真实点击打一行：无此行 = 触控没有命中按钮；有行 = 命中后看后续状态。 */
+    GY_UI_LOG("[gy_ui] click action=%d at %d,%d\n",action,(int)p.x,(int)p.y);
+    gy_ui_action(action);
+}
 static void cell_event(lv_event_t *e)
 {int n=(int)(intptr_t)lv_event_get_user_data(e);gy_ui_cell(n%GY_MAX,n/GY_MAX);}
 static lv_obj_t *button(lv_obj_t *root,const char *name,int x,int y,int w,int h,int action)
@@ -1470,9 +1490,10 @@ void gy_ui_create(void)
      net_ready_button=button(net_room_page,"准备",204,350,170,44,GY_UI_NET_READY);
     }
     root=game_page;
-    /* 真机为圆角屏：左上角不放 GEYI；右上角“认输/返回首页/退出旁观”按钮左移，
-     * 避开板边和右手遮挡，同时仍在圆角安全区内。 */
-    resign_button=button(root,"认输",240,22,96,36,GY_UI_RESIGN);
+    /* 真机为圆角屏：左上角不放 GEYI；右上角“认输/返回首页/退出旁观”按钮下移、
+     * 加高并加宽点击热区，避开顶部边缘/圆角触控死区，仍保持在棋盘上沿(y=86)之前。 */
+    resign_button=button(root,"认输",240,40,134,44,GY_UI_RESIGN);
+    lv_obj_set_ext_click_area(resign_button,10);
     /* 左上圆角 R=48：回合标签原在 (16,26) 会被圆角裁掉；右移到
      * 棋盘左边界附近，既避开圆角也不压右上认输按钮。 */
     turn_label=text(root,"RED TURN",90,24);money_label=text(root,"",16,50);
@@ -1911,8 +1932,8 @@ void gy_ui_tick(void)
     gy_net_app_tick(now);
     history_net_tick(now);
     if(net_lobby_active)net_lobby_refresh();
-    if(net_room_active&&gy_net_app_local_terminal()){
-        /* 客方在房间页等房主 10s 未果：同样停留 2s 后回大厅。 */
+    if(net_room_active&&(gy_net_app_local_terminal()||gy_net_app_join_rejected())){
+        /* 客方在房间页等房主 10s 未果，或旁观者跟随新房主被拒：停留 2s 后回大厅。 */
         if(!net_terminal_at)net_terminal_at=now?now:1;
         else if((uint32_t)(now-net_terminal_at)>=2000u){
             net_terminal_at=0;

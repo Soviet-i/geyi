@@ -148,11 +148,20 @@ int main(void)
      CHECK(gy_preview(&g,(GyMove){GY_UP,1,0},&q));
      CHECK(q.visible.cells[4][3].kind==GY_SOLDIER);
      CHECK(q.visible.cells[5][2].kind==GY_SOLDIER);
-     /* 方位优先于深度：偏左时，后排左兵优先于更靠前的中间兵。 */
+     /* ADR-0013：不同深度按到方位边指示点的欧氏距离，近者优先；
+      * 横向只在距离相同时起作用。旧“方位优先于深度”断言保留为失败记录。 */
      g=empty();soldier(&g,1,5,0,8);soldier(&g,3,2,0,8);soldier(&g,5,0,1,8);
      CHECK(gy_preview(&g,(GyMove){GY_UP,1,-100},&q));
-     CHECK(q.visible.cells[4][1].kind==GY_SOLDIER);
-     CHECK(q.visible.cells[2][3].kind==GY_SOLDIER);
+     CHECK(q.visible.cells[1][3].kind==GY_SOLDIER);   /* (3,2) 上移 */
+     CHECK(q.visible.cells[2][3].kind==GY_EMPTY);
+     CHECK(q.visible.cells[5][1].kind==GY_SOLDIER);   /* 后排左兵未动 */
+     /* 2026-11-13 截图回归：8×8 正下方 aim=0，下方近边兵先于上方中列兵。
+      * 旧规则下这里会选 (2,2)，导致上方 B6 先动。 */
+     g=empty();g.config.size=8;g.turn=1;
+     soldier(&g,2,2,1,8);soldier(&g,1,6,1,8);soldier(&g,7,7,0,8);
+     CHECK(gy_preview(&g,(GyMove){GY_DOWN,1,0},&q));
+     CHECK(q.visible.cells[7][1].kind==GY_SOLDIER);   /* (1,6) 下移 */
+     CHECK(q.visible.cells[2][2].kind==GY_SOLDIER);   /* 上方兵未动 */
     }
     g=empty();g.turn=1;
     CHECK(gy_resign(&g));CHECK(g.outcome==GY_RED_WIN);CHECK(!gy_resign(&g));

@@ -1065,6 +1065,239 @@ static int test_rejoin_wait_does_not_send_stale_snapshot(void)
     return 0;
 }
 
+/* 旁观者跟随（ADR-0015）：用真实 ROOM_STATE 触发，不依赖 BLE。 */
+static int feed_client_state(uint8_t host, uint8_t guest, uint8_t players,
+                             uint8_t phase, uint32_t room_id, uint32_t seq,
+                             uint8_t seat_online)
+{
+    GyNetRoomState s;
+    GyNetMsg m;
+    memset(&s, 0, sizeof(s));
+    s.phase = phase;
+    s.host_color = host;
+    s.guest_color = guest;
+    s.player_count = players;
+    s.host_id = 0x1111;
+    s.guest_id = 0x2222;
+    s.room_id = room_id;
+    s.seq = seq;
+    s.seat_online = seat_online;
+    if (gy_net_pack_room_state(&m, &s) != GY_NET_OK) return 1;
+    client_process(&m);
+    return 0;
+}
+
+static int setup_spectator(uint32_t room_id)
+{
+    gy_net_app_init();
+    g.active = 2;
+    g.role = GY_NET_ROLE_SPECTATOR;
+    g.local_color = GY_NET_COLOR_NONE;
+    g.room_id = room_id;
+    g.local_player_id = 0x3333;
+    gy_net_room_init_client(&g.room, room_id, 0);
+    return 0;
+}
+
+static int test_spectator_follows_host_migration(void)
+{
+    CHECK(setup_spectator(0x2081) == 0);
+    /* 初始：红房主 + 蓝客人，旁观者已收到权威状态。 */
+    CHECK(feed_client_state(GY_NET_COLOR_RED, GY_NET_COLOR_BLUE, 2,
+                            GY_NET_PHASE_WAIT, g.room_id, 1, 0x3) == 0);
+    CHECK(g.room.view.host_color == GY_NET_COLOR_RED);
+    CHECK(g.room.view.player_count == 2);
+    CHECK(g.spectator_scan == 0);
+    /* 房主退出：蓝客人接管，players 2→1，host 颜色变化。 */
+    CHECK(feed_client_state(GY_NET_COLOR_BLUE, GY_NET_COLOR_RED, 1,
+                            GY_NET_PHASE_WAIT, g.room_id, 2, 0x2) == 0);
+    CHECK(g.spectator_scan == 1);
+    CHECK(g.spectator_follow == 1);
+    CHECK(g.spectator_transfer_seen == 1);
+    CHECK(g.spectator_lost == 0);
+    CHECK(g.room.view.host_color == GY_NET_COLOR_BLUE);
+    CHECK(g.room.view.player_count == 1);
+    CHECK(g.room_id == 0x2081);
+    return 0;
+}
+
+static int test_spectator_follow_scan_new_host(void)
+{
+    uint8_t old_addr[6] = {1, 2, 3, 4, 5, 6};
+    uint8_t new_addr[6] = {9, 8, 7, 6, 5, 4};
+    CHECK(setup_spectator(0x2082) == 0);
+    memcpy(g.join_addr, old_addr, 6);
+    g.join_addr_type = 0;
+    g.token = 0xABCD;
+    spectator_start_scan(100, 0);
+    CHECK(g.spectator_scan == 1);
+    CHECK(memcmp(g.spectator_old_addr, old_addr, 6) == 0);
+    /* 非 WAIT 广播不接；仍保持扫描。 */
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_PLAYING, 1, 0, 2,
+                               new_addr, 0, 200) == 0);
+    CHECK(g.spectator_scan == 1);
+    /* 同 room_id、WAIT、1/2 玩家、有空旁观位：以 SPECTATOR 全新加入。 */
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_WAIT, 1, 0, 2,
+                               new_addr, 0, 200) == 1);
+    CHECK(g.spectator_scan == 0);
+    CHECK(g.spectator_follow == 1);
+    CHECK(g.spectator_lost == 0);
+    CHECK(g.pending_join == 1);
+    CHECK(g.join_req_role == 1);              /* 1 = 旁观，不是 auto */
+    CHECK(g.join_role == GY_NET_ROLE_SPECTATOR);
+    CHECK(g.role == GY_NET_ROLE_SPECTATOR);
+    CHECK(g.token == 0);
+    CHECK(g.active == 2);
+    CHECK(g.spectator_transfer_seen == 1);
+    CHECK(gy_net_app_spectator_following() == 1);
+    CHECK(memcmp(g.join_addr, new_addr, 6) == 0);
+    return 0;
+}
+
+static int test_spectator_follow_old_host_fresh_join(void)
+{
+    uint8_t old_addr[6] = {1, 2, 3, 4, 5, 6};
+    CHECK(setup_spectator(0x2083) == 0);
+    memcpy(g.join_addr, old_addr, 6);
+    g.join_addr_type = 0;
+    g.token = 0xABCD;
+    spectator_start_scan(100, 0);
+    /* WAIT 下旧旁观席位已被释放，旧 token 不能 REJOIN；必须全新 SPECTATOR JOIN。 */
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_WAIT, 2, 0, 2,
+                               old_addr, 0, 200) == 1);
+    CHECK(g.spectator_scan == 0);
+    CHECK(g.pending_join == 1);
+    CHECK(g.join_req_role == 1);
+    CHECK(g.token == 0);
+    CHECK(g.spectator_follow == 1);
+    CHECK(g.spectator_transfer_seen == 0);    /* 没换 host，UI 仍显示重连 */
+    CHECK(gy_net_app_spectator_following() == 0);
+    return 0;
+}
+
+static int test_spectator_transfer_ignores_old_addr(void)
+{
+    uint8_t old_addr[6] = {1, 2, 3, 4, 5, 6};
+    uint8_t new_addr[6] = {9, 8, 7, 6, 5, 4};
+    CHECK(setup_spectator(0x2085) == 0);
+    memcpy(g.join_addr, old_addr, 6);
+    spectator_start_scan(100, 1);          /* 已收到房主转移 ROOM_STATE */
+    CHECK(g.spectator_transfer_seen == 1);
+    /* 旧 host 残留广播必须被丢弃，不能把旁观者锁回旧地址。 */
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_WAIT, 2, 1, 2,
+                               old_addr, 0, 200) == 0);
+    CHECK(g.spectator_scan == 1);
+    CHECK(g.pending_join == 0);
+    /* 新房主广播才接受。 */
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_WAIT, 1, 0, 2,
+                               new_addr, 0, 200) == 1);
+    CHECK(g.pending_join == 1);
+    CHECK(g.join_req_role == 1);
+    return 0;
+}
+
+static int test_spectator_no_follow_on_guest_leave(void)
+{
+    CHECK(setup_spectator(0x2086) == 0);
+    CHECK(feed_client_state(GY_NET_COLOR_RED, GY_NET_COLOR_BLUE, 2,
+                            GY_NET_PHASE_WAIT, g.room_id, 1, 0x3) == 0);
+    /* 客人退出：host 颜色不变，players 2→1，不能当成房主转移。 */
+    CHECK(feed_client_state(GY_NET_COLOR_RED, GY_NET_COLOR_BLUE, 1,
+                            GY_NET_PHASE_WAIT, g.room_id, 2, 0x1) == 0);
+    CHECK(g.spectator_scan == 0);
+    CHECK(g.spectator_follow == 0);
+    return 0;
+}
+
+static int test_spectator_no_follow_when_playing(void)
+{
+    CHECK(setup_spectator(0x2087) == 0);
+    CHECK(feed_client_state(GY_NET_COLOR_RED, GY_NET_COLOR_BLUE, 2,
+                            GY_NET_PHASE_WAIT, g.room_id, 1, 0x3) == 0);
+    /* PLAYING 阶段即使 host 颜色变化也不能触发 WAIT 跟随。 */
+    CHECK(feed_client_state(GY_NET_COLOR_BLUE, GY_NET_COLOR_RED, 1,
+                            GY_NET_PHASE_PLAYING, g.room_id, 2, 0x2) == 0);
+    CHECK(g.spectator_scan == 0);
+    CHECK(g.spectator_follow == 0);
+    return 0;
+}
+
+static int test_spectator_scan_rejects(void)
+{
+    uint8_t addr[6] = {9, 8, 7, 6, 5, 4};
+    CHECK(setup_spectator(0x2088) == 0);
+    memcpy(g.join_addr, addr, 6);
+    spectator_start_scan(100, 0);
+    CHECK(spectator_scan_match(g.room_id + 1, GY_NET_PHASE_WAIT, 1, 0, 2,
+                               addr, 0, 200) == 0);
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_WAIT, 0, 0, 2,
+                               addr, 0, 200) == 0);
+    CHECK(spectator_scan_match(g.room_id, GY_NET_PHASE_WAIT, 1, 2, 2,
+                               addr, 0, 200) == 0);
+    CHECK(g.spectator_scan == 1);
+    return 0;
+}
+
+static int test_join_ack_clears_spectator_follow(void)
+{
+    GyNetJoinAck a;
+    GyNetMsg m;
+    CHECK(setup_spectator(0x2089) == 0);
+    g.pending_join = 1;
+    g.spectator_scan = 1;
+    g.spectator_follow = 1;
+    g.spectator_transfer_seen = 1;
+    g.spectator_lost = 0;
+    memset(&a, 0, sizeof(a));
+    a.color = GY_NET_COLOR_NONE;
+    a.seat = 0;
+    a.player_id = 0x3333;
+    a.token = 0x5566;
+    a.room_id = g.room_id;
+    a.seq = 1;
+    CHECK(gy_net_pack_join_ack(&m, &a) == GY_NET_OK);
+    client_process(&m);
+    CHECK(g.pending_join == 0);
+    CHECK(g.spectator_scan == 0);
+    CHECK(g.spectator_follow == 0);
+    CHECK(g.spectator_transfer_seen == 0);
+    CHECK(g.spectator_lost == 0);
+    CHECK(g.role == GY_NET_ROLE_SPECTATOR);
+    CHECK(g.token == 0x5566);
+    return 0;
+}
+
+static int test_spectator_mark_lost(void)
+{
+    CHECK(setup_spectator(0x2084) == 0);
+    g.room.view.local_terminal = 0;
+    spectator_mark_lost(100);
+    CHECK(g.spectator_lost == 1);
+    CHECK(g.spectator_scan == 0);
+    CHECK(g.spectator_follow == 0);
+    CHECK(g.active == 0);
+    CHECK(g.room.view.local_terminal == 1);
+    return 0;
+}
+
+static int test_spectator_follow_timing(void)
+{
+    CHECK(setup_spectator(0x2090) == 0);
+    g.dropped = 1;
+    g.drop_at = 100;
+    g.room.view.phase = GY_NET_PHASE_WAIT;
+    g.room.view.player_count = 2;
+    CHECK(spectator_should_scan(3099) == 0);
+    CHECK(spectator_should_scan(3100) == 1);
+    g.spectator_follow = 1;
+    CHECK(spectator_follow_expired(10099) == 0);
+    CHECK(spectator_follow_expired(10100) == 1);
+    g.spectator_lost = 1;
+    CHECK(spectator_follow_expired(20000) == 0);
+    CHECK(spectator_should_scan(20000) == 0);
+    return 0;
+}
+
 int main(void)
 {
     if (test_swap_ready_and_move_color()) return 1;
@@ -1105,6 +1338,16 @@ int main(void)
     if (test_preview_clears_placement()) return 35;
     if (test_pending_move_timeout()) return 36;
     if (test_rejoin_wait_does_not_send_stale_snapshot()) return 37;
+    if (test_spectator_follows_host_migration()) return 38;
+    if (test_spectator_follow_scan_new_host()) return 39;
+    if (test_spectator_follow_old_host_fresh_join()) return 40;
+    if (test_spectator_mark_lost()) return 41;
+    if (test_spectator_transfer_ignores_old_addr()) return 42;
+    if (test_spectator_no_follow_on_guest_leave()) return 43;
+    if (test_spectator_no_follow_when_playing()) return 44;
+    if (test_spectator_scan_rejects()) return 45;
+    if (test_join_ack_clears_spectator_follow()) return 46;
+    if (test_spectator_follow_timing()) return 47;
     printf("geyi-net-app-tests: %d checks PASS\n", checks);
     return 0;
 }
