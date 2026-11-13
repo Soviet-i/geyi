@@ -311,7 +311,10 @@ static void net_room_refresh(void)
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_FULL?"房间已满":
                          gy_net_app_join_reason()==GY_NET_JOIN_REASON_TIMEOUT?"加入超时":"加入失败";
         int reconn=gy_net_app_remote_reconnect_seconds();
-        if(reconn>0)
+        if(gy_net_app_spectator_following())
+            lv_snprintf(text,sizeof(text),"房主已转移 正在重新加入 | 本机 #%04X",
+                        (unsigned)gy_net_app_local_id());
+        else if(reconn>0)
             lv_snprintf(text,sizeof(text),"%s 重连中 %ds | 本机 #%04X",
                         role==GY_NET_ROLE_HOST?"对手断线":
                         role==GY_NET_ROLE_SPECTATOR?
@@ -631,6 +634,7 @@ static void render(void)
             net_result_text(value,sizeof(value),netres,",即将返回房间");
             status(value);
         }
+        else if(gy_net_app_spectator_following())status("房主已转移 正在重新加入...");
         else if(reconn>0){
             net_reconn_text(value,sizeof(value),"等待对手重连",0);
             status(value);
@@ -1928,8 +1932,8 @@ void gy_ui_tick(void)
     gy_net_app_tick(now);
     history_net_tick(now);
     if(net_lobby_active)net_lobby_refresh();
-    if(net_room_active&&gy_net_app_local_terminal()){
-        /* 客方在房间页等房主 10s 未果：同样停留 2s 后回大厅。 */
+    if(net_room_active&&(gy_net_app_local_terminal()||gy_net_app_join_rejected())){
+        /* 客方在房间页等房主 10s 未果，或旁观者跟随新房主被拒：停留 2s 后回大厅。 */
         if(!net_terminal_at)net_terminal_at=now?now:1;
         else if((uint32_t)(now-net_terminal_at)>=2000u){
             net_terminal_at=0;

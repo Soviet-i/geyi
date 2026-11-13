@@ -35,6 +35,10 @@
 #define APP_JOIN_ACK_TIMEOUT_MS 5000u
 /* 房主退出时 ROOM_STATE 可能因立即断链丢失；等待期客方在 2.5s 后自行接管。 */
 #define APP_HOST_TAKEOVER_MS 2500u
+/* 无转移 ROOM_STATE 时，先按原重连逻辑尝试旧 host 3s；旧 host 广播 TTL
+ * 约 1.5s，3s 后残留摘要基本消失，再扫描同 room_id 的新 host。转移状态
+ * 触发的扫描会直接丢弃旧 host 广播，不等待这个窗口。 */
+#define APP_SPECTATOR_SCAN_AFTER_MS 3000u
 
 /* 加入失败原因定义在 geyi_net_app.h，供 UI 与测试共用。 */
 
@@ -64,6 +68,11 @@ static struct {
     uint32_t last_rx;
     uint8_t  dropped;
     uint8_t  spectator_lost;
+    /* 旁观者跟随：房主转移/丢失后扫描同一 room_id 的新 host（ADR-0015）。 */
+    uint8_t  spectator_scan;
+    uint8_t  spectator_follow;
+    uint8_t  spectator_transfer_seen; /* 1=已确认房主换人，UI 显示“房主已转移” */
+    uint8_t  spectator_old_addr[6];   /* 仅用于丢弃旧 host 的残留广播 */
     uint32_t drop_at;
     uint32_t reconnect_at;
     uint8_t  rejoin_sent;
@@ -116,6 +125,16 @@ static struct {
 
 static int color_valid(uint8_t c) { return c == GY_NET_COLOR_RED || c == GY_NET_COLOR_BLUE; }
 static void join_fail(uint8_t reason);
+static void spectator_start_scan(uint32_t now_ms, int transfer_seen);
+static int spectator_should_scan(uint32_t now_ms);
+static int spectator_follow_expired(uint32_t now_ms);
+static void spectator_mark_lost(uint32_t now_ms);
+static int spectator_scan_match(uint32_t room_id, uint8_t phase, uint8_t players,
+                                uint8_t spectators, uint8_t max_spectators,
+                                const uint8_t addr[6], uint8_t addr_type, uint32_t now_ms);
+#ifdef GEYI_WITH_RTTHREAD
+static void spectator_follow_poll(uint32_t now_ms);
+#endif
 
 /* 放兵/预览的清理点较多；集中在这里，避免某条路径漏掉字段。 */
 static void clear_placement(void)
@@ -838,6 +857,9 @@ static void start_fresh_join(uint32_t now_ms)
     g.drop_at = 0;
     g.need_fresh_join = 0;
     g.ready_pending = 0;
+    g.spectator_scan = 0;
+    g.spectator_follow = 0;
+    g.spectator_transfer_seen = 0;
     APP_LOG("fresh auto join");
 }
 
@@ -878,6 +900,10 @@ static void client_process(const GyNetMsg *msg)
         g.rejoin_sent = 0;
         g.rejoin_at = 0;
         g.drop_at = 0;
+        g.spectator_scan = 0;
+        g.spectator_follow = 0;
+        g.spectator_lost = 0;
+        g.spectator_transfer_seen = 0;
         gy_net_room_client_reconnect(&g.room, g.now);
         g.last_rx = g.now;
         break;
@@ -907,6 +933,19 @@ static void client_process(const GyNetMsg *msg)
             s.player_count == 1 && s.phase == GY_NET_PHASE_WAIT) {
             /* 两人房间的房主退出：房主转给本机，房间继续存在。 */
             promote_self_to_host(s.host_color, g.now);
+            return;
+        }
+        if (g.role == GY_NET_ROLE_SPECTATOR && !g.spectator_lost &&
+            !g.spectator_scan && g.room.last_room_seq != 0 &&
+            s.seq > g.room.last_room_seq &&
+            s.phase == GY_NET_PHASE_WAIT && s.player_count == 1 &&
+            color_valid(g.room.view.host_color) &&
+            s.host_color != g.room.view.host_color &&
+            g.room.view.player_count >= 2) {
+            /* WAIT 双人房房主把房间转给客人：房间还活着，旁观者停止连旧 host，
+             * 改扫同一 room_id 的新 host（ADR-0015）。 */
+            gy_net_room_apply_room_state(&g.room, &s);
+            spectator_start_scan(g.now, 1);
             return;
         }
         {
@@ -1068,6 +1107,9 @@ static void join_fail(uint8_t reason)
     g.active = 0;
     g.role = GY_NET_ROLE_SPECTATOR;
     g.local_color = GY_NET_COLOR_NONE;
+    g.spectator_scan = 0;
+    g.spectator_follow = 0;
+    g.spectator_transfer_seen = 0;
     lobby_remove_room(g.room_id);
     memset(&g.room, 0, sizeof(g.room));
 #ifdef GEYI_WITH_RTTHREAD
@@ -1075,6 +1117,141 @@ static void join_fail(uint8_t reason)
 #endif
     g.leaving = 0;
 }
+
+/* 纯判据：主机测试可直接调用，保证 3s 触发/10s 预算不只存在于 BLE 编译分支。 */
+static int spectator_should_scan(uint32_t now_ms)
+{
+    return g.role == GY_NET_ROLE_SPECTATOR && g.dropped &&
+           !g.spectator_scan && !g.spectator_lost &&
+           g.room.view.phase == GY_NET_PHASE_WAIT &&
+           g.room.view.player_count >= 2 &&
+           (uint32_t)(now_ms - g.drop_at) >= APP_SPECTATOR_SCAN_AFTER_MS;
+}
+static int spectator_follow_expired(uint32_t now_ms)
+{
+    return g.spectator_follow && !g.spectator_lost && g.drop_at &&
+           (uint32_t)(now_ms - g.drop_at) >= GY_NET_RECONNECT_MS;
+}
+
+/* 旁观者房主转移/丢失：停止对旧 host 的 REJOIN，保存旧地址并扫描同一 room_id。
+ * WAIT 下旧 host 会立即释放旁观席位，旧 token 不能 REJOIN；任何匹配到的
+ * host 都用全新 SPECTATOR JOIN。transition_seen=1 时还会丢弃旧 host 的
+ * 残留广播，避免被正在关播的旧地址锁死。 */
+static void spectator_start_scan(uint32_t now_ms, int transfer_seen)
+{
+    if (g.spectator_scan || g.spectator_lost) return;
+    g.spectator_scan = 1;
+    g.spectator_follow = 1;
+    g.spectator_transfer_seen = transfer_seen ? 1 : 0;
+    memcpy(g.spectator_old_addr, g.join_addr, 6);
+    g.pending_join = 0;
+    g.join_sent = 0;
+    g.join_connected = 0;
+    g.join_ready_at = 0;
+    g.rejoin_sent = 0;
+    g.rejoin_at = 0;
+    if (!g.dropped) {
+        g.dropped = 1;
+        g.drop_at = now_ms;
+        gy_net_room_client_disconnect(&g.room, now_ms);
+    }
+#ifdef GEYI_WITH_RTTHREAD
+    gy_net_ble_client_abort();
+    gy_net_ble_scan_start();
+#endif
+    APP_LOG("spectator scan room id=%08x at %u transfer=%d", (unsigned)g.room_id,
+            (unsigned)now_ms, g.spectator_transfer_seen);
+}
+
+/* 房间已不可恢复（对局中房主丢失/没有客人可接管）：立即回大厅，不再等 10s。 */
+static void spectator_mark_lost(uint32_t now_ms)
+{
+    g.spectator_scan = 0;
+    g.spectator_follow = 0;
+    g.spectator_transfer_seen = 0;
+    g.spectator_lost = 1;
+    g.active = 0;
+    g.pending_join = 0;
+    g.join_sent = 0;
+    g.join_connected = 0;
+    g.join_ready_at = 0;
+    g.room.view.local_terminal = 1;
+    gy_net_room_client_disconnect(&g.room, now_ms);
+#ifdef GEYI_WITH_RTTHREAD
+    gy_net_ble_scan_stop();
+    gy_net_ble_client_abort();
+#endif
+    APP_LOG("spectator lost room id=%08x", (unsigned)g.room_id);
+}
+
+/* 匹配到同一 room_id 的广播：一律用全新 SPECTATOR JOIN（WAIT 下旧席位
+ * 已释放，旧 token 不能 REJOIN）。抽成不依赖 GyNetBleAdv 的纯函数，
+ * 主机测试可直接构造字段调用。 */
+static int spectator_scan_match(uint32_t room_id, uint8_t phase, uint8_t players,
+                                uint8_t spectators, uint8_t max_spectators,
+                                const uint8_t addr[6], uint8_t addr_type, uint32_t now_ms)
+{
+    if (!g.spectator_scan || !addr) return 0;
+    if (room_id != g.room_id) return 0;
+    if (phase != GY_NET_PHASE_WAIT) return 0;
+    if (players < 1) return 0;
+    if (spectators >= max_spectators) return 0;
+    /* 由转移 ROOM_STATE 触发的扫描：旧 host 已知在离开，丢弃它残留的广播。
+     * WAIT 阶段旧 host 会立即释放旁观席位，旧 token 已失效，不能 REJOIN。 */
+    if (g.spectator_transfer_seen &&
+        memcmp(addr, g.spectator_old_addr, 6) == 0)
+        return 0;
+    /* 旧 host 地址（无转移状态的自瞬断）也走全新 SPECTATOR JOIN：
+     * WAIT 下原旁观席位已被释放，REJOIN 必然被拒。 */
+    g.spectator_transfer_seen =
+        (memcmp(addr, g.spectator_old_addr, 6) != 0) ? 1 : 0;
+    memcpy(g.join_addr, addr, 6);
+    g.join_addr_type = addr_type;
+    gy_net_room_init_client(&g.room, g.room_id, now_ms);
+    g.room.role = GY_NET_ROLE_SPECTATOR;
+    g.room.local_color = GY_NET_COLOR_NONE;
+    g.room.token = 0;
+    g.role = GY_NET_ROLE_SPECTATOR;
+    g.local_color = GY_NET_COLOR_NONE;
+    g.token = 0;
+    g.active = 2;
+    g.spectator_scan = 0;
+    g.spectator_follow = 1;
+    g.spectator_lost = 0;
+    g.pending_join = 1;
+    g.join_req_role = 1;            /* 1 = 旁观 */
+    g.join_role = GY_NET_ROLE_SPECTATOR;
+    g.join_sent = 0;
+    g.join_connected = 0;
+    g.join_ready_at = 0;
+    g.join_at = now_ms;
+    g.join_rejected = 0;
+    g.join_reason = GY_NET_JOIN_REASON_NONE;
+    g.dropped = 0;
+    g.rejoin_sent = 0;
+    g.rejoin_at = 0;
+#ifdef GEYI_WITH_RTTHREAD
+    gy_net_ble_scan_stop();
+    gy_net_ble_connect(g.join_addr, g.join_addr_type);
+#endif
+    APP_LOG("spectator follow host room id=%08x moved=%d", (unsigned)g.room_id,
+            g.spectator_transfer_seen);
+    return 1;
+}
+
+#ifdef GEYI_WITH_RTTHREAD
+static void spectator_follow_poll(uint32_t now_ms)
+{
+    GyNetBleAdv adv;
+    if (!g.spectator_scan) return;
+    while (gy_net_ble_adv_recv(&adv)) {
+        if (spectator_scan_match(adv.adv.room_id, adv.adv.phase, adv.adv.players,
+                                 adv.adv.spectators, adv.adv.max_spectators,
+                                 adv.addr, adv.addr_type, now_ms))
+            return;
+    }
+}
+#endif
 
 static void lobby_drain(void)
 {
@@ -1136,6 +1313,9 @@ void gy_net_app_tick(uint32_t now_ms)
     }
 #ifdef GEYI_WITH_RTTHREAD
     gy_net_ble_poll();
+    /* 旁观者跟随扫描必须在 lobby_drain 之前消费广播，否则同 room_id 的
+     * 新房主摘要会先被大厅列表吃掉。 */
+    spectator_follow_poll(now_ms);
 #endif
     lobby_drain();
 #ifdef GEYI_WITH_RTTHREAD
@@ -1344,7 +1524,20 @@ void gy_net_app_tick(uint32_t now_ms)
             g.drop_at = now_ms;
             gy_net_room_client_disconnect(&g.room, now_ms);
         }
-        if (g.dropped && !g.room.view.local_terminal &&
+        /* 跟随总预算固定为 10s：即使已经连上新 host、正在等 JOIN_ACK，
+         * 也不能因为 init_client 清了 host_absent 而无限等下去。 */
+        if (spectator_follow_expired(now_ms)) {
+            spectator_mark_lost(now_ms);
+            g.client_gen = 0;
+            g.rejoin_sent = 0;
+            g.rejoin_at = 0;
+        }
+        /* 旁观者房主丢失：先按原逻辑尝试旧 host 3s；仍失败且最后已知是
+         * WAIT 双人房，才扫描同 room_id 跟随新房主。对局中/没有客人可接管
+         * 仍沿用原来的 10s 重连窗口，避免把旁观者自己的瞬断误判成房主离开。 */
+        if (spectator_should_scan(now_ms))
+            spectator_start_scan(now_ms, 0);
+        if (g.dropped && !g.room.view.local_terminal && !g.spectator_scan &&
             (uint32_t)(now_ms - g.drop_at) < GY_NET_RECONNECT_MS) {
             if (conn == 0xff && (uint32_t)(now_ms - g.reconnect_at) >= 1000u) {
                 g.reconnect_at = now_ms;
@@ -1395,11 +1588,7 @@ void gy_net_app_tick(uint32_t now_ms)
         }
         if (gy_net_room_client_host_lost(&g.room, now_ms) &&
             g.role == GY_NET_ROLE_SPECTATOR) {
-            g.spectator_lost = 1;
-            g.active = 0;
-#ifdef GEYI_WITH_RTTHREAD
-            gy_net_ble_client_abort();
-#endif
+            spectator_mark_lost(now_ms);
             g.client_gen = 0;
             g.rejoin_sent = 0;
             g.rejoin_at = 0;
@@ -1621,6 +1810,12 @@ int gy_net_app_local_terminal(void) { return g.room.view.local_terminal; }
 int gy_net_app_join_rejected(void) { return g.join_rejected; }
 int gy_net_app_join_reason(void) { return g.join_reason; }
 int gy_net_app_spectator_lost(void) { return g.spectator_lost; }
+int gy_net_app_spectator_following(void)
+{
+    /* 仅当已确认房主换人时让 UI 显示“房主已转移”；旁观者自身瞬断
+     * 仍沿用原来的“断线重连”文案。 */
+    return (g.spectator_follow && g.spectator_transfer_seen) ? 1 : 0;
+}
 int gy_net_app_result(void) { return g.room.view.result; }
 int gy_net_app_result_reason(void) { return g.room.view.result_reason; }
 int gy_net_app_local_turn(void)
@@ -1926,6 +2121,9 @@ void gy_net_app_leave(void)
     g.need_fresh_join = 0;
     g.join_rejected = 0;
     g.spectator_lost = 0;
+    g.spectator_scan = 0;
+    g.spectator_follow = 0;
+    g.spectator_transfer_seen = 0;
     g.dropped = 0;
     g.drop_at = 0;
     g.reconnect_at = 0;

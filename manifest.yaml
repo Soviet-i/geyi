@@ -93,6 +93,10 @@ design:
       alternatives_considered: "保持现状 / 整批回退追查期补丁"
       rationale: "追查期补丁有噪声和重复状态；整批回退会误删有测试支撑的防御；定向清理后外部行为不变，主机/双板/三端回归与独立 review 通过"
       decided_by: "蔡融汉 2026-11-10 确认问题解决后要求清理；重构后学生确认功能完好、同意提交（ADR-0012）"
+    - decision: "WAIT 房主转移后，旁观者扫描同一 room_id 以旁观身份跟随新房主"
+      alternatives_considered: "房主退出/掉线即房间消失 / 旁观者回大厅手动重加 / 扫描同 room_id 自动跟随"
+      rationale: "保留玩家侧已工作的房主接管；大厅 auto 角色会把回归旁观者变成第二个玩家，因此必须用 role=SPECTATOR 的全新 JOIN；对局中/无接管沿用原有 10s 重连窗口"
+      decided_by: "项目负责人 2026-11-13 本次会话明确选择方案 B（ADR-0015）"
     - decision: "选兵改为按到方位边指示点的欧氏距离（平方后比较）排序，距离相同按扫描顺序"
       alternatives_considered: "横向优先再深度（旧规则）/ 深度优先横向并列 / 欧氏距离"
       rationale: "8×8 正下方倾斜时旧规则让上方中列兵先于下方近边兵；欧氏距离符合“离倾斜方向最近的兵先动”，同时保留 aim 的方位选择"
@@ -397,7 +401,16 @@ test_results:
     pass: false
     evidence_path: ".github/workflows/course-check.yml"
 
+  - test_id: "TC-510-06-SPECTATOR-FOLLOW"
+    description: "WAIT 房主转移后旁观者扫描同 room_id 跟随新房主（三端）"
+    expected: "客人接管且 room_id 不变；旁观者丢弃旧 host 残留广播，以 role=SPECTATOR 全新 JOIN 新房主；非 WAIT/无接管沿用 10s 窗口"
+    actual: "主机 453 checks PASS（含 9 组跟随用例）；三端实体板未执行"
+    pass: false
+    evidence_path: "docs/04-测试报告.md"
+
 known_issues:
+  - "【2026-11-13 主机通过，三端待测】R-083 旁观者房主转移跟随：WAIT 双人房房主退出后客人接管正常，但旁观者仍重连旧 host 地址，10s 后离开。已按方案 B 增加同 room_id 扫描与 role=SPECTATOR 全新 JOIN；独立 review 发现旧 host 残留广播会把旁观者锁回旧地址，已修（转移状态触发的扫描丢弃旧地址；WAIT 下旧席位已释放，改为全新 JOIN）；主机 453 checks PASS（含 9 组跟随用例），三端物理待测（ADR-0015）。"
+  - "【2026-11-13 已知限制】R-084 room_id 由 `0x1001 + (now & 0x0fff)` 生成，仅 4096 个取值；旁观者自动跟随把 room_id 当作会话身份，同批上电/同时建房存在误跟风险。本轮不改生成方式，扫描同时校验 phase/players/旁观容量；后续建议随机化或 UID 派生。"
   - "【2026-11-13 学生真机确认】R-081 选兵距离：学生截图反馈 8×8 向下倾斜时上方中列 B6 先于下方近边 B8。根因是 `apply_move()` 的 `lateral*18+depth` 横向优先规则；已按学生选择改为欧氏距离平方 `lateral²+depth²`，同步 REQ-320-B/ADR-0014/TC-320②⑥ 与测试。主机 24,576 断言含 8×8 固定局面回归；学生同日在合并前 1,091,836 B 构建上真机确认 8×8 倾斜选兵通过；证据为对局页照片+本人确认（`evidence/board/20261113_194341/`），未回传逐次倾斜视频，不写成逐帧/定量通过；合并远程后 1,098,684 B 重新编译通过，最终固件未再单独上板。"
   - "【2026-11-13 学生真机确认】R-082 对局右上角认输/返回首页按钮：学生报告经常点了没反应。代码路径未发现拦截；按钮原为 96×36、距顶 22px，低于 NFR-UX-02 的 44px。已按学生选择改为 134×44、y=40，加 `lv_obj_set_ext_click_area(10)` 与点击动作/触点日志；学生同日在合并前 1,091,836 B 构建上真机确认点击流程完全通过（`evidence/board/20261113_194341/`），未回传逐次点击串口日志，不写成 10/10 计数通过；合并远程后 1,098,684 B 重新编译通过，最终固件未再单独上板。"
   - "【2026-11-10 清理重构】在真机确认后清理联机追查期的无效补丁与重复状态逻辑：集中放兵/预览 reset、提取客方确认打包、协议 kind 字段校验复用、UI 状态文案去重、删除 dead 字段 `pending_aim/aim_pending/last_ms/starting_seq/GyNetRoom.last_seq`、去掉高频诊断日志；独立 review 发现并修复 WAIT 期 REJOIN 回旧终局快照的 P1。重构后固件 1,091,788 B + LCPU 6,384 B（SHA256 89b0275a…），主机 24572/105/283/2517/85/59/10 + net 428/app 358、覆盖率 76.5%–100%（input 91.3%）；`net_input_test` 默认/COM5 房主/换座、双板完整套件、三端旁观套件 PASS。双板套件曾 1 次 transient rejoin 超时，立即重跑 PASS（失败日志保留）。**学生 2026-11-10 真机确认针对重构前 1,093,852 B；学生随后确认重构后功能完好、可提交（三张截图来自重构前）。** 证据 `evidence/net/20261110/refactor_cleanup/`。"

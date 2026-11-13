@@ -18,6 +18,7 @@ KEY2 确认或放兵，触摸用于菜单；联机只走 BLE，房主权威、�
 - `gy_game`、`gy_ai`、`gy_config`、`gy_net_proto/room/link` 不依赖 LVGL/RT-Thread/BLE，时间用 `now_ms` 注入，可主机测试。
 - 联机是房主权威：只有房主改 `GyNetRoom`/棋局；客方发请求并应用 `ROOM_STATE`/`SNAPSHOT`；旁观只收状态/预览。
 - 房间只存 RAM，房主重启即消失；断线保留席位 10s，窗口内按 `player_id` 回收，瞬断走 `REJOIN` token。
+- WAIT 阶段房主退出/掉线且有客人：客人接管，`room_id` 不变；旁观者扫描同 `room_id`，以 `role=SPECTATOR` 全新 JOIN 跟随新房主。对局中/无接管沿用 10s 重连窗口后回大厅。
 - BLE 链路用 `conn + gen` 区分复用；JOIN 必须等 CCCD 就绪；连接后重启可连接广播以支持第二人/旁观。`ROOM_STATE` v3 带两个座位的在线位/断线剩余秒数，同一 seq 的心跳仍刷新倒计时；v4 的 MOVE/PREVIEW 带方位与放兵行。
 - UI 的“你/对方”只由 `gy_net_app_side_relation()` 的座位关系决定，不能从回合/阶段推断；输入门控另用 `local_turn()`。
 - 自动化入口 `gy_net <cmd>` 只把动作排入队列，由 `gy_ui_tick()` 在 LVGL 主线程执行，和触摸走同一路径。
