@@ -73,7 +73,7 @@ physical_verification:
     required_action: "学生本人烧录并操作，记录历史持久化、四列身份、AI 搜索深度/认输、联机扫描、参数修改画面"
     executed_at: "2026-11-13（学生提供照片/串口截图）"
     evidence_path: "evidence/history/20261113/README.md、evidence/ai/20261113/README.md、evidence/net/20261113/README.md、evidence/param/20261113/README.md"
-    agent_conclusion: "学生本人确认（2026-11-13）：历史第11条淘汰/详情/旁观/清空重启、AI 预览/认输/参数设置、联机实际加入/完整对局/断线重连、参数板端生效均已验证；已有重启 count=10、records/01~08（前10/第11/清空/重启/旁观）、联机机主/对手、AI depth=1/6/5/4/3、参数层数 1/6 截图、双板扫描照片。AI 网盘视频已归档但 agent 未访问/解码；详情页/逐帧/耗时/栈证据留存不足。另发现房客认输后卡在对局界面，已在 fix/renji 加客户端 RESULT 超时回房兜底；主机测试通过，双板待复测，不写成板端通过。AI 层数 6 已有板端 `max_depth=6 depth=6`、ms=1844 证据。学生复核实“幽灵房”是另一块板已创建房间，不是缺陷。"
+    agent_conclusion: "学生本人确认（2026-11-13）：历史第11条淘汰/详情/旁观/清空重启、AI 预览/认输/参数设置、联机实际加入/完整对局/断线重连、参数板端生效均已验证；已有重启 count=10、records/01~08（前10/第11/清空/重启/旁观）、详情页、联机机主/对手、1进入房间~5回到房间、AI depth=1/6/5/4/3、参数层数 1/6、棋盘大小5/7、SPAWN=3、缓冲0/50照片。AI 网盘视频已归档但 agent 未访问/解码；逐帧/耗时/栈证据留存不足。另发现房客认输后卡在对局界面，已在 fix/renji 加客户端 RESULT 超时回房兜底；主机测试通过，双板待复测，不写成板端通过。AI 层数 6 已有板端 `max_depth=6 depth=6`、ms=1844 证据。学生复核实“幽灵房”是另一块板已创建房间，不是缺陷。"
 
 test_results:
   - test_id: "TC-315-SW"
@@ -108,7 +108,7 @@ test_results:
     evidence_path: "evidence/ui-prep/README.md"
 
 known_issues:
-  - "【2026-11-13，郑瑞杭】fix/history 已合并到 develop，当前 fix/renji 从 3cc306a 创建。复核“真人先手 AI 不动”为观察误判：AI 实际向后移动且已贴墙，画面变化不可见，未改 AI 代码。确认参数页 AI 搜索深度不是 UI 影子值：gy_param_ui_adjust -> s_params[GY_MODE_PVE].search_depth -> start_ai.cfg.max_depth；实际完成深度受 300ms/200000 节点上限限制，RAM 重启默认 3。板端证据见 evidence/history/20261113、evidence/ai/20261113、evidence/net/20261113、evidence/param/20261113。学生本人确认超过10条淘汰、详情页、旁观者不记录、清空后再重启、AI 预览/认输/参数设置、联机实际加入/完整对局/断线重连、参数板端生效均已验证；这些项因证据留存困难按学生定性确认记录。网盘视频 agent 未访问/解码，逐帧/参数设置值/耗时/栈证据仍不足。"
+  - "【2026-11-13，郑瑞杭】fix/history 已合并到 develop，当前 fix/renji 从 3cc306a 创建。复核“真人先手 AI 不动”为观察误判：AI 实际向后移动且已贴墙，画面变化不可见，未改 AI 代码。确认参数页 AI 搜索深度不是 UI 影子值：gy_param_ui_adjust -> s_params[GY_MODE_PVE].search_depth -> start_ai.cfg.max_depth；实际完成深度受 300ms/200000 节点上限限制，RAM 重启默认 3。板端证据见 evidence/history/20261113、evidence/ai/20261113、evidence/net/20261113、evidence/param/20261113。学生本人确认超过10条淘汰、详情页、旁观者不记录、清空后再重启、AI 预览/认输/参数设置、联机实际加入/完整对局/断线重连、参数板端生效均已验证；历史、联机加入/对局/回房、参数数值和 AI 层数已有照片/串口，断线重连和视频逐帧仍为定性/补证。网盘视频 agent 未访问/解码，耗时/栈证据仍不足。"
   - "【2026-11-13，郑瑞杭】联机问题：房客认输后曾卡在对局界面，房主可正常回房间；房主认输正常。已在 fix/renji 加客户端 RESULT 超时 5s 回 WAIT/房间兜底，主机 test_client_result_timeout_returns_room 通过；双板复测待验证。记录见 docs/06 R-078 和 evidence/net/20261113/tmp3-问题.md。"
   - "【2026-11-13，郑瑞杭】参数页 AI 搜索层数可设 1~6；设 5/6 时曾因 300ms 时间预算只完成 depth=4。已在 start_ai() 对 max_depth>=5 关闭时间截断并打印 max_depth/实际 depth；主机 depth=6 断言通过，学生板端设置6证据为 max_depth=6 depth=6、ms=1844，单步约1.84s。见 docs/06 R-079。"
   - "【2026-11-13，郑瑞杭】重新烧录后联机大厅看到的房间经复核是另一块板已经创建的真实房间，不是幽灵房；adv 队列清理仅保留为防御性加固，见 docs/06 R-080（误判，不是缺陷）。"
