@@ -128,6 +128,13 @@ int main(void)
     CHECK(same_action(&a, &b));
     CHECK(a.score == b.score);
 
+    /* 5/6 层不再被 300ms 提前截断：无时间限制时迭代加深应完成第 6 层。 */
+    CHECK(gy_init(&g, gy_default_config(), 20261113));
+    c = config(6, 1);
+    c.use_iterative = 1;
+    CHECK(gy_ai_choose(&g, &c, &a, &sa));
+    CHECK(sa.depth == 6);
+
     /* Short AI-vs-AI self-play through the real spawn/commit path. */
     {
         GyGame sim;

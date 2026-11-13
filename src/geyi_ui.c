@@ -654,6 +654,10 @@ static void start_ai(void)
     cfg=gy_ai_default_config();
     {const GyParamSet *p=gy_param_mode(GY_MODE_PVE);
      if(p)cfg.max_depth=p->search_depth;}
+    /* 5/6 层是用户明确要求的搜索上限；300ms 默认预算会在更深迭代前
+     * 截断，导致串口只报告 depth=4。高深度使用节点上限兜底，不再用
+     * 300ms 提前终止，保证 5/6 层设置能实际跑完。 */
+    if(cfg.max_depth>=5)cfg.time_limit_ms=0;
     ++ai_generation;
     ai_revision=game.revision;
     if(gy_ai_task_start(&game,&cfg,ai_revision,ai_generation)==0)ai_thinking=1;

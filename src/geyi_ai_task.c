@@ -46,8 +46,8 @@ static void ai_thread_entry(void *parameter)
         c.now_ms = board_now_ms;
         ok = gy_ai_choose(&g, &c, &action, &stats);
         if (ok)
-            rt_kprintf("[geyi:ai] nodes=%u cutoffs=%u ms=%u depth=%d score=%d kind=%d\n",
-                       (unsigned)stats.nodes, (unsigned)stats.cutoffs,
+            rt_kprintf("[geyi:ai] max_depth=%d nodes=%u cutoffs=%u ms=%u depth=%d score=%d kind=%d\n",
+                       c.max_depth, (unsigned)stats.nodes, (unsigned)stats.cutoffs,
                        (unsigned)stats.elapsed_ms, stats.depth, action.score, action.kind);
         else
             rt_kprintf("[geyi:ai] no action or cancelled\n");
