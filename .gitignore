@@ -39,3 +39,6 @@ build_*/
 *.pyc
 sifli_sdk/
 project/src/
+
+# 归档用可烧录固件（随最终 zip 交付，不进入源码历史）
+firmware/
