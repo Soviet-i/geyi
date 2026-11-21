@@ -204,7 +204,7 @@ type：`feat fix docs test refactor perf build ci chore revert hw`。`feat/fix/r
 | `python scripts/build_firmware.py` | 编译固件（在 project/ 下调用 scons），并提示下载命令 |
 | `python scripts/check_manifest.py` | manifest 完整性与证据文件存在性 |
 
-> 脚本通过只代表“字段齐全、规则满足”，**不代表内容质量合格**。评审时教师（及评审 agent）会核对日志、提交、证据三者是否互相印证。
+> 脚本检查字段齐全与规则满足；内容质量由评审核对日志、提交、证据三者是否互相印证。
 
 ## 重要提醒
 
