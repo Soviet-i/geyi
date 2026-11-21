@@ -2,44 +2,49 @@
 \input{_preamble}
 \begin{document}
 \begin{tikzpicture}[x=1cm,y=1cm,
-  dev/.style={core, minimum width=3.30cm, minimum height=1.75cm},
-  ble/.style={base=cgray, minimum width=2.60cm, minimum height=1.25cm},
-  peer/.style={ext, minimum width=3.30cm, minimum height=1.75cm},
-  bi/.style={<->, draw=ink!75, line width=0.8pt}]
+  dev/.style={core, minimum width=4.60cm, minimum height=5.40cm},
+  peer/.style={ext, minimum width=3.90cm, minimum height=2.10cm},
+  spec/.style={ui, minimum width=3.90cm, minimum height=2.10cm},
+  up/.style={-{Latex[length=2.2mm]}, draw=cblue, line width=1.0pt},
+  down/.style={-{Latex[length=2.2mm]}, draw=corange, line width=1.0pt}]
 
-  \node[dev, draw=cred!65!black, fill=cred!6] (host) at (-6.20,0.70)
-    {\textbf{房主板}\\[-2pt]
-     \scriptsize BLE 外设 + GATT 服务端\\
-     \scriptsize 唯一裁判 · 随机块唯一来源};
-  \node[ble] (air) at (-1.60,0.70)
-    {\textbf{BLE 空口}\\[-2pt]\scriptsize 广播 + GATT\\
-     \scriptsize 连接数待实测};
-  \node[peer] (opp) at (4.30,2.55)
-    {\textbf{对手板}\\[-2pt]\scriptsize BLE 中央\\
-     \scriptsize 只发意图 · 镜像快照\\
-     \textcolor{cred}{\scriptsize 不接收 PREVIEW}};
-  \node[peer] (spec) at (4.30,-1.15)
-    {\textbf{旁观板 / 手机}\\[-2pt]\scriptsize BLE 中央 · 只读\\
-     \scriptsize 接收双方预览};
+  % 两块客板放在左侧，房主独占右侧
+  \node[peer] (opp) at (-4.40,2.40)
+    {\textbf{玩家板}\\[1pt]
+     \scriptsize 通过蓝牙连到房主\\[-1pt]
+     \scriptsize 只发送自己的操作\\[-1pt]
+     \scriptsize 等房主发回棋盘后更新\\[-1pt]
+     \textcolor{corange}{\scriptsize 不会先改自己的棋盘}};
+  \node[spec] (spec) at (-4.40,-2.00)
+    {\textbf{旁观板}\\[1pt]
+     \scriptsize 通过蓝牙连到房主\\[-1pt]
+     \scriptsize 只能看，不能下棋\\[-1pt]
+     \scriptsize 能看到双方棋盘和预览};
+  \node[dev] (host) at (3.60,0.20)
+    {\textbf{房主板}\\[2pt]
+     \scriptsize 同时是玩家和裁判\\[2pt]
+     \scriptsize 房主也是蓝牙服务端\\[6pt]
+     \scriptsize 保存唯一的棋局\\[-1pt]
+     \scriptsize 判断每一步是否合法\\[-1pt]
+     \scriptsize 结算后把棋盘发给各板\\[-1pt]
+     \scriptsize 把预览转给旁观者\\[4pt]
+     \textcolor{cblue}{\scriptsize 棋局以房主为准}};
 
-  % 房主与空口
-  \draw[bi] ([yshift=0.25cm]host.east) -- node[lab, above]{意图 $\uparrow$} ([yshift=0.25cm]air.west);
-  \draw[bi] ([yshift=-0.25cm]air.west) -- node[lab, below]{快照 $\downarrow$} ([yshift=-0.25cm]host.east);
+  % 玩家板 <-> 房主
+  \draw[up]   (opp.east |- {0,2.65}) -- node[lab, above]{加入房间、发送操作} (host.west |- {0,2.65});
+  \draw[down] (host.west |- {0,2.15}) -- node[lab, below]{房间状态、棋盘、结果} (opp.east |- {0,2.15});
 
-  % 空口与对手
-  \draw[bi] (air.north) -- (-1.60,2.55) -- (opp.west);
-  \node[lab, above] at (1.05,2.62) {JOIN $\uparrow$ · 快照 $\downarrow$};
-
-  % 空口与旁观
-  \draw[bi] (air.south) -- (-1.60,-1.15) -- (spec.west);
-  \node[lab, below] at (0.85,-1.22) {JOIN $\uparrow$ · 快照/预览 $\downarrow$};
+  % 旁观板 <-> 房主
+  \draw[up]   (spec.east |- {0,-1.75}) -- node[lab, above]{加入旁观} (host.west |- {0,-1.75});
+  \draw[down] (host.west |- {0,-2.25}) -- node[lab, below]{房间状态、棋盘、预览} (spec.east |- {0,-2.25});
 
   % 说明
   \node[draw=ink!20, fill=ink!3, rounded corners=3pt, align=left,
-        font=\scriptsize, text=ink!85, inner sep=5pt] at (-4.30,-2.55)
-    {预览是本地临时状态：玩家 $\to$ 房主 $\to$ 旁观者；对手端不渲染、不回传。\\
-     多房间由多台房主各自广播，大厅按 roomId 维护列表，不设中心服务器。\\
-     旁观上限 $K$ = 房主可接受连接数 $-\,1$；P-02 容量尚未实测。};
+        font=\scriptsize, text=ink!85, inner sep=5pt, text width=12.4cm]
+    at (0.00,-4.65)
+    {找房间：房主会不断广播自己的房间，其他板在列表里看到后加入，不需要中心服务器。\\
+     预览：只有自己看得到；房主会转给旁观者，对手看不到。\\
+     掉线后：10 秒内可以回到原来的位置；等待阶段房主退出时，另一位玩家接管房间，旁观者跟着新房主。};
 
 \end{tikzpicture}
 \end{document}
