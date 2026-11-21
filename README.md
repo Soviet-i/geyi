@@ -2,9 +2,9 @@
 
 > 在黄山派 SF32LB52 上，用“倾斜 + 按键”玩 6×6 数字合并战棋：倾斜选方向和士兵数量，
 > 确认前看到高亮预览，手指不遮挡棋盘。支持同板双人、人机对战、参数自定义、BLE 联机/旁观与断线重连；
-> 历史/计时 RAM 版已合入 develop；NOR + FlashDB 持久化、联机双端记录和四列格式修订在
-> `fix/history` 软件段通过；2026-11-13 板端已有重启 count=10、联机“机主/对手”和清空
-> 空状态照片；超过 10 条淘汰、详情页、清空后再重启均有 `records/`/`详情页.jpg` 证据。
+> 历史/计时已按 ADR-0013 实现 NOR + FlashDB 持久化、联机双端记录和四列格式，并已合入 develop；
+> 2026-11-13 板端已有重启 count=10、联机“机主/对手”和清空空状态照片；超过 10 条淘汰、
+> 详情页、清空后再重启均有 `records/`/`详情页.jpg` 证据。
 > 其余主流程已由学生 2026-11-10 真机确认。
 
 ## 功能状态
@@ -83,6 +83,12 @@ python scripts/build_firmware.py      # 固件编译（需 SDK export）
 - **已修复**：房客认输后客户端 5s 超时回房间（R-078，主机回归通过）；AI 搜索层数 5/6 不再使用 300ms 提前截断并打印 max_depth/实际 depth（R-079，板端设置 6 已见 `depth=6`、ms=1844）；旁观者跟随房主转移（R-083，学生真机确认主动退出场景）。
 - 当前板端证据包含历史构建与协议 v4 固件；旧 v2/v3 固件与 v4 不兼容。
 
+## 归档
+
+- 固件与校验：`firmware/`（`main.bin`、`bootloader.bin`、`ftab.bin`、`SHA256SUMS`、烧录说明）；该目录被 `.gitignore` 排除，随最终 zip 交付，不混入源码历史。
+- 封版清单：`docs/09-归档清单.md`（tag、bundle、clone 恢复、zip 打包）。
+- 交付版本以 `v1.0.0` tag 与 git bundle 为准；tag 在 `docs/05-研制总结.docx` 完成后创建。
+
 ## 第三方资源
 
 见 `docs/refs/third-party.md`。固件使用 SiFli SDK（Apache-2.0）、LVGL v9（MIT）、
@@ -94,7 +100,7 @@ python scripts/build_firmware.py      # 固件编译（需 SDK export）
 
 # course_starter —— 黄山派嵌入式产品开发课程脚手架
 
-本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。当前成员已加入，产品名为格弈；M2 人机对战已通过 PR 合入 `develop`，M4 测试与交付准备中。具体状态见 `docs/00-项目计划与里程碑.md`。
+本小组仓库：[Soviet-i/geyi](https://github.com/Soviet-i/geyi)（公开）。默认分支为 `develop`，成员从它建立功能分支，并只通过 PR 合入 `develop`；负责人通过 `develop → main` 的 PR 同步稳定版本。两个分支禁止直接推送、强推及删除，合并需通过课程和 PR 目标检查。当前成员已加入，产品名为格弈；M4 测试与交付已完成，M5 研制总结编写中。具体状态见 `docs/00-项目计划与里程碑.md`。
 
 这是课程的**统一起点**：既是入门训练的练习场，也是你自己产品项目的基础工程。它内置：
 
