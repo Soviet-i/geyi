@@ -3,6 +3,6 @@
 *.py text eol=lf
 .githooks/* text eol=lf
 Makefile text eol=lf
-*.docx binary
+*.pdf binary
 *.png binary
 *.jpg binary

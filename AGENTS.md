@@ -10,7 +10,7 @@
 | 路径 | 用途 |
 |---|---|
 | `docs/00-项目计划与里程碑.md` … `06-风险与问题台账.md` | 过程文档（需求、设计、测试、总结…），随开发持续更新 |
-| `docs/05-研制总结.docx` | 唯一的 Word 文档，仅在 M5 阶段填写 |
+| `docs/05-研制总结.tex` / `.pdf` | 研制总结；LaTeX 源与编译后的 PDF，仅在 M5 阶段填写 |
 | `docs/adr/` | 架构决策记录，每个关键决策一份 |
 | `docs/devlog/YYYY-MM-DD.md` | 开发日志，每个开发日一份 |
 | `docs/guides/` | git 规范、日志规范、agent 协作指南（先读 git-workflow.md） |
