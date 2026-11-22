@@ -87,7 +87,7 @@ python scripts/build_firmware.py      # 固件编译（需 SDK export）
 
 - 固件与校验：`firmware/`（`main.bin`、`bootloader.bin`、`ftab.bin`、`SHA256SUMS`、烧录说明）；该目录被 `.gitignore` 排除，随最终 zip 交付，不混入源码历史。
 - 封版清单：`docs/09-归档清单.md`（tag、bundle、clone 恢复、zip 打包）。
-- 交付版本以 `v1.0.0` tag 与 git bundle 为准；tag 在 `docs/05-研制总结.pdf` 完成后创建。
+- 交付版本以 `v1.0.0` tag 与 git bundle 为准；tag 在 `docs/05-研制总结.docx` 完成后创建。
 
 ## 第三方资源
 
@@ -104,7 +104,7 @@ python scripts/build_firmware.py      # 固件编译（需 SDK export）
 
 这是课程的**统一起点**：既是入门训练的练习场，也是你自己产品项目的基础工程。它内置：
 
-- **AI 软件工程过程文档模板**：计划、需求规格(PRD)、方案设计、测试计划、测试报告、风险台账、架构决策(ADR)、开发日志（Markdown），研制总结（LaTeX → PDF）
+- **AI 软件工程过程文档模板**：计划、需求规格(PRD)、方案设计、测试计划、测试报告、风险台账、架构决策(ADR)、开发日志（Markdown），研制总结（Word）
 - **AI agent 驱动开发支持**：`CLAUDE.md` / `AGENTS.md`、Claude Code 斜杠命令、协作指南与提示词
 - **git 全程管理**：提交规范由钩子强制，开发日志与提交自动核对
 - **入门训练**：T0 环境与规范、T1 用一个小功能完整走一遍“需求 → 设计 → 实现 → 测试 → 总结”
@@ -151,7 +151,7 @@ course_starter/
 │   ├── 02-方案设计说明.md
 │   ├── 03-测试计划.md            TC-xxx 编号
 │   ├── 04-测试报告.md
-│   ├── 05-研制总结.tex / .pdf    LaTeX 源与 PDF 交付，M5 阶段填写
+│   ├── 05-研制总结.docx          Word，M5 阶段填写
 │   ├── 06-风险与问题台账.md
 │   ├── adr/                     架构决策记录
 │   ├── devlog/                  开发日志（每个开发日一篇）
