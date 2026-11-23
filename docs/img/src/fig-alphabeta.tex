@@ -1,0 +1,89 @@
+% 研制总结报告插图：Alpha-Beta 剪枝原理
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.geometric}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\small,
+    root/.style={draw=cblue!60!black, fill=cblue!8, rounded corners=3pt, align=center,
+      inner sep=5pt, minimum width=3.9cm, minimum height=1.15cm, text=ink},
+    min/.style={draw=cgreen!55!black, fill=cgreen!8, rounded corners=3pt, align=center,
+      inner sep=4pt, minimum width=3.3cm, minimum height=1.05cm, text=ink},
+    leaf/.style={draw=ink!45, fill=white, rounded corners=2pt, align=center,
+      inner sep=4pt, minimum width=1.3cm, text=ink},
+    cut/.style={draw=cred, dashed, fill=cred!6, rounded corners=2pt, align=center,
+      inner sep=4pt, minimum width=1.3cm, text=cred},
+    edge/.style={-{Latex[length=1.7mm]}, draw=ink!65, line width=0.8pt},
+    cutedge/.style={-{Latex[length=1.7mm]}, draw=cred, dashed, line width=0.9pt},
+    tag/.style={font=\scriptsize, text=cgray, align=center},
+    order/.style={circle, draw=ink!50, fill=white, inner sep=0.8pt, font=\scriptsize, text=ink}
+  ]
+
+  % 节点
+  \node[root] (root) at (0,0) {当前方（MAX）\\[2pt]
+    \scriptsize $\alpha=-\infty,\ \beta=+\infty$};
+  \node[min] (B) at (-5.9,-3.2) {对手（MIN）\\[2pt]\scriptsize $\beta=3$};
+  \node[min] (C) at (0,-3.2) {对手（MIN）\\[2pt]\scriptsize $\alpha=3,\ \beta=2$};
+  \node[min] (D) at (5.9,-3.2) {对手（MIN）\\[2pt]\scriptsize $\beta=5$};
+
+  \node[leaf] (b1) at (-7.3,-6.1) {3};
+  \node[leaf] (b2) at (-4.5,-6.1) {12};
+  \node[leaf] (c1) at (-1.8,-6.1) {2};
+  \node[cut]  (c2) at (1.9,-6.1) {?};
+  \node[leaf] (d1) at (4.5,-6.1) {5};
+  \node[leaf] (d2) at (7.3,-6.1) {7};
+
+  % 边
+  \draw[edge] (root) -- (B);
+  \draw[edge] (root) -- (C);
+  \draw[edge] (root) -- (D);
+  \draw[edge] (B) -- (b1);
+  \draw[edge] (B) -- (b2);
+  \draw[edge] (C) -- (c1);
+  \draw[cutedge] (C.south) -- (c2.north);
+  \draw[edge] (D) -- (d1);
+  \draw[edge] (D) -- (d2);
+
+  % 访问顺序
+  \node[order] at (-2.82,-2.02) {1};
+  \node[order] at (0.30,-2.02) {2};
+  \node[order] at (2.82,-2.02) {3};
+
+  % 剪枝标注（放在虚线右侧，不与节点文字重叠）
+  \node[font=\scriptsize, text=cred, align=left, anchor=west] at (1.05,-4.42)
+    {$\alpha=3\ \ge\ \beta=2$\\[1pt]剩余子节点整枝剪掉};
+
+  % 说明条
+  \node[draw=cgray!40, fill=cgray!4, rounded corners=3pt, align=center,
+        inner sep=6pt, text=ink, minimum width=15.2cm] at (0,-7.85) {
+    \small
+    每搜完一个子节点，把下界抬到 $\max\left(\alpha,\ \mathrm{child}(c,\alpha,\beta)\right)$；
+    一旦 $\alpha\ge\beta$，剩余兄弟节点整枝剪掉
+  };
+
+  % 图例
+  \draw[edge] (-2.0,-8.95) -- (-0.9,-8.95);
+  \node[tag, anchor=west] at (-0.8,-8.95) {实际搜索};
+  \draw[cutedge] (2.4,-8.95) -- (3.5,-8.95);
+  \node[tag, anchor=west] at (3.6,-8.95) {被剪枝的分支};
+
+  % 左右注释
+  \node[tag, anchor=east, align=right] at (-3.90,-0.72)
+    {先走左子树：\\[1pt]叶子 3、12 $\Rightarrow \beta=3$};
+  \node[tag, anchor=west, align=left] at (3.90,-0.72)
+    {根已由左子树得到 $\alpha=3$；\\[1pt]中间子树首个叶子为 2};
+\end{tikzpicture}
+\end{document}

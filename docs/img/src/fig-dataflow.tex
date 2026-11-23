@@ -1,65 +1,78 @@
+% 研制总结报告插图：一次交互的数据流（主线 + 参数旁路 + AI/联机旁路）
 \documentclass[tikz,border=8pt]{standalone}
-\input{_preamble}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+
 \begin{document}
-\begin{tikzpicture}[x=1cm,y=1cm]
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small,
+    mod/.style={draw=#1!55!black, fill=white, rounded corners=3pt, align=center,
+      inner sep=3pt, text=ink, font=\small, line width=0.6pt, minimum height=1.35cm},
+    arr/.style={-{Latex[length=2mm]}, draw=ink!70, line width=0.8pt},
+    darr/.style={arr, dashed, draw=cblue!70!black},
+    lab/.style={font=\footnotesize, text=ink!85, inner sep=1pt},
+    dl/.style={font=\footnotesize, text=cblue!70!black, inner sep=1pt}
+  ]
 
-  % 两条数据带
-  \draw[band=cgreen] (-8.6,1.55) rectangle (7.7,3.25);
-  \draw[band=corange] (-8.6,-0.35) rectangle (7.7,1.35);
-  \node[anchor=east, font=\scriptsize\bfseries, text=cgreen!45!black] at (-8.7,2.90) {交互主线};
-  \node[anchor=east, font=\scriptsize\bfseries, text=corange!55!black] at (-8.7,1.00) {旁路与外部};
-
-  % 交互主线
-  \node[ext, minimum width=1.90cm] (sensor) at (-7.45,2.40)
-    {\textbf{IMU / KEY2}\\[-1pt]\scriptsize 20 ms 采样};
-  \node[core, minimum width=1.90cm] (input) at (-5.00,2.40)
-    {\textbf{输入状态机}\\[-1pt]\scriptsize 200 ms 稳定};
-  \node[core, minimum width=1.70cm] (preview) at (-2.45,2.40)
-    {\textbf{本地预览}\\[-1pt]\scriptsize 方向 / 数量};
-  \node[core, minimum width=1.60cm] (confirm) at (0.00,2.40)
-    {\textbf{确认}\\[-1pt]\scriptsize KEY2 / 触摸};
-  \node[core, minimum width=1.90cm] (game) at (2.55,2.40)
-    {\textbf{规则核心}\\[-1pt]\scriptsize 预览 / 提交 / 结算};
-  \node[ui, minimum width=1.70cm] (ui) at (5.75,2.40)
-    {\textbf{UI 渲染}\\[-1pt]\scriptsize LVGL 主线程};
-
-  \draw[arr] (sensor) -- (input);
-  \draw[arr] (input) -- node[lab, above]{选择} (preview);
-  \draw[arr] (preview) -- node[lab, above]{预览} (confirm);
-  \draw[arr] (confirm) -- node[lab, above]{动作} (game);
-  \draw[arr] (game) -- node[lab, above]{状态} (ui);
+  % 主线
+  \node[mod=corange, minimum width=2.40cm] (src) at (1.50,0)
+    {\normalsize\bfseries 倾斜 / 按键\\[1pt]\footnotesize IMU · KEY2};
+  \node[mod=cblue, minimum width=2.90cm] (input) at (4.65,0)
+    {\normalsize\bfseries 输入状态机\\[1pt]\footnotesize 去抖 · 定档 · 回差};
+  \node[mod=cblue, minimum width=2.70cm] (game) at (8.25,0)
+    {\normalsize\bfseries 规则核心\\[1pt]\footnotesize 预览 / 提交 / 结算};
+  \node[mod=cgreen, minimum width=2.90cm] (ui) at (12.10,0)
+    {\normalsize\bfseries 界面（LVGL）\\[1pt]\footnotesize 预览棋盘 · 结算};
 
   % 旁路
-  \node[core, minimum width=2.20cm] (param) at (-6.70,0.45)
-    {\textbf{参数配置}\\[-1pt]\scriptsize 10 项 / 三模式};
-  \node[core, minimum width=1.65cm] (fb) at (0.10,0.45)
-    {\textbf{RGB 反馈}\\[-1pt]\scriptsize 行动 / 终局};
-  \node[core, minimum width=2.15cm] (ai) at (2.55,0.45)
-    {\textbf{AI 任务}\\[-1pt]\scriptsize 快照 $\to$ 动作};
-  \node[core, minimum width=1.85cm] (net) at (5.75,0.45)
-    {\textbf{联机 net\_room}\\[-1pt]\scriptsize 房主权威 / seq};
+  \node[mod=cblue, minimum width=2.70cm] (cfg) at (8.25,2.35)
+    {\normalsize\bfseries 参数配置\\[1pt]\footnotesize 10 项参数 · 三套配置};
+  \node[mod=cblue, minimum width=2.50cm] (ai) at (8.25,-2.60)
+    {\normalsize\bfseries AI 搜索\\[1pt]\footnotesize 快照进 · 动作出};
+  \node[mod=cblue, minimum width=2.90cm] (net) at (12.10,-2.60)
+    {\normalsize\bfseries 联机对战\\[1pt]\footnotesize 房主提交后广播};
+  \node[mod=corange, minimum width=2.70cm] (peer) at (15.55,-2.60)
+    {\normalsize\bfseries 对手板 / 旁观板\\[1pt]\footnotesize BLE 中央};
 
-  % 规则核心与 AI
-  \draw[arr] ([xshift=-0.50cm]game.south) -- node[lab, left]{快照} ([xshift=-0.50cm]ai.north);
-  \draw[arr] ([xshift=0.50cm]ai.north) -- node[lab, right]{动作} ([xshift=0.50cm]game.south);
+  % 主线箭头
+  \draw[arr] (src.east) -- (input.west);
+  \node[lab] at (2.95,0.88) {角度 · 按键};
+  \draw[arr] (input.east) -- (game.west);
+  \node[lab] at (6.50,0.88) {选择 / 确认};
+  \draw[arr] (game.east) -- (ui.west);
+  \node[lab] at (10.12,0.88) {棋盘快照};
 
-  % 规则核心到反馈与联机
-  \draw[arr] (1.55,1.90) -- (1.55,1.15) -- (0.10,1.15) -- (fb.north);
-  \node[lab, anchor=east] at (0.45,1.35) {反馈};
-  \draw[arr] (3.50,2.40) -- (4.60,2.40) -- (4.60,0.85)
-    -- (5.75,0.85) -- (net.north);
+  % 参数旁路（虚线：新开一局才生效）
+  \draw[darr] (cfg.south) -- (8.25,0.68);
+  \node[dl, anchor=east] at (8.12,1.28) {规则 · 搜索深度};
+  \draw[darr] (cfg.west) -- (4.65,2.35) -- node[dl, left=2pt, pos=0.55]{缓冲参数} (4.65,0.68);
 
-  % 参数在开局时写入 input / AI / game（preview 不是独立配置对象）
-  \draw[darr, draw=cblue!60!black] (param.south) -- (-6.70,-0.85)
-    -- (3.85,-0.85) -- (3.85,2.40) -- (game.east);
-  \draw[darr, draw=cblue!60!black] (-5.00,-0.85) -- (-5.00,-0.10) -- (input.south);
-  \draw[darr, draw=cblue!60!black] (2.55,-0.85) -- (2.55,-0.10) -- (ai.south);
-  \node[lab, anchor=north west] at (-3.90,-0.92) {参数（新开一局生效）};
+  % AI 旁路
+  \draw[arr] (7.55,-0.68) -- node[lab, left, pos=0.5]{快照} (7.55,-1.93);
+  \draw[arr] (8.45,-1.93) -- node[lab, right, pos=0.5]{动作} (8.45,-0.68);
+
+  % 联机旁路
+  \draw[arr] (9.42,-0.68) -- (9.42,-1.50) -- (12.10,-1.50)
+    -- (12.10,-1.93);
+  \node[lab] at (10.70,-1.30) {同步};
+  \draw[arr] (net.east) -- (peer.west);
 
   % 图例
-  \node[core, minimum width=1.10cm, minimum height=0.38cm, font=\scriptsize] at (-6.60,-1.45) {业务模块};
-  \node[ui, minimum width=0.95cm, minimum height=0.38cm, font=\scriptsize] at (-5.15,-1.45) {界面};
-  \node[ext, minimum width=1.10cm, minimum height=0.38cm, font=\scriptsize] at (-3.65,-1.45) {输入/外部};
+  \draw[arr] (0.40,-2.95) -- (1.35,-2.95);
+  \node[font=\footnotesize, text=ink!85, anchor=west] at (1.45,-2.95) {一次交互的主线数据流};
+  \draw[darr] (0.40,-3.45) -- (1.35,-3.45);
+  \node[dl, anchor=west] at (1.45,-3.45) {参数：新开一局时写入};
 
 \end{tikzpicture}
 \end{document}
