@@ -1,95 +1,99 @@
+% 研制总结报告插图：系统架构（四层 + 跨层通道）
+% 只画分层、模块与跨层通道；模块间的调用关系见数据流图（图 4-2）与表 4-1。
 \documentclass[tikz,border=8pt]{standalone}
-\input{_preamble}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+
 \begin{document}
-\begin{tikzpicture}[x=1cm,y=1cm]
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small,
+    band/.style={draw=#1!32!black, fill=#1!4, rounded corners=5pt, line width=0.6pt},
+    mod/.style={draw=#1!55!black, fill=white, rounded corners=3pt, align=center,
+      inner sep=3pt, text=ink, font=\small, line width=0.6pt},
+    lay/.style={font=\footnotesize, text=ink!55, rotate=90},
+    lab/.style={font=\small, text=ink!85, inner sep=1pt},
+    arr/.style={-{Latex[length=2mm]}, draw=ink!70, line width=0.8pt}
+  ]
 
-  % 板卡边界
-  \draw[rounded corners=8pt, draw=cblue!35!black, fill=cblue!2, dashed]
-    (-7.5,-2.05) rectangle (6.95,5.05);
+  % ---------- 板卡边界 ----------
+  \draw[draw=cblue!35!black, dashed, rounded corners=6pt] (-0.85,2.30) rectangle (15.45,11.55);
   \node[anchor=south west, font=\small\bfseries, text=cblue!45!black]
-    at (-7.42,5.08) {黄山派 SF32LB525UC6（sf32lb52-lchspi-ulp）};
+    at (-0.80,11.62) {黄山派 SF32LB525UC6};
 
-  % 界面层
-  \draw[band=cgreen] (-7.15,3.55) rectangle (6.85,4.75);
-  \node[ui, minimum width=13.55cm, minimum height=0.85cm] (ui) at (-0.15,4.15)
-    {\textbf{界面层（LVGL v9，仅主线程）}\quad
-     首页 · 模式 · 准备/房间 · 对局 · 结算 · 参数 · 规则};
+  % ---------- 界面层 ----------
+  \draw[band=cgreen] (0.05,9.35) rectangle (15.35,10.95);
+  \node[lay] at (-0.48,10.15) {界面层};
+  \node[mod=cgreen, minimum width=14.9cm, minimum height=1.20cm] at (7.70,10.15)
+    {\normalsize\bfseries LVGL v9 · 仅主线程\\[1pt]\small
+     首页 · 模式 · 准备 · 大厅 · 房间 · 对局 · 结算 · 参数 · 规则};
 
-  % 业务层
-  \draw[band=cblue] (-7.15,1.85) rectangle (6.85,3.35);
-  \node[core, minimum width=1.95cm] (input) at (-5.90,2.55)
-    {\textbf{输入状态机}\\[-1pt]\scriptsize \texttt{gy\_input.c}};
-  \node[core, minimum width=1.95cm] (game) at (-3.55,2.55)
-    {\textbf{规则核心}\\[-1pt]\scriptsize \texttt{gy\_game.c}};
-  \node[core, minimum width=1.75cm] (ai) at (-1.25,2.55)
-    {\textbf{AI 搜索}\\[-1pt]\scriptsize \texttt{gy\_ai*.c}};
-  \node[core, minimum width=1.95cm] (param) at (1.00,2.55)
-    {\textbf{参数配置}\\[-1pt]\scriptsize \texttt{gy\_config*.c}};
-  \node[core, minimum width=2.05cm] (net) at (3.35,2.55)
-    {\textbf{联机对战}\\[-1pt]\scriptsize \texttt{gy\_net\_*.c}};
-  \node[core, minimum width=1.30cm] (fb) at (6.15,2.55)
-    {\textbf{反馈}\\[-1pt]\scriptsize \texttt{gy\_feedback.c}};
+  % ---------- 业务层 ----------
+  \draw[band=cblue] (0.05,6.50) rectangle (15.35,8.70);
+  \node[lay] at (-0.48,7.60) {业务层};
+  \node[mod=cblue, minimum width=4.20cm, minimum height=1.50cm] (input) at (2.30,7.60)
+    {\normalsize\bfseries 输入状态机\\[1pt]\small 倾斜 → 四类事件};
+  \node[mod=cblue, minimum width=2.25cm, minimum height=1.50cm] (game) at (5.78,7.60)
+    {\normalsize\bfseries 规则核心\\[1pt]\small 唯一权威棋盘};
+  \node[mod=cblue, minimum width=2.00cm, minimum height=1.50cm] (ai) at (8.15,7.60)
+    {\normalsize\bfseries AI 搜索\\[1pt]\small 独立线程};
+  \node[mod=cblue, minimum width=2.00cm, minimum height=1.50cm] (param) at (10.40,7.60)
+    {\normalsize\bfseries 参数配置\\[1pt]\small 三套配置};
+  \node[mod=cblue, minimum width=1.55cm, minimum height=1.50cm] (fb) at (12.43,7.60)
+    {\normalsize\bfseries 反馈\\[1pt]\small 灯效};
+  \node[mod=cblue, minimum width=1.85cm, minimum height=1.50cm] (net) at (14.38,7.60)
+    {\normalsize\bfseries 联机对战\\[1pt]\small 房主权威};
 
-  % 板级服务层
-  \draw[band=corange] (-7.15,-0.95) rectangle (6.85,1.55);
-  \node[ext, minimum width=1.40cm, minimum height=0.90cm] (imu) at (-6.10,0.10)
-    {\textbf{IMU}\\[-1pt]\scriptsize I2C3\\[-2pt]\scriptsize 20 ms};
-  \node[ext, minimum width=1.30cm, minimum height=0.90cm] (key) at (-4.35,0.10)
-    {\textbf{KEY2}\\[-1pt]\scriptsize PA43};
-  \node[ext, minimum width=1.95cm, minimum height=0.75cm] (disp) at (-1.95,0.10)
-    {\textbf{显示 / 触摸}\\[-1pt]\scriptsize SDK BSP};
-  \node[ext, minimum width=2.15cm, minimum height=0.75cm] (ble) at (3.55,0.10)
-    {\textbf{BLE}\\[-1pt]\scriptsize 广播 · GATT};
-  \node[ext, minimum width=1.35cm, minimum height=0.75cm] (rgb) at (6.15,0.10)
-    {\textbf{RGB}\\[-1pt]\scriptsize PA32};
+  % ---------- 板级适配层 ----------
+  \draw[band=corange] (0.05,3.75) rectangle (15.35,5.65);
+  \node[lay] at (-0.48,4.70) {板级层};
+  \node[mod=corange, minimum width=1.95cm, minimum height=1.20cm] (imu) at (1.45,4.80)
+    {\normalsize\bfseries IMU\\[1pt]\small 20 ms 采样};
+  \node[mod=corange, minimum width=1.85cm, minimum height=1.20cm] (key) at (3.45,4.80)
+    {\normalsize\bfseries KEY2\\[1pt]\small 确认键};
+  \node[mod=corange, minimum width=1.35cm, minimum height=1.20cm] (rgb) at (12.40,4.80)
+    {\normalsize\bfseries RGB};
+  \node[mod=corange, minimum width=1.55cm, minimum height=1.20cm] (ble) at (14.40,4.80)
+    {\normalsize\bfseries BLE};
 
-  % 平台层
-  \node[draw=ink!25, fill=ink!4, rounded corners=3pt, minimum width=13.55cm,
-        minimum height=0.56cm, font=\small, text=ink!80] (plat) at (-0.15,-1.55)
-    {BSP + HAL + RT-Thread + SiFli SDK v2.5.1 + LVGL v9};
+  % 板级层留白处说明显示/触摸的归属，避免再拉一条穿过业务层的线
+  \node[font=\footnotesize, text=cgray] at (7.95,4.80) {显示 / 触摸由 LVGL 的 BSP 端口直接驱动};
 
-  % 业务层内部关系
-  \draw[arr] (input) -- (game);
-  \draw[arr] ([yshift=2mm]game.east) -- ([yshift=2mm]ai.west);
-  \draw[arr] ([yshift=-2mm]ai.west) -- ([yshift=-2mm]game.east);
+  % ---------- 平台层 ----------
+  \node[lay] at (-0.48,3.00) {系统层};
+  \node[draw=ink!22, fill=ink!4, rounded corners=3pt, minimum width=14.9cm,
+        minimum height=0.90cm, font=\small, text=ink!85] at (7.70,3.00)
+    {BSP / HAL · RT-Thread · SiFli SDK v2.5.1};
 
-  % 参数在开局时生效：走业务层下沿，避免穿过其它模块
-  \draw[darr, draw=cblue!60!black] (param.south) -- (1.00,1.92)
-    -- (-3.55,1.92) -- (game.south);
-  \draw[darr, draw=cblue!60!black] (1.00,1.92) -- (-1.25,1.92) -- (ai.south);
-  \node[lab, fill=cblue!2, inner sep=1pt] at (-1.20,1.55) {参数（新开一局）};
+  % ---------- 跨层通道 ----------
+  \draw[arr] (imu.north) -- (1.45,6.80);
+  \draw[arr] (key.north) -- (3.45,6.80);
 
-  % 界面与业务的事件/重绘
-  \draw[arr] ([xshift=-0.9cm]game.north) -- node[lab, left]{事件}
-    ([xshift=-0.9cm]game.north |- ui.south);
-  \draw[arr] ([xshift=0.9cm]game.north |- ui.south) -- node[lab, right]{重绘}
-    ([xshift=0.9cm]game.north);
-  \draw[arr] (ui.east) -- (6.15,4.15) -- (fb.north);
-  \node[lab, left] at (6.12,3.72) {灯事件};
+  \draw[arr] (5.40,9.55) -- node[lab, left, pos=0.55]{事件} (5.40,8.35);
+  \draw[arr] (6.00,8.35) -- node[lab, right, pos=0.45]{重绘} (6.00,9.55);
 
-  % 板级到业务
-  \draw[arr] (imu.north) -- node[lab, left]{角度} (input.south);
-  \draw[arr] (key.north) -- (input.south);
-  \draw[arr] (net.south) -- node[lab, left]{收发} (ble.north);
-  \draw[arr] (fb.south) -- (rgb.north);
+  \draw[arr] (fb.south) -- (12.40,5.40);
+  \draw[arr] (net.south) -- (14.40,5.40);
 
-  % 显示/触摸沿左侧走线，避免穿过业务层
-  \draw[arr] (disp.west) -- (-7.35,0.10) -- (-7.35,4.15) -- (ui.west);
-  \node[lab, rotate=90, anchor=south] at (-7.46,2.10) {重绘 / 触摸};
+  % ---------- 外部设备 ----------
+  \node[mod=corange, minimum width=2.10cm, minimum height=1.45cm] (peer) at (17.10,4.80)
+    {\small\bfseries 对手板\\[1pt]\small\bfseries 旁观板\\[1pt]\scriptsize BLE 中央};
+  \draw[arr] (ble.east) -- (peer.west);
 
-  % 外部设备：BLE 沿板级层上沿绕到右侧
-  \node[ext, minimum width=2.55cm, minimum height=1.0cm] (peer) at (9.55,2.35)
-    {\textbf{对手板}\\[-1pt]\scriptsize BLE 中央};
-  \node[ext, minimum width=2.55cm, minimum height=1.0cm] (spec) at (9.55,0.25)
-    {\textbf{旁观板 / 手机}\\[-1pt]\scriptsize BLE 中央，只读};
-  \draw[arr] (4.20,0.48) -- (4.20,1.35) -- (7.65,1.35) -- (7.65,2.35) -- (peer.west);
-  \draw[arr] (7.65,1.35) -- (7.65,0.25) -- (spec.west);
-  \node[lab, above] at (5.55,1.35) {BLE};
-
-  % 图例
-  \node[core, minimum width=1.25cm, minimum height=0.40cm, font=\scriptsize] at (-6.05,-2.42) {业务模块};
-  \node[ui, minimum width=1.05cm, minimum height=0.40cm, font=\scriptsize] at (-4.55,-2.42) {界面};
-  \node[ext, minimum width=1.25cm, minimum height=0.40cm, font=\scriptsize] at (-3.00,-2.42) {板级/外部};
+  % ---------- 图例 ----------
+  \node[mod=cblue, minimum width=1.55cm, minimum height=0.45cm, font=\footnotesize] at (1.05,1.65) {业务模块};
+  \node[mod=cgreen, minimum width=1.15cm, minimum height=0.45cm, font=\footnotesize] at (3.35,1.65) {界面};
+  \node[mod=corange, minimum width=1.55cm, minimum height=0.45cm, font=\footnotesize] at (5.70,1.65) {板级/外部};
 
 \end{tikzpicture}
 \end{document}

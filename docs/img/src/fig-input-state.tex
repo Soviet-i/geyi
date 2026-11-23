@@ -2,42 +2,54 @@
 \input{_preamble}
 \begin{document}
 \begin{tikzpicture}[x=1cm,y=1cm,
-  st/.style={core, minimum width=2.20cm, minimum height=1.05cm, rounded corners=10pt}]
+  st/.style={core, minimum width=2.60cm, minimum height=1.35cm, rounded corners=10pt},
+  stc/.style={st, draw=corange!65!black, fill=corange!7},
+  flow/.style={-{Latex[length=2.2mm]}, draw=ink!75, line width=0.9pt},
+  ret/.style={-{Latex[length=2.0mm]}, draw=cgray, line width=0.9pt, dashed},
+  bi/.style={{Latex[length=2.0mm]}-{Latex[length=2.0mm]}, draw=ink!75, line width=0.9pt}]
 
-  \node[st] (center) at (-7.60,2.20) {\textbf{回中}\\[-1pt]\scriptsize 幅度 $<4^\circ$};
-  \node[st] (arming) at (-4.70,2.20) {\textbf{稳定计时}\\[-1pt]\scriptsize 200 ms};
-  \node[st] (preview) at (-1.50,2.20) {\textbf{可见选择}\\[-1pt]\scriptsize 方向 / 数量};
-  \node[st] (confirm) at (1.90,2.20) {\textbf{已确认}\\[-1pt]\scriptsize 按键锁存};
-  \node[st] (placing) at (-7.60,0.00) {\textbf{放兵选格}\\[-1pt]\scriptsize 外围边 / 列};
+  % 主线：空闲 -> 方向稳定中 -> 预览中 -> 已确认
+  \node[st] (center) at (-8.00,0.00)
+    {\textbf{空闲}\\[-1pt]\scriptsize 板子放平，没有预览};
+  \node[st] (arming) at (-4.60,0.00)
+    {\textbf{方向稳定中}\\[-1pt]\scriptsize 同一个方向保持 0.2 秒};
+  \node[st] (preview) at (-1.20,0.00)
+    {\textbf{预览中}\\[-1pt]\scriptsize 显示方向和人数};
+  \node[stc] (confirm) at (2.20,0.00)
+    {\textbf{已确认}\\[-1pt]\scriptsize 动作已提交};
 
-  \draw[arr] (center) -- node[lab, above]{$\ge 6^\circ$} (arming);
-  \draw[arr] (arming) -- node[lab, above]{200 ms} (preview);
-  \draw[arr] (preview) -- node[lab, above]{确认} (confirm);
+  \draw[flow] (center) -- (arming);
+  \draw[flow] (arming) -- (preview);
+  \draw[flow] (preview) -- (confirm);
+  \node[lab] at (-6.30,1.00) {倾斜超过 $6^\circ$};
+  \node[lab] at (-2.90,1.00) {停稳 0.2 秒};
+  \node[lab] at (0.50,1.00) {按 KEY2 或点确认};
 
-  % 预览期间的变化：旧预览保留
-  \draw[arr] (preview.north) to[loop above, looseness=8] (preview.north);
-  \node[lab, anchor=west] at (-0.15,3.05) {方向 / 数量变化：200 ms 后 UPDATE};
+  % 预览中还可以继续调整：从节点底部绕一圈再回来
+  \draw[flow]
+    ([xshift=0.35cm]preview.south)
+    .. controls ([xshift=0.35cm,yshift=-0.75cm]preview.south)
+            and ([xshift=-0.35cm,yshift=-0.75cm]preview.south) ..
+    ([xshift=-0.35cm]preview.south);
+  \node[lab, anchor=north] at (-1.20,-1.40) {继续倾斜可改方向和人数};
 
-  % 预览取消：沿左侧绕回，避开放兵状态
-  \draw[arr] (preview.south) -- (-1.50,-0.70) -- (-8.85,-0.70)
-    -- (-8.85,2.35) -- (center.west);
-  \node[lab, above] at (-4.40,-0.70) {回中 / 无样本 / 无合法方向};
+  % 取消：板子放平后回到空闲
+  \draw[ret] (preview.north) -- (-1.20,2.20) -- (-9.60,2.20) -- (-9.60,0.20) -- ([yshift=0.20cm]center.west);
+  \draw[ret] (arming.north) -- (-4.60,2.20);
+  \node[lab, above] at (-3.40,2.42) {板子放平或这个方向走不了};
 
-  % 确认后的解锁：再外一层
-  \draw[arr] (confirm.south) -- (1.90,-1.35) -- (-9.05,-1.35)
-    -- (-9.05,2.00) -- ([yshift=-0.15cm]center.west);
-  \node[lab, above] at (-2.20,-1.35) {释放按键并回中 $<4^\circ$};
+  % 已确认之后，放平才能再次操作
+  \draw[ret] (confirm.south) -- (2.20,-1.20) -- (4.10,-1.20) -- (4.10,-3.95)
+    -- (-10.20,-3.95) -- (-10.20,-0.20) -- ([yshift=-0.20cm]center.west);
+  \node[lab, above] at (-6.00,-3.95) {放平后解锁};
 
-  % 放兵模式
-  \draw[arr] (-7.85,1.55) -- node[lab, left]{空闲时 KEY2} (-7.85,0.65);
-  \draw[arr] (-7.35,0.65) -- node[lab, right]{确认 / 退出} (-7.35,1.55);
-
-  % 约束说明
-  \node[draw=ink!20, fill=ink!3, rounded corners=3pt, align=left,
-        font=\scriptsize, text=ink!85, inner sep=5pt] at (1.30,-2.35)
-    {进入 $6^\circ$、退出 $4^\circ$，形成 $2^\circ$ 回差；\\
-     方向或数量变化时旧预览保持可见，新选择稳定 200 ms 后才切换；\\
-     AI 回合由 UI 预览约 500 ms 后自动确认，不经过本状态机。};
+  % 放兵：空闲时按 KEY2 进入，没选格时再按退出
+  \node[stc] (placing) at (-8.00,-2.70)
+    {\textbf{放兵模式}\\[-1pt]\scriptsize 倾斜选择空位\\[-1pt]
+     \scriptsize 按 KEY2 落子};
+  \draw[bi] (center.south) -- (placing.north);
+  \node[lab, right] at (-7.85,-1.05) {空闲时按 KEY2 进入};
+  \node[lab, right] at (-7.85,-1.55) {没选格时再按退出};
 
 \end{tikzpicture}
 \end{document}

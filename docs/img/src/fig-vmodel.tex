@@ -1,0 +1,81 @@
+% 研制总结报告插图：V 模型与测试分层对应关系
+\documentclass[tikz,border=6pt]{standalone}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc,decorations.pathreplacing}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\small,
+    node distance=6mm,
+    stage/.style={draw=#1!60!black, fill=#1!8, rounded corners=3pt, align=center,
+      inner sep=4pt, minimum width=4.60cm, minimum height=1.20cm, text=ink},
+    link/.style={draw=cgray, dashed, line width=0.6pt, -{Latex[length=1.6mm]}},
+    flow/.style={-{Latex[length=2.2mm]}, draw=ink!70, line width=0.9pt},
+    tag/.style={font=\footnotesize\bfseries, text=cred}
+  ]
+
+  % 左侧设计臂
+  \node[stage=cblue] (req) at (0,0) {需求规格\\[1pt]
+    \footnotesize L1--L4 / REQ-201$\sim$606};
+  \node[stage=cblue, below=10mm of req] (arch) {方案设计\\[1pt]
+    \footnotesize 分层架构 / ADR-0001$\sim$0015};
+  \node[stage=cblue, below=10mm of arch] (detail) {详细设计\\[1pt]
+    \footnotesize 状态机 / 协议 / 搜索算法};
+  \node[stage=cblue, below=10mm of detail] (code) {编码实现\\[1pt]
+    \footnotesize src/ 39 个文件，13,548 行};
+
+  % 右侧验证臂
+  \node[stage=cgreen] (accept) at (13.2,0) {验收与交付\\[1pt]
+    \footnotesize 真机确认 / 归档 / 答辩};
+  \node[stage=cgreen, below=10mm of accept] (sys) {系统测试\\[1pt]
+    \footnotesize 179 条用例 / 52 条功能需求};
+  \node[stage=cgreen, below=10mm of sys] (integ) {集成测试\\[1pt]
+    \footnotesize 双板 15 段 / 三端旁观};
+  \node[stage=cgreen, below=10mm of integ] (unit) {单元与主机测试\\[1pt]
+    \footnotesize 10 组 28,657 条断言};
+
+  % 左侧下行
+  \draw[flow] (req.south) -- (arch.north);
+  \draw[flow] (arch.south) -- (detail.north);
+  \draw[flow] (detail.south) -- (code.north);
+
+  % 右侧上行
+  \draw[flow] (unit.north) -- (integ.south);
+  \draw[flow] (integ.north) -- (sys.south);
+  \draw[flow] (sys.north) -- (accept.south);
+
+  % 底部顶点：编码 -> 测试
+  \coordinate (bottom) at (6.6,-8.2);
+  \draw[flow] (code.south) -- (bottom) -- (unit.south);
+  \node[font=\footnotesize, text=cgray, below=2mm of bottom, align=center]
+    {自检 / 主机回归 / 桌面 LVGL / 板端套件};
+
+  % 水平验证映射
+  \draw[link] (req.east) -- node[above, font=\footnotesize, text=ink!80]
+    {TC / 验收矩阵 / evidence} (accept.west);
+  \draw[link] (arch.east) -- node[above, font=\footnotesize, text=ink!80]
+    {系统级用例} (sys.west);
+  \draw[link] (detail.east) -- node[above, font=\footnotesize, text=ink!80]
+    {双板 / 三端自动套件} (integ.west);
+  \draw[link] (code.east) -- node[above, font=\footnotesize, text=ink!80]
+    {断言 / 桌面渲染 / 启动自检} (unit.west);
+
+  % 阶段标注
+  \node[tag, above=3mm of req] {设计左臂};
+  \node[tag, above=3mm of accept] {验证右臂};
+  \node[font=\footnotesize, text=cgray, rotate=90] at (-3.55,-3.2) {逐层细化};
+  \node[font=\footnotesize, text=cgray, rotate=90] at (16.55,-3.2) {逐层验证};
+\end{tikzpicture}
+\end{document}
