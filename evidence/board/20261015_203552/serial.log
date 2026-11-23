@@ -1,0 +1,228 @@
+Serial:c2,Chip:4,Package:3,Rev:3  Reason:00000000
+
+ \ | /
+- SiFli Corporation
+ / | \     build on Oct 15 2026, 2.5.1 build 822548b5
+ 2020 - 2022 Copyright by SiFli team
+aw32001_init ok,  time consum: 0.00 ms.
+mount /dev sucess
+[I/drv.rtc] PSCLR=0x80000100 DivAI=128 DivAF=0 B=256
+[I/drv.rtc] RTC use LXT RTC_CR=00000001
+
+[I/drv.rtc] Init RTC, wake = 0
+
+[I/drv.audprc] init 00 ADC_PATH_CFG0 0x606
+
+[I/drv.audprc] HAL_AUDPRC_Init res 0
+
+[I/drv.audcodec] HAL_AUDCODEC_Init res 0
+
+[I/drv.rgb] rgbled register success, supporting 1 LEDs
+[32m[I/TOUCH] Regist touch screen driver, probe=1202740d [0m
+[32;22m[I/FAL] Flash Abstraction Layer (V0.5.99) initialize success.[0m
+[32;22m[I/FAL] The FAL MTD NOR device (dfu) created successfully[0m
+[32;22m[I/FAL] The FAL MTD NOR device (ble) created successfully[0m
+LV_MEM_RT: using rt_malloc path (psram private heap build condition not met)
+[I/DBG] drv_gpu opened.
+call par CFG1(3313)
+fc 9, xtal 2000, pll 2065
+call par CFG1(3313)
+fc 7, xtal 2000, pll 1657
+
+[course_starter] v0.1.0 boot ok
+Hello world!
+[geyi:selftest] core=PASS (not a hardware game test)
+[geyi:selftest] input=PASS (simulated angles only)
+[I/DBG] [NONE] -> [OPENING]
+[I/DBG] open
+[I/DBG] HW open
+[I/DBG] Try registered LCD driver...
+msh />
+CO5300_ReadID 0x331100 
+[I/co5300] LCD module use CO5300 IC 
+
+
+CO5300_ReadID 0x331100 
+[I/co5300] LCD module use CO5300 IC 
+
+[I/DBG] Found lcd co5300 id:331100h
+[I/DBG] HW open done.
+[I/DBG] [OPENING] -> [INITIALIZED]
+[I/DBG] open done.
+[I/DBG] drv_lcd_fb_init
+[I/DBG] drv_lcd_fb_init done.
+[32m[I/TOUCH] Open[0m
+[32m[I/TOUCH] Opened.[0m
+[geyi:lcd] READY 390 x 450
+[geyi:board] Keep board still ~1 second. KEY1 short=confirm KEY2=cancel/place
+[32m[I/TOUCH] Find touch screen driver...[0m
+[32m[I/TOUCH] Probe 1202740d[0m
+[32m[I/TOUCH] touch screen found driver  20031438, ft6146[0m
+[geyi:imu] WHO_AM_I=6a keep still for calibration
+[I/DBG] Auto turn on display.
+[I/DBG] set brightness 50
+[I/DBG] display on
+[I/DBG] [INITIALIZED] -> [ON]
+[E/drv.ft6146] ft6146 id_H=64
+[E/drv.ft6146] ft6146 id_L=56
+[geyi:imu] calibrated zero_x=17573 zero_y=41
+[geyi:motion] x=0 y=-1 key1=0 revision=0
+[geyi:motion] x=-4 y=3 key1=0 revision=0
+[geyi:motion] x=-4 y=0 key1=0 revision=0
+[geyi:motion] x=-16 y=-7 key1=0 revision=0
+[geyi:motion] x=-2 y=3 key1=0 revision=0
+[geyi:motion] x=-1 y=2 key1=0 revision=0
+[geyi:motion] x=-9 y=-3 key1=0 revision=0
+[geyi:motion] x=0 y=9 key1=0 revision=0
+[geyi:motion] x=-5 y=3 key1=0 revision=0
+[geyi:motion] x=-5 y=2 key1=0 revision=0
+[geyi:motion] x=-2 y=1 key1=0 revision=0
+[geyi:motion] x=-7 y=-1 key1=0 revision=0
+[geyi:motion] x=-3 y=2 key1=0 revision=0
+[geyi:motion] x=322 y=-194 key1=0 revision=0
+[geyi:motion] x=542 y=-100 key1=0 revision=0
+[geyi:motion] x=432 y=-43 key1=0 revision=0
+[geyi:motion] x=589 y=-15 key1=0 revision=0
+[geyi:motion] x=537 y=-115 key1=0 revision=0
+[geyi:motion] x=586 y=-89 key1=0 revision=0
+[geyi:motion] x=545 y=-91 key1=0 revision=0
+[geyi:motion] x=550 y=-89 key1=0 revision=0
+[geyi:motion] x=519 y=-105 key1=0 revision=0
+[geyi:tilt] x=-1 y=-2887 dir=0 count=1 preview=1
+[geyi:motion] x=77 y=-2929 key1=0 revision=0
+[geyi:tilt] x=1160 y=1530 dir=2 count=0 preview=1
+[geyi:motion] x=1126 y=1467 key1=0 revision=0
+[geyi:motion] x=1058 y=487 key1=0 revision=0
+[geyi:motion] x=923 y=3 key1=0 revision=0
+[geyi:tilt] x=473 y=-2227 dir=0 count=1 preview=1
+[geyi:motion] x=890 y=-820 key1=0 revision=0
+[geyi:tilt] x=381 y=-2063 dir=0 count=1 preview=1
+[geyi:motion] x=335 y=-2285 key1=0 revision=0
+[geyi:motion] x=865 y=-365 key1=0 revision=0
+[geyi:tilt] x=633 y=-2188 dir=0 count=1 preview=1
+[geyi:motion] x=590 y=-2633 key1=0 revision=0
+[geyi:tilt] x=2104 y=247 dir=1 count=1 preview=1
+[geyi:motion] x=1836 y=-49 key1=0 revision=0
+[geyi:motion] x=1613 y=-40 key1=0 revision=0
+[geyi:motion] x=718 y=-672 key1=0 revision=0
+[geyi:tilt] x=1317 y=-743 dir=1 count=1 preview=1
+[geyi:motion] x=1132 y=-2562 key1=0 revision=0
+[geyi:tilt] x=1132 y=-2562 dir=0 count=1 preview=1
+[geyi:tilt] x=1950 y=40 dir=1 count=1 preview=1
+[geyi:motion] x=1967 y=435 key1=0 revision=0
+[geyi:motion] x=1402 y=28 key1=0 revision=0
+[geyi:motion] x=1216 y=-206 key1=0 revision=0
+[geyi:tilt] x=1999 y=-21 dir=1 count=1 preview=1
+[geyi:motion] x=2218 y=70 key1=0 revision=0
+[geyi:motion] x=1969 y=107 key1=0 revision=0
+[geyi:motion] x=926 y=-439 key1=0 revision=0
+[geyi:motion] x=1089 y=-247 key1=0 revision=0
+[geyi:motion] x=932 y=-808 key1=0 revision=0
+[geyi:tilt] x=733 y=-2022 dir=0 count=1 preview=1
+[geyi:motion] x=349 y=-2382 key1=0 revision=0
+[geyi:motion] x=1407 y=-1679 key1=0 revision=0
+[geyi:tilt] x=1376 y=-1606 dir=0 count=1 preview=1
+[geyi:motion] x=1287 y=-2375 key1=0 revision=0
+[geyi:motion] x=1326 y=-1752 key1=0 revision=1
+[geyi:motion] x=1563 y=-663 key1=0 revision=1
+[geyi:motion] x=1189 y=-403 key1=0 revision=1
+[geyi:motion] x=1044 y=338 key1=0 revision=1
+[geyi:tilt] x=1573 y=1935 dir=2 count=1 preview=1
+[geyi:motion] x=2002 y=2635 key1=0 revision=1
+[geyi:motion] x=1606 y=851 key1=0 revision=1
+[geyi:tilt] x=1561 y=675 dir=1 count=1 preview=1
+[geyi:motion] x=1754 y=970 key1=0 revision=1
+[geyi:motion] x=683 y=428 key1=0 revision=1
+[geyi:tilt] x=1149 y=2274 dir=2 count=1 preview=1
+[geyi:motion] x=736 y=337 key1=0 revision=1
+[geyi:tilt] x=1634 y=-268 dir=1 count=1 preview=1
+[geyi:motion] x=2420 y=-188 key1=0 revision=1
+[geyi:motion] x=2142 y=131 key1=0 revision=1
+[geyi:motion] x=2315 y=988 key1=0 revision=1
+[geyi:motion] x=2703 y=1223 key1=0 revision=1
+[geyi:tilt] x=2795 y=1155 dir=1 count=1 preview=1
+[geyi:motion] x=601 y=1119 key1=0 revision=1
+[geyi:tilt] x=2917 y=946 dir=1 count=1 preview=1
+[geyi:motion] x=3193 y=998 key1=0 revision=1
+[geyi:motion] x=553 y=1032 key1=0 revision=1
+[geyi:tilt] x=2288 y=955 dir=1 count=1 preview=1
+[geyi:motion] x=2487 y=972 key1=0 revision=1
+[geyi:motion] x=859 y=863 key1=0 revision=1
+[geyi:tilt] x=2380 y=985 dir=1 count=1 preview=1
+[geyi:motion] x=1502 y=953 key1=0 revision=1
+[geyi:tilt] x=2575 y=1034 dir=1 count=1 preview=1
+[geyi:motion] x=2671 y=1064 key1=0 revision=1
+[geyi:motion] x=2714 y=1059 key1=0 revision=1
+[geyi:motion] x=598 y=745 key1=0 revision=1
+[geyi:tilt] x=2858 y=1047 dir=1 count=1 preview=1
+[geyi:motion] x=2927 y=1092 key1=0 revision=1
+[geyi:motion] x=980 y=771 key1=0 revision=1
+[geyi:tilt] x=2978 y=1163 dir=1 count=1 preview=1
+[geyi:motion] x=3103 y=1173 key1=0 revision=1
+[geyi:motion] x=1087 y=837 key1=0 revision=1
+[geyi:tilt] x=2986 y=1206 dir=1 count=1 preview=1
+[geyi:motion] x=3140 y=1255 key1=0 revision=1
+[geyi:motion] x=667 y=793 key1=0 revision=1
+[geyi:tilt] x=3045 y=1163 dir=1 count=1 preview=1
+[geyi:motion] x=3169 y=1223 key1=0 revision=1
+[geyi:motion] x=3126 y=1221 key1=0 revision=1
+[geyi:motion] x=404 y=754 key1=0 revision=1
+[geyi:tilt] x=801 y=2540 dir=2 count=1 preview=1
+[geyi:motion] x=1105 y=2971 key1=0 revision=1
+[geyi:motion] x=716 y=272 key1=0 revision=1
+[geyi:tilt] x=1066 y=2433 dir=2 count=1 preview=1
+[geyi:motion] x=1389 y=2381 key1=0 revision=1
+[geyi:motion] x=1151 y=1729 key1=0 revision=1
+[geyi:motion] x=1280 y=1687 key1=0 revision=1
+[geyi:motion] x=1186 y=642 key1=0 revision=1
+[geyi:tilt] x=1123 y=1470 dir=2 count=1 preview=1
+[geyi:motion] x=1023 y=1506 key1=0 revision=1
+[geyi:motion] x=546 y=118 key1=0 revision=1
+[geyi:tilt] x=533 y=1560 dir=2 count=1 preview=1
+[geyi:motion] x=697 y=1890 key1=0 revision=1
+[geyi:motion] x=518 y=630 key1=0 revision=1
+[geyi:motion] x=493 y=-614 key1=0 revision=1
+[geyi:tilt] x=2543 y=128 dir=1 count=1 preview=1
+[geyi:motion] x=2567 y=1386 key1=0 revision=1
+[geyi:motion] x=1546 y=1230 key1=0 revision=1
+[geyi:motion] x=1139 y=950 key1=0 revision=1
+[geyi:tilt] x=2345 y=1169 dir=1 count=1 preview=1
+[geyi:motion] x=873 y=1209 key1=0 revision=1
+[geyi:motion] x=1044 y=866 key1=0 revision=1
+[geyi:tilt] x=2675 y=1208 dir=1 count=1 preview=1
+[geyi:motion] x=2250 y=1202 key1=0 revision=1
+[geyi:motion] x=2438 y=1300 key1=0 revision=1
+[geyi:tilt] x=2664 y=1366 dir=1 count=1 preview=1
+[geyi:motion] x=473 y=531 key1=0 revision=1
+[geyi:tilt] x=218 y=-1817 dir=0 count=0 preview=1
+[geyi:motion] x=315 y=-1873 key1=0 revision=1
+[geyi:tilt] x=1378 y=1793 dir=2 count=1 preview=1
+[geyi:motion] x=1231 y=1613 key1=0 revision=1
+[geyi:motion] x=1185 y=1293 key1=0 revision=1
+[geyi:motion] x=371 y=194 key1=0 revision=1
+[geyi:motion] x=480 y=288 key1=0 revision=1
+[geyi:motion] x=609 y=582 key1=0 revision=1
+[geyi:motion] x=641 y=711 key1=0 revision=1
+[geyi:tilt] x=828 y=2030 dir=2 count=1 preview=1
+[geyi:motion] x=930 y=2480 key1=0 revision=1
+[geyi:motion] x=860 y=1502 key1=0 revision=1
+[geyi:tilt] x=910 y=1835 dir=2 count=1 preview=1
+[geyi:motion] x=1116 y=2198 key1=0 revision=1
+[geyi:motion] x=1127 y=1950 key1=0 revision=1
+[geyi:motion] x=1218 y=1775 key1=0 revision=1
+[geyi:motion] x=1225 y=1621 key1=0 revision=1
+[geyi:motion] x=1084 y=58 key1=0 revision=1
+[geyi:motion] x=-846 y=655 key1=0 revision=1
+[geyi:tilt] x=-2435 y=422 dir=3 count=1 preview=1
+[geyi:motion] x=-2630 y=487 key1=0 revision=1
+[geyi:motion] x=-2111 y=671 key1=0 revision=1
+[geyi:tilt] x=-2270 y=638 dir=3 count=1 preview=1
+[geyi:motion] x=989 y=1108 key1=0 revision=1
+[geyi:tilt] x=1336 y=2440 dir=2 count=1 preview=1
+[geyi:motion] x=1060 y=1696 key1=0 revision=1
+[geyi:tilt] x=1038 y=2438 dir=2 count=1 preview=1
+[geyi:motion] x=1111 y=2460 key1=0 revision=1
+[geyi:motion] x=1332 y=2517 key1=0 revision=1
+[geyi:motion] x=948 y=384 key1=0 revision=2
+[geyi:motion] x=541 y=295 key1=0 revision=2
+[

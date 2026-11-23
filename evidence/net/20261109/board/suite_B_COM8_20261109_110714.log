@@ -1,0 +1,641 @@
+SFBL
+Serial:c2,Chip:4,Package:3,Rev:3  Reason:00000000
+
+ \ | /
+- SiFli Corporation
+ / | \     build on Nov  8 2026, 2.5.1 build 421126d9
+ 2020 - 2022 Copyright by SiFli team
+aw32001_init ok,  time consum: 0.00 ms.
+mount /dev sucess
+[I/drv.rtc] PSCLR=0x80000100 DivAI=128 DivAF=0 B=256
+[I/drv.rtc] RTC use LXT RTC_CR=00000001
+
+[I/drv.rtc] Init RTC, wake = 0
+
+[I/drv.audprc] init 00 ADC_PATH_CFG0 0x606
+
+[I/drv.audprc] HAL_AUDPRC_Init res 0
+
+[I/drv.audcodec] HAL_AUDCODEC_Init res 0
+
+[I/drv.rgb] rgbled register success, supporting 1 LEDs
+[32m[I/TOUCH] Regist touch screen driver, probe=12027835 [0m
+[32;22m[I/FAL] Flash Abstraction Layer (V0.5.99) initialize success.[0m
+[32;22m[I/FAL] The FAL MTD NOR device (dfu) created successfully[0m
+[32;22m[I/FAL] The FAL MTD NOR device (ble) created successfully[0m
+LV_MEM_RT: using rt_malloc path (psram private heap build condition not met)
+[I/DBG] drv_gpu opened.
+call par CFG1(3313)
+fc 9, xtal 2000, pll 2066
+call par CFG1(3313)
+fc 7, xtal 2000, pll 1658
+
+[course_starter] v0.1.0 boot ok
+Hello world!
+[geyi:selftest] core=PASS (not a hardware game test)
+[geyi:selftest] input=PASS (simulated angles only)
+[geyi:selftest] ai=PASS
+[geyi:selftest] param=PASS rc=0
+[geyi:selftest] paramui=PASS rc=0
+[geyi:selftest] net=PASS (protocol/room logic only, BLE not tested)
+[geyi:selftest] light=PASS
+[I/DBG] [NONE] -> [OPENING]
+[I/DBG] open
+[I/DBG] HW open
+[I/DBG] Try registered LCD driver...
+msh />
+CO5300_ReadID 0x331100 
+[I/co5300] LCD module use CO5300 IC 
+
+
+CO5300_ReadID 0x331100 
+[I/co5300] LCD module use CO5300 IC 
+
+[I/DBG] Found lcd co5300 id:331100h
+[I/DBG] HW open done.
+[I/DBG] [OPENING] -> [INITIALIZED]
+[I/DBG] open done.
+[I/DBG] drv_lcd_fb_init
+[I/DBG] drv_lcd_fb_init done.
+[32m[I/TOUCH] Open[0m
+[32m[I/TOUCH] Opened.[0m
+D/HEX uid: 0000-0008: AF 4D BA 29 03 EA CC A5    .M.)....
+           0008-0010: 94 16 2A 0C D6 37 64 00    ..*..7d.
+D/HEX addr: 0000-0008: AF 4D BA 29 03 EA          .M.)..
+[geyi:ble] local id=03EA
+[geyi:lcd] READY 390 x 450
+[geyi:board] Keep board still ~1 second. KEY1 short=confirm KEY2=cancel/place
+[geyi:light] event=1
+[32m[I/TOUCH] Find touch screen driver...[0m
+[32m[I/TOUCH] Probe 12027835[0m
+[32m[I/TOUCH] touch screen found driver  20031a48, ft6146[0m
+[geyi:imu] WHO_AM_I=6a keep still for calibration
+[I/DBG] Auto turn on display.
+[I/DBG] set brightness 50
+[I/DBG] display on
+[I/DBG] [INITIALIZED] -> [ON]
+[E/drv.ft6146] ft6146 id_H=64
+[E/drv.ft6146] ft6146 id_L=56
+[geyi:imu] calibrated zero_x=14617 zero_y=469
+le p256 nvds get 0
+le p256 nvds get 0
+app addr nvds get 1
+[geyi:ble] power on
+a[geyi:ble] service init
+ct num:0
+set cmd 0x91, stop_status:0, msg_status:2
+act num:0
+set cmd 0x91, stop_status:0, msg_status:2
+act num:0
+set cmd 0x91, stop_status:0, msg_status:1
+[geyi:ble] service init done srv=537075964
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[geyi:ble] scan started
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan stopped
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] connected idx=0 role=0
+[geyi:ble] search start conn=0
+[geyi:ble] mtu idx=0 mtu=1024
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[geyi:ble] svc uuid 31304356 ... hdl 16-21
+[geyi:ble] chars rx=18 tx=20 cccd=21 rmt=0 hdl=16-21
+[geyi:ble] remote svc registered conn=0 status=0
+[geyi:ble] cccd write conn=0 hdl=21 ret=0
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=1 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=2 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=0 rready=1 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:motion] x=0 y=3 key1=0 revision=0
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=4 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=5 y=-3 key1=0 revision=0
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=5 rooms=0 turn=1 rev=1
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=16 y=6 key1=0 revision=1
+[gy_test] suggest move 1 1
+[gy_test] end
+msh />msh />[gy_test] move sent dir=1 count=1
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=5 rooms=0 turn=1 rev=1
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=6 rooms=0 turn=0 rev=2
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=20 y=-4 key1=0 revision=2
+[geyi:motion] x=2 y=2 key1=0 revision=3
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=7 rooms=0 turn=1 rev=3
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] suggest move 1 1
+[gy_test] end
+msh />[gy_test] move sent dir=1 count=1
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=7 rooms=0 turn=1 rev=3
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=8 y=-2 key1=0 revision=4
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=8 rooms=0 turn=0 rev=4
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=8 y=-1 key1=0 revision=4
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=9 rooms=0 turn=1 rev=5
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=-13 y=3 key1=0 revision=5
+msh />[gy_test] suggest move 2 1
+[gy_test] end
+msh />[gy_test] move sent dir=2 count=1
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=9 rooms=0 turn=1 rev=5
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=10 rooms=0 turn=0 rev=6
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=3 y=-1 key1=0 revision=6
+[geyi:motion] x=-1 y=0 key1=0 revision=7
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=11 rooms=0 turn=1 rev=7
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] suggest move 2 1
+[gy_test] end
+msh />[gy_test] move sent dir=2 count=1
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=11 rooms=0 turn=1 rev=7
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=-3 y=4 key1=0 revision=7
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=12 rooms=0 turn=0 rev=8
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=8 y=9 key1=0 revision=8
+[geyi:motion] x=6 y=4 key1=0 revision=9
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=13 rooms=0 turn=1 rev=9
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] suggest move 2 1
+[gy_test] end
+msh />[gy_test] move sent dir=2 count=1
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=13 rooms=0 turn=1 rev=9
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=2 players=2 spectators=0 seq=14 rooms=0 turn=0 rev=10
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=3 y=0 key1=0 revision=10
+[geyi:motion] x=0 y=4 key1=0 revision=10
+msh />[gy_test] state active=2 role=1 phase=3 players=2 spectators=0 seq=16 rooms=0 turn=0 rev=11
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=1 gready=1 rready=1 bready=1 outcome=1 result=1 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:motion] x=10 y=0 key1=0 revision=11
+msh />[geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[geyi:ble] scan started
+[geyi:ble] disconnected idx=0 reason=22
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan stopped
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] connected idx=0 role=0
+[geyi:ble] search start conn=0
+[geyi:ble] mtu idx=0 mtu=1024
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[geyi:ble] svc uuid 31304356 ... hdl 16-21
+[geyi:ble] chars rx=18 tx=20 cccd=21 rmt=1 hdl=16-21
+[geyi:ble] remote svc registered conn=0 status=0
+[geyi:ble] cccd write conn=0 hdl=21 ret=0
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=1 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />msh />[geyi:ble] scan_start ret=0
+[geyi:ble] scan started
+[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] disconnected idx=0 reason=22
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan stopped
+[geyi:ble] connected idx=0 role=0
+[geyi:ble] search start conn=0
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] mtu idx=0 mtu=1024
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[geyi:ble] svc uuid 31304356 ... hdl 16-21
+[geyi:ble] chars rx=18 tx=20 cccd=21 rmt=2 hdl=16-21
+[geyi:ble] remote svc registered conn=0 status=0
+[geyi:ble] cccd write conn=0 hdl=21 ret=0
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh /[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+emsh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=3 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />msh />[geyi:ble] scan_start ret=0
+[geyi:ble] scan started
+[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] disconnected idx=0 reason=22
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan stopped
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] connected idx=0 role=0
+[geyi:ble] search start conn=0
+[geyi:ble] mtu idx=0 mtu=1024
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[geyi:ble] svc uuid 31304356 ... hdl 16-21
+[geyi:ble] chars rx=18 tx=20 cccd=21 rmt=3 hdl=16-21
+[geyi:ble] remote svc registered conn=0 status=0
+[geyi:ble] cccd write conn=0 hdl=21 ret=0
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=1 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=1 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=2 spectators=0 seq=1 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=0 guest=1 id=03EA hostid=F33A guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] host_start room=00001c09 players=1 power=1
+[geyi:ble] adv_start connectable=1
+[geyi:ble] adv init ret=0
+[geyi:ble] adv start ret=0
+[geyi:ble] host_start ret=0
+[geyi:net] promote self to host color=1 id=03EA
+[geyi:ble] adv started status=0
+[geyi:ble] disconnected idx=0 reason=22
+msh />[gy_test] state active=1 role=0 phase=0 players=1 spectators=0 seq=2 rooms=0 turn=0 rev=0
+[gy_test] info local=1 host=1 guest=0 id=03EA hostid=0000 guestid=03EA
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:net] leave host phase=4 players=0 hostc=1 seq=3
+msh />msh />[geyi:ble] scan_start ret=0
+[geyi:ble] adv stopped
+[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] scan started
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan stopped
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=2 role=1 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=1 joinreason=1
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=1 joinreason=1
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=1 joinreason=1
+[gy_test] end
+msh />[geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[geyi:ble] scan started
+msh />[gy_test] state active=0 role=2 phase=0 players=1 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:light] event=1
+msh />[gy_test] state active=0 role=2 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan stopped
+[geyi:ble] connected idx=0 role=0
+[gy_test] state active=2 role=2 phase=0 players=1 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+[geyi:ble] search start conn=0
+[geyi:ble] mtu idx=0 mtu=1024
+msh />[geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[geyi:ble] svc uuid 31304356 ... hdl 16-21
+[geyi:ble] chars rx=18 tx=20 cccd=21 rmt=4 hdl=16-21
+[geyi:ble] remote svc registered conn=0 status=0
+[geyi:ble] cccd write conn=0 hdl=21 ret=0
+msh />[gy_test] move rejected active=2 turn=0
+msh />[gy_test] state active=2 role=2 phase=0 players=1 spectators=1 seq=1 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=1 id=03EA hostid=F33A guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[geyi:ble] scan_start ret=0
+[geyi:ble] scan started
+[geyi:ble] disconnected idx=0 reason=22
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=1 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end
+msh />[gy_test] state active=0 role=2 phase=0 players=0 spectators=0 seq=0 rooms=0 turn=0 rev=0
+[gy_test] info local=255 host=0 guest=0 id=03EA hostid=0000 guestid=0000
+[gy_test] ready hready=0 gready=0 rready=0 bready=0 outcome=0 result=0 joinrej=0 joinreason=0
+[gy_test] end

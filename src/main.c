@@ -16,7 +16,25 @@
 #include "drv_io.h"
 #include "stdio.h"
 #include "string.h"
+#include "geyi_game.h"
+#include "geyi_input.h"
+#include "geyi_feedback.h"
+#include "geyi_history.h"
+#include "geyi_history_store.h"
+#include "geyi_timer.h"
+#include "geyi_ai.h"
+#include "geyi_config.h"
+#include "geyi_param_ui.h"
+#include "geyi_net_proto.h"
+#include "geyi_net_room.h"
+#include "geyi_net_link.h"
+#include "geyi_net_app.h"
 #include "drivers/rt_drv_pwm.h"
+#ifdef GEYI_WITH_LVGL
+#include "geyi_ui.h"
+#include "geyi_board.h"
+#include "littlevgl2rtt.h"
+#endif
 
 #define APP_NAME        "course_starter"
 #define APP_VERSION     "0.1.0"
@@ -40,7 +58,7 @@ static const struct rgb_color color_table[] =
 
 static struct rt_device *rgbled_device;
 
-static void rgb_led_init(void)
+static int rgb_led_init(void)
 {
 #ifdef SF32LB52X
     HAL_PIN_Set(PAD_PA32, GPTIM2_CH1, PIN_NOPULL, 1);   /* pwmt2_cc1 */
@@ -51,23 +69,70 @@ static void rgb_led_init(void)
     if (!rgbled_device)
     {
         rt_kprintf("[%s] ERROR: device '%s' not found, check proj.conf RGB options\n", APP_NAME, RGBLED_NAME);
-        RT_ASSERT(0);
+        return 0;
     }
+    return 1;
 }
 
-static void rgb_led_set_color(uint32_t color)
+static int rgb_led_set_color(uint32_t color)
 {
-    struct rt_rgbled_configuration configuration;
+    struct rt_rgbled_configuration configuration={0};
     configuration.color_rgb = color;
-    rt_device_control(rgbled_device, PWM_CMD_SET_COLOR, &configuration);
+    return rt_device_control(rgbled_device, PWM_CMD_SET_COLOR, &configuration)==RT_EOK;
 }
 
 int main(void)
 {
     rt_kprintf("\n[%s] v%s boot ok\n", APP_NAME, APP_VERSION);
     rt_kprintf("Hello world!\n");
+    rt_kprintf("[geyi:selftest] core=%s (not a hardware game test)\n",
+               gy_selftest() ? "PASS" : "FAIL");
+    rt_kprintf("[geyi:selftest] input=%s (simulated angles only)\n",
+               gy_input_selftest() ? "PASS" : "FAIL");
+    rt_kprintf("[geyi:selftest] history=%s timer=%s\n",
+               gy_history_selftest() ? "PASS" : "FAIL",
+               gy_timer_selftest() ? "PASS" : "FAIL");
+    {int rc=gy_history_store_init();
+     rt_kprintf("[geyi:selftest] history_store=%s count=%d\n",
+                rc?"PASS":"FAIL",gy_history_count());}
+    rt_kprintf("[geyi:selftest] ai=%s\n", gy_ai_selftest() ? "PASS" : "FAIL");
+    {int rc=gy_param_selftest();rt_kprintf("[geyi:selftest] param=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
+    {int rc=gy_param_ui_selftest();rt_kprintf("[geyi:selftest] paramui=%s rc=%d\n",rc?"FAIL":"PASS",rc);}
+    {int ok=gy_net_proto_selftest()==0&&gy_net_room_selftest()==0&&
+               gy_net_link_selftest()==0&&gy_net_app_selftest()==0;
+     rt_kprintf("[geyi:selftest] net=%s (protocol/room logic only, BLE not tested)\n",ok?"PASS":"FAIL");}
 
-    rgb_led_init();
+#ifdef GEYI_WITH_LVGL
+    GyLight light={0};uint32_t last_light=UINT32_MAX;
+    int light_ok=rgb_led_init();
+    rt_kprintf("[geyi:selftest] light=%s\n",gy_light_selftest()?"PASS":"FAIL");
+    if (littlevgl2rtt_init("lcd") != RT_EOK) {
+        rt_kprintf("[geyi:lcd] FAIL initialize\n");
+        return -1;
+    }
+    gy_net_app_init();
+    gy_ui_create();
+    rt_kprintf("[geyi:lcd] READY %d x %d\n",(int)lv_display_get_horizontal_resolution(NULL),
+               (int)lv_display_get_vertical_resolution(NULL));
+    int board_ready=gy_board_start()==0;
+    if(!board_ready)rt_kprintf("[geyi:board] FAIL worker start, touch remains available\n");
+    rt_kprintf("[geyi:board] KEY2 short=confirm/place (KEY1 is power); tilt directly\n");
+    while(1){
+        if(board_ready)gy_board_poll();
+        lv_timer_handler();
+        gy_ui_tick();
+        {uint32_t now=(uint32_t)((uint64_t)rt_tick_get()*1000/RT_TICK_PER_SECOND);
+        int event=gy_ui_take_feedback();uint32_t current;
+        if(event){gy_light_start(&light,event,now);rt_kprintf("[geyi:light] event=%d\n",event);}
+        current=gy_light_color(&light,now);
+        if(light_ok&&current!=last_light){
+            if(!rgb_led_set_color(current)){light_ok=0;rt_kprintf("[geyi:light] FAIL write; game continues\n");}
+            last_light=current;
+        }}
+        rt_thread_mdelay(5);
+    }
+#else
+    if(!rgb_led_init())return -1;
 
     while (1)
     {
@@ -80,5 +145,6 @@ int main(void)
             rt_thread_mdelay(BLINK_OFF_MS);
         }
     }
+#endif
     return 0;
 }

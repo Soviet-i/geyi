@@ -1,0 +1,69 @@
+% 研制总结报告插图：联机拓扑与权威归属
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  dev/.style={draw=cblue!55!black, fill=cblue!8, rounded corners=3pt, align=center,
+    inner sep=4pt, text=ink, minimum width=4.9cm, minimum height=5.4cm},
+  peer/.style={draw=corange!55!black, fill=corange!7, rounded corners=3pt, align=center,
+    inner sep=4pt, text=ink, minimum width=4.3cm, minimum height=2.3cm},
+  spec/.style={draw=cgreen!55!black, fill=cgreen!7, rounded corners=3pt, align=center,
+    inner sep=4pt, text=ink, minimum width=4.3cm, minimum height=2.3cm},
+  up/.style={-{Latex[length=2.2mm]}, draw=ink!70, line width=0.9pt},
+  down/.style={-{Latex[length=2.2mm]}, draw=ink!70, line width=0.9pt},
+  lab/.style={font=\footnotesize, text=ink!85, inner sep=2pt}]
+
+  % 两块客板放在左侧，房主独占右侧
+  \node[peer] (opp) at (-4.90,2.55)
+    {\normalsize\bfseries 对手板\\[2pt]
+     \footnotesize 通过蓝牙连到房主\\[-1pt]
+     \footnotesize 只发送自己的操作\\[-1pt]
+     \footnotesize 等房主发回棋盘后更新\\[1pt]
+     \textcolor{corange}{\footnotesize 不会先改自己的棋盘}};
+  \node[spec] (spec) at (-4.90,-2.20)
+    {\normalsize\bfseries 旁观板\\[2pt]
+     \footnotesize 通过蓝牙连到房主\\[-1pt]
+     \footnotesize 只能看，不能下棋\\[-1pt]
+     \footnotesize 能看到双方棋盘和预览};
+  \node[dev] (host) at (3.90,0.20)
+    {\normalsize\bfseries 房主板\\[3pt]
+     \footnotesize 同时下棋并当裁判\\[2pt]
+     \footnotesize 房主也是蓝牙服务端\\[5pt]
+     \footnotesize 保存唯一的棋局\\[-1pt]
+     \footnotesize 判断每一步是否合法\\[-1pt]
+     \footnotesize 结算后把棋盘发给各板\\[-1pt]
+     \footnotesize 把预览转给旁观者\\[3pt]
+     \textcolor{cblue}{\footnotesize 棋局以房主为准}};
+
+  % 对手板 <-> 房主
+  \draw[up]   (opp.east |- {0,2.80}) -- node[lab, above]{加入房间、发送操作} (host.west |- {0,2.80});
+  \draw[down] (host.west |- {0,2.30}) -- node[lab, below]{房间状态、棋盘、结果} (opp.east |- {0,2.30});
+
+  % 旁观板 <-> 房主
+  \draw[up]   (spec.east |- {0,-1.95}) -- node[lab, above]{加入旁观} (host.west |- {0,-1.95});
+  \draw[down] (host.west |- {0,-2.45}) -- node[lab, below]{房间状态、棋盘、预览} (spec.east |- {0,-2.45});
+
+  % 说明
+  \node[draw=ink!20, fill=ink!3, rounded corners=3pt, align=left,
+        font=\footnotesize, text=ink!85, inner sep=5pt, text width=14.6cm]
+    at (0.00,-5.30)
+    {找房间：房主不断广播自己的房间，其他板在列表里看到后加入，不需要中心服务器。\\
+     预览：只有自己看得到；房主会转给旁观者，对手看不到。\\
+     掉线后：10 秒内可以回到原来的位置；等待阶段房主退出时，由对手接管房间，旁观者跟着新房主。};
+
+\end{tikzpicture}
+\end{document}

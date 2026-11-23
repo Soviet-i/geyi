@@ -1,0 +1,34 @@
+% 公共导言：XeLaTeX + TikZ + 中文字体
+\usepackage{xeCJK}
+% 优先使用开源的 Noto Sans SC（OFL）；没有时回退到系统字体，便于他机复现。
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usepackage{amsmath}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc,decorations.pathreplacing}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{DC2626}
+\definecolor{cgray}{HTML}{6B7280}
+\definecolor{cpurple}{HTML}{7C3AED}
+
+\tikzset{
+  base/.style={draw=#1!65!black, fill=#1!7, rounded corners=3pt, align=center,
+    font=\small, inner sep=5pt, minimum height=1.0cm, text=ink},
+  ui/.style={base=cgreen},
+  core/.style={base=cblue},
+  plan/.style={base=cgray, dashed},
+  ext/.style={base=corange},
+  note/.style={base=cpurple},
+  band/.style={draw=#1!35!black, fill=#1!3, rounded corners=6pt},
+  arr/.style={-{Latex[length=2.2mm]}, draw=ink!75, line width=0.8pt},
+  darr/.style={arr, dashed},
+  lab/.style={font=\scriptsize, text=ink!85, inner sep=2pt},
+  lbl/.style={font=\scriptsize, text=ink!70, inner sep=2pt},
+  title/.style={font=\small\bfseries, text=ink!85}
+}

@@ -1,0 +1,31 @@
+host=COM5 guest=COM7
+[move 1] turn=0 actor=B (host) local=0/1 rev=0
+  B tilt UP -> preview dir=0 count=1
+  OK rev 0 -> 1
+[move 2] turn=1 actor=A (guest) local=0/1 rev=1
+  A tilt UP -> preview dir=0 count=0
+  OK rev 1 -> 2
+[move 3] turn=0 actor=B (host) local=0/1 rev=2
+  B tilt UP -> preview dir=0 count=1
+  OK rev 2 -> 3
+[move 4] turn=1 actor=A (guest) local=0/1 rev=3
+  A tilt UP -> preview dir=0 count=0
+  OK rev 3 -> 4
+[move 5] turn=0 actor=B (host) local=0/1 rev=4
+  B tilt UP -> preview dir=0 count=1
+  OK rev 4 -> 5
+[move 6] turn=1 actor=A (guest) local=0/1 rev=5
+  A tilt UP -> preview dir=0 count=0
+  OK rev 5 -> 6
+[move 7] turn=0 actor=B (host) local=0/1 rev=6
+  B tilt UP -> preview dir=0 count=1
+  OK rev 6 -> 7
+[move 8] turn=1 actor=A (guest) local=0/1 rev=7
+  A tilt UP -> preview dir=0 count=0
+  OK rev 7 -> 8
+[move 9] turn=0 actor=B (host) local=0/1 rev=8
+  B tilt UP -> preview dir=0 count=1
+  OK rev 8 -> 9
+game finished after 9 input moves; outcome=1
+PASS: tilt + KEY2 moves accepted for both seats
+evidence: D:\233\code\course_starter\evidence\net\20261110\input_20261110_152500

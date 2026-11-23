@@ -1,0 +1,62 @@
+host=COM7 guest=COM5
+swapping seats before start
+[move 1] turn=0 actor=B (guest) local=1/0 rev=1
+  B place row=5 col=3, holding 1.6s across periodic snapshot
+  OK place rev 1 -> 2
+[move 2] turn=1 actor=A (host) local=1/0 rev=2
+  A place row=4 col=3, holding 1.6s across periodic snapshot
+  OK place rev 2 -> 3
+[move 3] turn=0 actor=B (guest) local=1/0 rev=3
+  B tilt UP -> preview dir=0 count=1
+  OK rev 3 -> 4
+[move 4] turn=1 actor=A (host) local=1/0 rev=4
+  A tilt UP -> preview dir=0 count=1
+  OK rev 4 -> 5
+[move 5] turn=0 actor=B (guest) local=1/0 rev=5
+  B tilt UP -> preview dir=0 count=1
+  OK rev 5 -> 6
+[move 6] turn=1 actor=A (host) local=1/0 rev=6
+  A tilt UP -> preview dir=0 count=1
+  OK rev 6 -> 7
+[move 7] turn=0 actor=B (guest) local=1/0 rev=7
+  B tilt UP -> preview dir=0 count=1
+  OK rev 7 -> 8
+[move 8] turn=1 actor=A (host) local=1/0 rev=8
+  A tilt UP -> preview dir=0 count=1
+  OK rev 8 -> 9
+[move 9] turn=0 actor=B (guest) local=1/0 rev=9
+  B tilt UP -> preview dir=0 count=1
+  OK rev 9 -> 10
+[move 10] turn=1 actor=A (host) local=1/0 rev=10
+  A tilt UP -> preview dir=0 count=0
+  OK rev 10 -> 11
+[move 11] turn=0 actor=B (guest) local=1/0 rev=11
+  B tilt UP -> preview dir=0 count=1
+  OK rev 11 -> 12
+[move 12] turn=1 actor=A (host) local=1/0 rev=12
+  A tilt UP -> preview dir=0 count=0
+  OK rev 12 -> 13
+[move 13] turn=0 actor=B (guest) local=1/0 rev=13
+  B tilt UP -> preview dir=0 count=1
+  OK rev 13 -> 14
+[move 14] turn=1 actor=A (host) local=1/0 rev=14
+  A place row=4 col=3, holding 1.6s across periodic snapshot
+  OK place rev 14 -> 15
+[move 15] turn=0 actor=B (guest) local=1/0 rev=15
+  B tilt UP -> preview dir=0 count=1
+  OK rev 15 -> 16
+[move 16] turn=1 actor=A (host) local=1/0 rev=16
+  A tilt UP -> preview dir=0 count=1
+  OK rev 16 -> 17
+[move 17] turn=0 actor=B (guest) local=1/0 rev=17
+  B place row=5 col=3, holding 1.6s across periodic snapshot
+  OK place rev 17 -> 18
+[move 18] turn=1 actor=A (host) local=1/0 rev=18
+  A tilt UP -> preview dir=0 count=1
+  OK rev 18 -> 19
+[move 19] turn=0 actor=B (guest) local=1/0 rev=19
+  B tilt UP -> preview dir=0 count=1
+  OK rev 19 -> 20
+game finished after 19 input moves; outcome=1
+PASS: tilt+KEY2 move and placement accepted on both boards; moves={'COM7': 7, 'COM5': 8} places={'COM7': 2, 'COM5': 2}
+evidence: D:\233\code\course_starter\evidence\net\20261110\input_20261110_194541

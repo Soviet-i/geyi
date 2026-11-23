@@ -1,0 +1,107 @@
+
+PASS: 27246 assertions; TC-301..307; TC-308 host selftest only
+
+
+PASS: input 60 assertions; TC-309 simulated angles/time only
+
+
+PASS: 62 AI assertions (legal win, self-damage, RNG independence, pruning, cancel)
+
+
+
+GEYI single-board rules prototype (keyboard replaces tilt)
+w/d/s/a COUNT: preview up/right/down/left; 0 allowed only if no soldier eligible
+ok: confirm preview | cancel | place COLUMN | resign | restart | quit
+No hardware, AI or Bluetooth. R/B:health. Outcome 0=playing 1=red 2=blue 3=draw.
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> PREVIEW ONLY (includes proposed next random tile):
+
+Turn=BLUE coins R:0 B:0 revision=1 outcome=0
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> PREVIEW ONLY (includes proposed next random tile):
+
+Turn=BLUE coins R:0 B:0 revision=1 outcome=0
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> COMMITTED
+CURRENT STATE:
+
+Turn=BLUE coins R:0 B:0 revision=1 outcome=0
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+> CURRENT STATE:
+
+Turn=BLUE coins R:0 B:0 revision=2 outcome=1
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+RESULT: RED WIN
+> CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> 

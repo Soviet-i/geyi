@@ -1,0 +1,6 @@
+# AI pruning benchmark (host CPU, no time limit, fixed seed 20261015)
+# command: geyi-ai-bench.exe --depth N [--no-pruning]
+pruning=1 depth=3 seed=20261015 nodes=129 cutoffs=16 elapsed_ms=0 score=-20 action=move direction=0 count=1
+pruning=0 depth=3 seed=20261015 nodes=304 cutoffs=0 elapsed_ms=0 score=-20 action=move direction=0 count=1
+pruning=1 depth=4 seed=20261015 nodes=382 cutoffs=66 elapsed_ms=1 score=40 action=move direction=0 count=2
+pruning=0 depth=4 seed=20261015 nodes=1801 cutoffs=0 elapsed_ms=4 score=40 action=move direction=0 count=2

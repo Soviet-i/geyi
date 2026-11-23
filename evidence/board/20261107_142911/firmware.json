@@ -1,0 +1,37 @@
+{
+  "board": "sf32lb52-lchspi-ulp",
+  "port": "COM3",
+  "time": "20261107_142911",
+  "source_head": "dc1339b989fdcf249de44291d6669de426cd2f54",
+  "worktree_dirty": true,
+  "source_files": {
+    "src\\geyi_ai.c": "ad715af3b8afee9d74742fd8ae989a2d27ccfd44f32c10c4428d6d90044d055b",
+    "src\\geyi_ai_task.c": "87953a12130eeba52e48be45c5cc0962e260e5ab8d27295f76fd9a6a91cafe97",
+    "src\\geyi_board.c": "962406c20204f546de8dba52d97069172a00c258a34fca9fd24db118d8b2fffd",
+    "src\\geyi_config.c": "a7acc1f588fee86ab0cfda71f0e448406c0f8598c1d5fd6de22de8bffbba454a",
+    "src\\geyi_feedback.c": "0d94b512a4f2a9b76507e73bf2aedb0d55f9c58e3349f97e0214eeced96e34c2",
+    "src\\geyi_font_cn16.c": "65d01326284b72fe7289f74c1e41d3d1e24bf153d2d25f9d7f6ad3668da6047b",
+    "src\\geyi_game.c": "9139401758aeb388a2e96caa49534af1e8ea5d4529b11baffecd67a75f2aecf6",
+    "src\\geyi_input.c": "df0db4d9d5f3d16f8e9161221fac79581f985effd0385398e72e9bdb45cea6c2",
+    "src\\geyi_param_ui.c": "7283369064a2d165aee224b3f65ecddf238cce4c82e4ec723a2e51a55d2d6d25",
+    "src\\geyi_ui.c": "bd4cd309610c040fd548b59d099c6296a0530edaa8b1bc021065b714692b87b9",
+    "src\\main.c": "2667e5e15435f6eb57aca396cae6394c43e2e9c5c0b12b9d88cc5def9bfb40ff",
+    "src\\geyi_ai.h": "369d80a1ec7c4bd650e57d1dae3c9b74b5ec3acfb931ce10dd85bd0dd47b30fa",
+    "src\\geyi_ai_task.h": "f80bdb0de6961a72b3c4d0c19059a03003439ef2b9c71644413d730ab7f3e94c",
+    "src\\geyi_board.h": "a44630a4d7fe6a4d50f1d5387772faf50b2ade47ed0e39b2c5e5647072656d7f",
+    "src\\geyi_config.h": "fa737d83854ba833ad7331df1427f8f0ff81995d1eaab6cd746e1a29e0f7a374",
+    "src\\geyi_feedback.h": "931c30a41e6dcc146d1b8320a2c327c2a5cfd9f0072f03334a076a81583abfee",
+    "src\\geyi_font_cn16.h": "1dc90db32e7bdb450ebeaca4fe98be05a659783a7a988be2088e999524f172e2",
+    "src\\geyi_game.h": "5e3a448b3f6692ae4008a5834ab1462425ec21fdf21b66ef9d2361e37ee8dc51",
+    "src\\geyi_input.h": "7bc242f853e532c8e9a4a93101ef9894835c72fba19b7acfd4834b0ffafbf276",
+    "src\\geyi_param_ui.h": "726e6c417474bdd9f8491e1b4ef967b4599f05b5999fe11c214607c1aea597bf",
+    "src\\geyi_ui.h": "f388c97baeb53636ed142f5958b19fe129c9821eba9aa5d97ad3a0c37746b5b4",
+    "project\\proj.conf": "5d79da36ef237251a9066438ea689a2cddb1b87022cd8f23cc0719ce4f7dd710",
+    "src\\SConscript": "1b1a78ea4d0778512057afe393b6d61299c8dac8a3aa6f64b8ce272f621e4d5d"
+  },
+  "files": {
+    "main.bin": "29a5b7dc629efd46293cb5aa2efe8202a24c712078aa095b4475b9eb54ca269a",
+    "bootloader\\bootloader.bin": "e59d70db44367d524fbb46a8a014ce0092462e86959d101a8e2e00ad27bb5e21",
+    "ftab\\ftab.bin": "a850d670228e9d53e78fa6fb8e2011a51c02262aa455e334e60ac6f15766007d"
+  }
+}

@@ -1,0 +1,89 @@
+scons: Reading SConscript files ...
+Board: sf32lb52-lchspi-ulp_hcpu
+-----
+Adding ftab subproject for chip: SF32LB52X (ptab v1/v2)
+========
+Multi-Project Info
+--------
+full_name       main.bootloader
+parent          main
+bsp_root        D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\example\boot_loader\project\butterflmicro\ram_v2
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/bootloader
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\example/boot_loader/project/butterflmicro/ram_v2\link
+ptab            D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\customer\boards\sf32lb52-lchspi-ulp\ptab.json
+embedded:       False
+--------
+full_name       main
+parent          
+bsp_root        D:\IDE\Code\Program\geyi\project
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\drivers/cmsis/sf32lb52x/Templates/gcc/hcpu/link
+ptab            D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\customer\boards\sf32lb52-lchspi-ulp\ptab.json
+--------
+full_name       main.ftab
+parent          main
+bsp_root        D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\example\flash_table\sf32lb52x_common_v2
+build_dir       build_sf32lb52-lchspi-ulp_hcpu/ftab
+link_script     D:/IDE/OpenSiFli/SiFli-SDK/v2.5.1\drivers/cmsis/sf32lb52x/Templates/gcc/hcpu/link
+ptab            D:\IDE\OpenSiFli\SiFli-SDK\v2.5.1\customer\boards\sf32lb52-lchspi-ulp\ptab.json
+embedded:       False
+========
+scons: done reading SConscript files.
+scons: Building targets ...
+scons: building associated VariantDir targets: build_sf32lb52-lchspi-ulp_hcpu
+Generating build_sf32lb52-lchspi-ulp_hcpu\bootloader\link_copy.lds ...
+CC build_sf32lb52-lchspi-ulp_hcpu\src\geyi_ai_task.o
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\compile_commands.json
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\bootloader\compile_commands.json
+Generating build_sf32lb52-lchspi-ulp_hcpu\link_copy.lds ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\link_copy.lds ...
+Building compilation database build_sf32lb52-lchspi-ulp_hcpu\ftab\compile_commands.json
+LINK build_sf32lb52-lchspi-ulp_hcpu\main.elf
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: warning: build_sf32lb52-lchspi-ulp_hcpu\main.elf has a LOAD segment with RWX permissions
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.asm ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.bin ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\main.hex ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\board\ftab.c ...
+WARNING: img "dfu" not found
+CC build_sf32lb52-lchspi-ulp_hcpu\ftab\board\ftab.o
+LINK build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.elf
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-closer.o): in function `_close_r':
+closer.c:(.text._close_r+0xc): warning: _close is not implemented and will always fail
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-closer.o): note: the message above does not take linker garbage collection into account
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+lseekr.c:(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-lseekr.o): note: the message above does not take linker garbage collection into account
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-readr.o): in function `_read_r':
+readr.c:(.text._read_r+0x10): warning: _read is not implemented and will always fail
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-readr.o): note: the message above does not take linker garbage collection into account
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-writer.o): in function `_write_r':
+writer.c:(.text._write_r+0x10): warning: _write is not implemented and will always fail
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v8-m.main+fp/hard\libg_nano.a(libc_a-writer.o): note: the message above does not take linker garbage collection into account
+D:/IDE/OpenSiFli/tool/tools/arm-none-eabi-gcc/14.2.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: warning: cannot find entry symbol entry; defaulting to 12000000
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.asm ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.hex ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\ftab\ftab.bin ...
+Generating build_sf32lb52-lchspi-ulp_hcpu\download.bat ...
+Generated sftool param: build_sf32lb52-lchspi-ulp_hcpu/sftool_param.json
+scons: done building targets.
+
+                                              main                             
+┌──────────────────────────┬──────────────────┬──────────────────┬─────────────
+│ Region / Section         │            Total │             Used │             
+├──────────────────────────┼──────────────────┼──────────────────┼─────────────
+│ ROM                      │      8,388,608 B │        868,582 B │      7,520,0
+│   .text                  │        435,756 B │                  │             
+│   .rodata                │        403,078 B │                  │             
+│   other                  │            568 B │                  │             
+│ RAM                      │        523,264 B │        242,908 B │        280,3
+│   other                  │        196,352 B │                  │             
+│   .bss                   │         42,352 B │                  │             
+│   .data                  │          4,204 B │                  │             
+└──────────────────────────┴──────────────────┴──────────────────┴─────────────
+  Binary size: 837,192 B
+
+================================================================================
+Memory Usage Analysis
+================================================================================
+================================================================================
+

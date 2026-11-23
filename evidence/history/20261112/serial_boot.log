@@ -1,0 +1,82 @@
+# 板端启动串口日志（REQ-601~606 历史记录板端验证）
+# 采集：2026-11-12 06:37，SiFli 设备监视器，COM3（wch.cn），1000000 baud
+# 固件：main.bin 1,095,412 B，SHA256 169A8BDE1E63670F2EB0CFB5CD855EAE6E7D94419CCF80A8AD0B22A03EBCDFF6
+#       构建时间 2026-11-12 06:05:48，源码 e94b99e1（PR #23 头提交）
+# 说明：设备监视器按窄列折行，下面按语义合并回原始行，内容未改写；未采集到的行不补写。
+
+SFBL
+Serial:c2,Chip:4,Package:3,Rev:3
+ Reason:00000000
+
+ | / - SiFli Corporation
+ / | \     build on Nov 12 2026, 2.5.1 build e94b99e1
+ 2020 - 2022 Copyright by SiFli team
+
+aw32001_init ok, time consum: 0.00 ms.
+mount /dev sucess
+[I/drv.rtc] PSCLR=0x80000100 DivAI=128 DivAF=0 B=256
+[I/drv.rtc] RTC use LXT RTC_CR=00000001
+[I/drv.rtc] Init RTC, wake = 0
+[I/drv.audprc] init 00 ADC_PATH_CFG0 0x606
+[I/drv.audprc] HAL_AUDPRC_Init res 0
+[I/drv.audcodec] HAL_AUDCODEC_Init res 0
+[I/drv.rgb] rgbled register success, supporting 1 LEDs
+[I/TOUCH] Regist touch screen driver, probe=12027835
+[I/FAL] Flash Abstraction Layer (V0.5.99) initialize success.
+[I/FAL] The FAL MTD NOR device (dfu) created successfully
+[I/FAL] The FAL MTD NOR device (ble) created successfully
+LV_MEM_RT: using rt_malloc path (psram private heap build condition not met)
+[I/DBG] drv_gpu opened.
+call par CFG1(3313) fc 9, xtal 2000, pll 2070
+call par CFG1(3313) fc 7, xtal 2000, pll 1660
+
+[course_starter] v0.1.0 boot ok
+Hello world!
+[geyi:selftest] core=PASS (not a hardware game test)
+[geyi:selftest] input=PASS (simulated angles only)
+[geyi:selftest] history=PASS timer=PASS (RAM only, cleared on reboot)
+[geyi:selftest] ai=PASS
+[geyi:selftest] param=PASS rc=0
+[geyi:selftest] paramui=PASS rc=0
+[geyi:selftest] net=PASS (protocol/room logic only, BLE not tested)
+[geyi:selftest] light=PASS
+
+[I/DBG] [NONE] -> [OPENING]
+[I/DBG] open
+[I/DBG] HW open
+[I/DBG] Try registered LCD driver...
+CO5300_ReadID 0x331100
+[I/co5300] LCD module use CO5300 IC
+CO5300_ReadID 0x331100
+[I/co5300] LCD module use CO5300 IC
+[I/DBG] Found lcd co5300 id:331100h
+[I/DBG] HW open done.
+[I/DBG] [OPENING] -> [INITIALIZED]
+[I/DBG] open done.
+[I/DBG] drv_lcd_fb_init
+[I/DBG] drv_lcd_fb_init done.
+[I/TOUCH] Open
+[I/TOUCH] Opened.
+D/HEX uid: 0000-0008: AF 4D BA 29 03 EA CC A5    .M...)
+D/HEX addr: 0000-0008: AF 4D BA 29 03 EA          .M.)
+[300][geyi:ble] local id=03EA
+[geyi:lcd] READY 390 x 450
+[geyi:board] KEY2 short=confirm/place (KEY1 is power); tilt directly
+[geyi:light] event=1
+
+[I/TOUCH] Find touch screen driver...
+[I/TOUCH] Probe 12027835
+[I/TOUCH] touch screen found driver 20031a58, ft6146
+[geyi:imu] WHO_AM_I=6a flat=gravity (Z inverted mount, no boot sampling)
+[I/DBG] Auto turn on display.
+[I/DBG] set brightness 50
+[I/DBG] display on
+[I/DBG] [INITIALIZED] -> [ON]
+[E/drv.ft6146] ft6146 id_H=64
+[E/drv.ft6146] ft6146 id_L=56
+le p256 nvds get 0
+le p256 nvds get 0
+app addr nvds get 1
+[2842][geyi:ble] power on
+act num:0
+[geyi:light] event=1

@@ -1,0 +1,122 @@
+SFBL
+Serial:c2,Chip:4,Package:3,Rev:3  Reason:00000000
+
+ \ | /
+- SiFli Corporation
+ / | \     build on Nov  8 2026, 2.5.1 build 421126d9
+ 2020 - 2022 Copyright by SiFli team
+aw32001_init ok,  time consum: 0.00 ms.
+mount /dev sucess
+[I/drv.rtc] PSCLR=0x80000100 DivAI=128 DivAF=0 B=256
+[I/drv.rtc] RTC use LXT RTC_CR=00000001
+
+[I/drv.rtc] Init RTC, wake = 0
+
+[I/drv.audprc] init 00 ADC_PATH_CFG0 0x606
+
+[I/drv.audprc] HAL_AUDPRC_Init res 0
+
+[I/drv.audcodec] HAL_AUDCODEC_Init res 0
+
+[I/drv.rgb] rgbled register success, supporting 1 LEDs
+[32m[I/TOUCH] Regist touch screen driver, probe=12027835 [0m
+[32;22m[I/FAL] Flash Abstraction Layer (V0.5.99) initialize success.[0m
+[32;22m[I/FAL] The FAL MTD NOR device (dfu) created successfully[0m
+[32;22m[I/FAL] The FAL MTD NOR device (ble) created successfully[0m
+LV_MEM_RT: using rt_malloc path (psram private heap build condition not met)
+[I/DBG] drv_gpu opened.
+call par CFG1(3313)
+fc 9, xtal 2000, pll 2165
+call par CFG1(3313)
+fc 7, xtal 2000, pll 1737
+
+[course_starter] v0.1.0 boot ok
+Hello world!
+[geyi:selftest] core=PASS (not a hardware game test)
+[geyi:selftest] input=PASS (simulated angles only)
+[geyi:selftest] ai=PASS
+[geyi:selftest] param=PASS rc=0
+[geyi:selftest] paramui=PASS rc=0
+ sp: 0x20046b18
+psr: 0x61000000
+r00: 0x00000000
+r01: 0x200460d8
+r02: 0x00000000
+r03: 0x00000005
+r04: 0x120bd916
+r05: 0x120bd91b
+r06: 0xdeadbeef
+r07: 0xdeadbeef
+r08: 0xdeadbeef
+r09: 0xdeadbeef
+r10: 0xdeadbeef
+r11: 0xdeadbeef
+r12: 0x20046604
+ lr: 0x12088ec9
+ pc: 0x1208421c
+hard fault on thread: main
+
+=====================
+PSP: 0x20046a84, MSP: 0x20001fbc
+===================
+Thread Info        
+===================
+thread pri  status      sp      top     stack size max used left tick  error
+------ ---  ------- ---------- ---------- ----------  ------  ---------- ---
+tshell  20  ready   0x20048cd0 0x20048d18 0x00001000    01%   0x0000000a 000
+tidle   31  ready   0x200432b8 0x20043300 0x00000200    14%   0x00000020 000
+timer    4  suspend 0x200302d0 0x20030324 0x00000400    08%   0x00000009 000
+main    10  ready   0x20046b10 0x20046b58 0x00002000    73%   0x00000011 -02
+===================
+Mailbox Info       
+===================
+mailbox entry size suspend thread
+------- ----  ---- --------------
+===================
+MessageQueue Info  
+===================
+msgqueue entry suspend thread
+-------- ----  --------------
+===================
+Mutex Info         
+===================
+mutex      owner  hold suspend thread
+-------- -------- ---- --------------
+rgb_drv  (NULL)   0000 0
+rtc      (NULL)   0000 0
+fslock   (NULL)   0000 0
+i2c_bus_ (NULL)   0000 0
+i2c_bus_ (NULL)   0000 0
+i2c_bus_ (NULL)   0000 0
+i2c_bus_ (NULL)   0000 0
+===================
+Semaphore Info     
+===================
+semaphore v   suspend thread
+-------- --- --------------
+shrx     000 0
+epic     001 0
+ft6146   000 0
+aes_drv  001 0
+drv_eDma 001 0
+gpadc    001 0
+i2c4     000 0
+i2c3     000 0
+i2c2     000 0
+i2c1     000 0
+heap     001 0
+flash2   001 0
+===================
+Memory Info     
+===================
+total memory: 242340 used memory : 17348 maximum allocated memory: 17348
+===================
+MemoryHeap Info     
+===================
+memheap  pool size  max used size available size
+------- ---------- ------------- --------------
+No such directory
+dfs_statfs failed.
+FPU active!
+usage fault:
+SCB_CFSR_UFSR:0x10 STKOF 

@@ -1,0 +1,5 @@
+discover: 0.60s
+join: 0.90s
+leave_visible: 0.31s
+close_visible: 0.18s
+PASS: latency budget

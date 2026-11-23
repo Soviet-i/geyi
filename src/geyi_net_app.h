@@ -1,0 +1,118 @@
+/*
+ * geyi_net_app.h —— 联机应用层：把 net_room 与 BLE 传输/UI 粘起来
+ *
+ * 纯逻辑部分（房间状态、消息处理）不依赖 LVGL；BLE 只在 GEYI_WITH_RTTHREAD 下调用。
+ * UI 只通过本头文件获取房间列表、角色、阶段、棋盘和预览，不直接碰 BLE。
+ */
+#ifndef GEYI_NET_APP_H
+#define GEYI_NET_APP_H
+
+#include "geyi_net_room.h"
+#include "geyi_net_proto.h"
+
+#define GY_NET_APP_MAX_ROOMS 8
+
+/* gy_net_app_join_reason() 的返回值：UI 据此提示“房间不存在”等。 */
+#define GY_NET_JOIN_REASON_NONE       0
+#define GY_NET_JOIN_REASON_NOT_FOUND  1
+#define GY_NET_JOIN_REASON_FULL       2
+#define GY_NET_JOIN_REASON_TIMEOUT    3
+
+typedef struct {
+    uint32_t room_id;
+    uint8_t  players;
+    uint8_t  phase;
+    uint8_t  spectators;
+    uint8_t  max_spectators;
+    uint8_t  flags;          /* adv flags，bit0=有玩家席位等待重连 */
+    uint8_t  addr[6];
+    uint8_t  addr_type;
+    int8_t   rssi;
+    uint32_t seen_ms;
+} GyNetAppRoom;
+
+void gy_net_app_init(void);
+void gy_net_app_tick(uint32_t now_ms);
+
+int gy_net_app_active(void);          /* 0=无，1=房主，2=客户端/旁观 */
+int gy_net_app_role(void);            /* GY_NET_ROLE_HOST/PLAYER/SPECTATOR */
+int gy_net_app_phase(void);
+int gy_net_app_local_color(void);
+int gy_net_app_host_color(void);
+int gy_net_app_guest_color(void);
+int gy_net_app_local_ready(void);
+int gy_net_app_countdown_seconds(void); /* STARTING 时返回 3/2/1，否则 0 */
+int gy_net_app_host_ready(void);
+int gy_net_app_guest_ready(void);
+int gy_net_app_spectator_count(void);
+int gy_net_app_player_count(void);
+int gy_net_app_seq(void);
+int gy_net_app_local_id(void);
+int gy_net_app_seat_occupied(int color);
+int gy_net_app_seat_ready(int color);
+int gy_net_app_seat_id(int color);
+int gy_net_app_connected(void);
+/* 对手/对端是否在线；断线重连窗口内为 0，UI 显示“断线重连中”。 */
+int gy_net_app_peer_online(void);
+/* 断线重连剩余秒数 10..1；无重连窗口返回 0。 */
+int gy_net_app_reconnect_seconds(void);
+/* 座位是否在线；房主用本地 seat.connected，客方/旁观者用 ROOM_STATE
+ * 下发的权威座位在线位。 */
+int gy_net_app_seat_online(int color);
+/* 某个座位的重连剩余秒数；客方/旁观者使用房主下发的值。 */
+int gy_net_app_seat_reconnect_seconds(int color);
+/* 任一远端座位/本机链路的重连剩余秒数，UI 横幅用。 */
+int gy_net_app_remote_reconnect_seconds(void);
+/* 首个离线座位颜色，-1=无。 */
+int gy_net_app_offline_seat(void);
+/* 颜色与“本机”的关系：1=本机座位，0=对方，-1=旁观/无本地座位。
+ * 只描述身份，不随 phase/回合/断线变化；不要拿 local_turn() 当身份用。 */
+int gy_net_app_side_relation(int color);
+int gy_net_app_host_adv_active(void); /* 房主是否仍在发可连接广播（测试/诊断） */
+int gy_net_app_local_terminal(void);
+int gy_net_app_join_rejected(void);
+int gy_net_app_join_reason(void);   /* GY_NET_JOIN_REASON_* */
+int gy_net_app_spectator_lost(void);
+/* 旁观者正在跟随房主转移（扫描同 room_id 或已发起新房主 JOIN）。 */
+int gy_net_app_spectator_following(void);
+int gy_net_app_result(void);
+/* 结算原因（GY_NET_REASON_*）；房主/客方都从本地房间视图读取。 */
+int gy_net_app_result_reason(void);
+int gy_net_app_local_turn(void);
+int gy_net_app_is_spectator(void);
+int gy_net_app_pending_move(void);
+const GyGame *gy_net_app_game(void);
+
+/* 大厅 */
+int gy_net_app_lobby_start(void);
+void gy_net_app_lobby_stop(void);
+int gy_net_app_room_count(void);
+const GyNetAppRoom *gy_net_app_room_at(int index);
+
+/* 房间操作 */
+int gy_net_app_create_room(uint32_t room_id);
+int gy_net_app_join_index(int index);
+/* 测试/旁观入口：role=-1 按大厅规则；GY_NET_ROLE_SPECTATOR 强制旁观。 */
+int gy_net_app_join_index_role(int index, int role);
+void gy_net_app_leave(void);
+int gy_net_app_set_ready(int ready);
+int gy_net_app_swap(void);
+int gy_net_app_preview(int direction, int count, int aim);
+int gy_net_app_confirm(void);
+int gy_net_app_cancel(void);
+int gy_net_app_place(int row, int column);
+int gy_net_app_resign(void);
+
+/* 预览可见性：UI 用 side=红/蓝 取预览；对手端由 visible 返回 0。 */
+int gy_net_app_preview_visible(int side);
+const GyNetPreview *gy_net_app_preview_at(int side);
+
+int gy_net_app_selftest(void);
+
+/* 测试专用：只断开当前 BLE 链路，不结束应用会话；用于验证自动重连/REJOIN。 */
+void gy_net_app_test_drop(void);
+/* 板端自动化夹具：只由房主把双方金币设为固定值并广播快照，
+ * 用于在真实放置输入路径上复现/回归放兵请求。 */
+int gy_net_app_test_set_coins(int coins);
+
+#endif /* GEYI_NET_APP_H */

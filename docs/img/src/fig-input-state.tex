@@ -1,0 +1,55 @@
+\documentclass[tikz,border=8pt]{standalone}
+\input{_preamble}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  st/.style={core, minimum width=2.60cm, minimum height=1.35cm, rounded corners=10pt},
+  stc/.style={st, draw=corange!65!black, fill=corange!7},
+  flow/.style={-{Latex[length=2.2mm]}, draw=ink!75, line width=0.9pt},
+  ret/.style={-{Latex[length=2.0mm]}, draw=cgray, line width=0.9pt, dashed},
+  bi/.style={{Latex[length=2.0mm]}-{Latex[length=2.0mm]}, draw=ink!75, line width=0.9pt}]
+
+  % 主线：空闲 -> 方向稳定中 -> 预览中 -> 已确认
+  \node[st] (center) at (-8.00,0.00)
+    {\textbf{空闲}\\[-1pt]\scriptsize 板子放平，没有预览};
+  \node[st] (arming) at (-4.60,0.00)
+    {\textbf{方向稳定中}\\[-1pt]\scriptsize 同一个方向保持 0.2 秒};
+  \node[st] (preview) at (-1.20,0.00)
+    {\textbf{预览中}\\[-1pt]\scriptsize 显示方向和人数};
+  \node[stc] (confirm) at (2.20,0.00)
+    {\textbf{已确认}\\[-1pt]\scriptsize 动作已提交};
+
+  \draw[flow] (center) -- (arming);
+  \draw[flow] (arming) -- (preview);
+  \draw[flow] (preview) -- (confirm);
+  \node[lab] at (-6.30,1.00) {倾斜超过 $6^\circ$};
+  \node[lab] at (-2.90,1.00) {停稳 0.2 秒};
+  \node[lab] at (0.50,1.00) {按 KEY2 或点确认};
+
+  % 预览中还可以继续调整：从节点底部绕一圈再回来
+  \draw[flow]
+    ([xshift=0.35cm]preview.south)
+    .. controls ([xshift=0.35cm,yshift=-0.75cm]preview.south)
+            and ([xshift=-0.35cm,yshift=-0.75cm]preview.south) ..
+    ([xshift=-0.35cm]preview.south);
+  \node[lab, anchor=north] at (-1.20,-1.40) {继续倾斜可改方向和人数};
+
+  % 取消：板子放平后回到空闲
+  \draw[ret] (preview.north) -- (-1.20,2.20) -- (-9.60,2.20) -- (-9.60,0.20) -- ([yshift=0.20cm]center.west);
+  \draw[ret] (arming.north) -- (-4.60,2.20);
+  \node[lab, above] at (-3.40,2.42) {板子放平或这个方向走不了};
+
+  % 已确认之后，放平才能再次操作
+  \draw[ret] (confirm.south) -- (2.20,-1.20) -- (4.10,-1.20) -- (4.10,-3.95)
+    -- (-10.20,-3.95) -- (-10.20,-0.20) -- ([yshift=-0.20cm]center.west);
+  \node[lab, above] at (-6.00,-3.95) {放平后解锁};
+
+  % 放兵：空闲时按 KEY2 进入，没选格时再按退出
+  \node[stc] (placing) at (-8.00,-2.70)
+    {\textbf{放兵模式}\\[-1pt]\scriptsize 倾斜选择空位\\[-1pt]
+     \scriptsize 按 KEY2 落子};
+  \draw[bi] (center.south) -- (placing.north);
+  \node[lab, right] at (-7.85,-1.05) {空闲时按 KEY2 进入};
+  \node[lab, right] at (-7.85,-1.55) {没选格时再按退出};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,94 @@
+msh />msh />[geyi:motion] x=-1085 y=469 key2=0 revision=0
+[geyi:key] KEY2 was_placing=0 now_placing=0 revision=1 turn=1
+[geyi:light] event=2
+[geyi:tilt] x=-1187 y=226 dir=3 count=1 preview=1 event=1
+[geyi:motion] x=-1223 y=210 key2=0 revision=1
+[geyi:tilt] x=1381 y=419 dir=1 count=1 preview=1 event=1
+[geyi:motion] x=1504 y=412 key2=0 revision=1
+[geyi:motion] x=1859 y=156 key2=0 revision=1
+[geyi:tilt] x=2327 y=176 dir=1 count=2 preview=1 event=8
+[geyi:motion] x=1415 y=278 key2=0 revision=1
+[geyi:tilt] x=1212 y=355 dir=1 count=1 preview=1 event=8
+[geyi:motion] x=845 y=300 key2=0 revision=1
+[geyi:motion] x=1057 y=355 key2=0 revision=1
+[geyi:motion] x=1143 y=286 key2=0 revision=1
+[geyi:motion] x=1178 y=295 key2=0 revision=1
+[geyi:motion] x=1267 y=328 key2=0 revision=1
+[geyi:tilt] x=1751 y=467 dir=1 count=2 preview=1 event=8
+[geyi:motion] x=1702 y=452 key2=0 revision=1
+[geyi:key] KEY2 was_placing=0 now_placing=0 revision=2 turn=0
+[geyi:light] event=2
+[geyi:tilt] x=1437 y=318 dir=1 count=1 preview=1 event=1
+[geyi:motion] x=1662 y=379 key2=0 revision=2
+[geyi:motion] x=524 y=584 key2=0 revision=2
+[geyi:motion] x=-49 y=648 key2=0 revision=2
+[geyi:motion] x=-94 y=742 key2=0 revision=2
+[geyi:key] KEY2 was_placing=0 now_placing=1 revision=2 turn=0
+[geyi:motion] x=4 y=585 key2=0 revision=2
+[geyi:motion] x=960 y=1894 key2=0 revision=2
+[geyi:motion] x=-526 y=2115 key2=0 revision=2
+[geyi:motion] x=454 y=2029 key2=0 revision=2
+[geyi:motion] x=1688 y=1807 key2=0 revision=2
+[geyi:motion] x=-415 y=1998 key2=0 revision=2
+[geyi:motion] x=-2233 y=1239 key2=0 revision=2
+[geyi:motion] x=-783 y=1519 key2=0 revision=2
+[geyi:motion] x=778 y=1769 key2=0 revision=2
+[geyi:motion] x=873 y=1758 key2=0 revision=2
+[geyi:motion] x=-486 y=1634 key2=0 revision=2
+[geyi:motion] x=1000 y=1625 key2=0 revision=2
+[geyi:motion] x=-512 y=1684 key2=0 revision=2
+[geyi:key] KEY2 was_placing=1 now_placing=0 revision=3 turn=1
+[geyi:light] event=2
+[geyi:motion] x=-425 y=1664 key2=0 revision=3
+[geyi:tilt] x=-267 y=1719 dir=2 count=2 preview=1 event=1
+[geyi:motion] x=-233 y=1506 key2=0 revision=3
+[geyi:tilt] x=-236 y=841 dir=2 count=1 preview=1 event=8
+[geyi:motion] x=-329 y=371 key2=0 revision=3
+[geyi:tilt] x=-184 y=1307 dir=2 count=1 preview=1 event=1
+[geyi:tilt] x=-201 y=2066 dir=2 count=2 preview=1 event=8
+[geyi:motion] x=-203 y=2115 key2=0 revision=3
+[geyi:tilt] x=-649 y=830 dir=2 count=1 preview=1 event=8
+[geyi:motion] x=-758 y=558 key2=0 revision=3
+[geyi:tilt] x=-778 y=447 dir=3 count=1 preview=1 event=8
+[geyi:tilt] x=-381 y=1397 dir=2 count=1 preview=1 event=8
+[geyi:motion] x=-304 y=1512 key2=0 revision=3
+[geyi:tilt] x=-33 y=1953 dir=2 count=2 preview=1 event=8
+[geyi:motion] x=14 y=1989 key2=0 revision=3
+[geyi:tilt] x=496 y=1197 dir=2 count=1 preview=1 event=8
+[geyi:motion] x=557 y=905 key2=0 revision=3
+[geyi:motion] x=204 y=41 key2=0 revision=3
+[geyi:motion] x=521 y=943 key2=0 revision=3
+[geyi:tilt] x=518 y=958 dir=2 count=1 preview=1 event=1
+[geyi:motion] x=505 y=1124 key2=0 revision=3
+[geyi:motion] x=253 y=236 key2=0 revision=3
+[geyi:tilt] x=391 y=966 dir=2 count=1 preview=1 event=1
+[geyi:motion] x=436 y=1261 key2=0 revision=3
+[geyi:tilt] x=232 y=2214 dir=2 count=2 preview=1 event=8
+[geyi:motion] x=242 y=2487 key2=0 revision=3
+[geyi:motion] x=358 y=2197 key2=0 revision=3
+[geyi:key] KEY2 was_placing=0 now_placing=0 revision=4 turn=0
+[geyi:light] event=2
+[geyi:motion] x=356 y=2016 key2=0 revision=4
+[geyi:motion] x=-21 y=-743 key2=0 revision=4
+[geyi:tilt] x=81 y=-1177 dir=0 count=1 preview=1 event=1
+[geyi:motion] x=-78 y=208 key2=0 revision=4
+[geyi:motion] x=39 y=235 key2=0 revision=4
+[geyi:motion] x=37 y=237 key2=0 revision=4
+[geyi:motion] x=37 y=236 key2=0 revision=4
+[geyi:motion] x=37 y=234 key2=0 revision=4
+[geyi:motion] x=36 y=234 key2=0 revision=4
+[geyi:motion] x=-268 y=-610 key2=0 revision=4
+[geyi:motion] x=172 y=460 key2=0 revision=4
+[geyi:motion] x=-778 y=1224 key2=0 revision=4
+[geyi:tilt] x=-1790 y=713 dir=3 count=1 preview=1 event=1
+[geyi:motion] x=-2395 y=282 key2=0 revision=4
+[geyi:motion] x=-2524 y=277 key2=0 revision=4
+[geyi:motion] x=-2588 y=5 key2=0 revision=4
+[geyi:key] KEY2 was_placing=0 now_placing=0 revision=5 turn=1
+[geyi:light] event=2
+[geyi:tilt] x=-2492 y=-50 dir=3 count=2 preview=1 event=1
+[geyi:motion] x=-2573 y=54 key2=0 revision=5
+[geyi:tilt] x=-913 y=-375 dir=3 count=1 preview=1 event=8
+[geyi:motion] x=-776 y=-364 key2=0 revision=5
+[geyi:tilt] x=1133 y=-30 dir=1 count=1 preview=1 event=1
+[geyi:motion] x=1564 y=119 key2=0 revision=5

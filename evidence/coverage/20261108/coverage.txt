@@ -1,0 +1,8 @@
+| 模块 | 行覆盖率 | 可执行行 | 说明 |
+|---|---:|---:|---|
+| `src/geyi_game.c` | 99.5% | 183 | |
+| `src/geyi_input.c` | 87.0% | 77 | |
+| `src/geyi_config.c` | 98.5% | 131 | |
+| `src/geyi_param_ui.c` | 100.0% | 106 | |
+| `src/geyi_ai.c` | 89.2% | 231 | |
+| `tools/geyi_balance.c` | 76.2% | 80 | |

@@ -1,0 +1,97 @@
+% 研制总结报告插图：联机消息时序
+% 版式：房主居中（就是 BLE 的中心），对手在左、旁观在右。所有消息都在相邻两条
+% 生命线之间，标签居中放在两线之间，因此没有任何箭头跨线、也没有标签压在生命线上。
+% 广播消息画成左右各一支箭头，两端都收到。
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+\definecolor{cpurple}{HTML}{7C3AED}
+
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small,
+    life/.style={draw=#1!55!black, fill=#1!8, rounded corners=3pt, font=\small\bfseries,
+      text=ink, inner sep=3pt, minimum width=2.0cm, minimum height=0.55cm},
+    msg/.style={-{Latex[length=2mm]}, draw=ink!60, line width=0.7pt},
+    bmsg/.style={-{Latex[length=2mm]}, draw=cblue!80!black, line width=1.0pt},
+    pmsg/.style={-{Latex[length=2mm]}, draw=cpurple!80!black, line width=0.9pt},
+    reply/.style={-{Latex[open,length=2.2mm]}, draw=ink!55, line width=0.6pt, dashed},
+    lab/.style={font=\footnotesize, text=ink!85, inner sep=1pt},
+    grp/.style={font=\footnotesize\bfseries, text=cgray!90, anchor=west}
+  ]
+
+  % ---------- 角色：房主居中 ----------
+  \node[life=corange] (peer) at (-5.4,1.05) {对手};
+  \node[life=cblue] (host) at (0,1.05) {房主};
+  \node[life=cgreen] (spec) at (5.4,1.05) {旁观};
+
+  \draw[dashed, draw=ink!30] (0,0.72) -- (0,-11.60);
+  \draw[dashed, draw=ink!30] (5.4,0.72) -- (5.4,-11.60);
+  % 对手生命线在链路断开处留缺口，重连成功后接上
+  \draw[dashed, draw=ink!30] (-5.4,0.72) -- (-5.4,-8.40);
+  \draw[dashed, draw=ink!30] (-5.4,-9.20) -- (-5.4,-11.60);
+
+  % ---------- 分组：只在左侧留白画短分隔线 ----------
+  \foreach \y/\t in {-0.55/加入与准备, -4.75/开局与对局同步, -6.55/预览路由,
+                     -8.35/断线重连, -10.15/结算} {
+    \draw[draw=ink!28, line width=0.6pt] (-8.85,\y) -- (-6.00,\y);
+    \node[grp] at (-8.85,\y-0.24) {\t};
+  }
+
+  % ---------- 加入与准备 ----------
+  \draw[bmsg] (-0.18,-1.05) -- node[lab, above=2pt]{ADV\_ROOM（广播）} (-5.4,-1.05);
+  \draw[bmsg] (0.18,-1.05) -- node[lab, above=2pt]{ADV\_ROOM（广播）} (5.4,-1.05);
+  \draw[msg] (-5.4,-1.60) -- node[lab, above=2pt]{JOIN\_REQ} (0,-1.60);
+  \draw[reply] (0,-2.15) -- node[lab, above=2pt]{JOIN\_ACK（席位）} (-5.4,-2.15);
+  \draw[msg] (5.4,-2.70) -- node[lab, above=2pt]{JOIN\_REQ（旁观）} (0,-2.70);
+  \draw[reply] (0,-3.25) -- node[lab, above=2pt]{JOIN\_ACK（只读）} (5.4,-3.25);
+  \draw[msg] (-5.4,-3.80) -- node[lab, above=2pt]{READY} (0,-3.80);
+  \draw[bmsg] (-0.18,-4.35) -- node[lab, above=2pt]{ROOM\_STATE（席位）} (-5.4,-4.35);
+  \draw[bmsg] (0.18,-4.35) -- node[lab, above=2pt]{ROOM\_STATE（席位）} (5.4,-4.35);
+
+  % ---------- 开局与对局同步 ----------
+  \draw[bmsg] (-0.18,-5.05) -- node[lab, above=2pt]{START（颜色 · 种子）} (-5.4,-5.05);
+  \draw[bmsg] (0.18,-5.05) -- node[lab, above=2pt]{START（颜色 · 种子）} (5.4,-5.05);
+  \draw[msg] (-5.4,-5.60) -- node[lab, above=2pt]{MOVE\_REQ（走子）} (0,-5.60);
+  \draw[bmsg] (-0.18,-6.15) -- node[lab, above=2pt]{SNAPSHOT（全量）} (-5.4,-6.15);
+  \draw[bmsg] (0.18,-6.15) -- node[lab, above=2pt]{SNAPSHOT（全量）} (5.4,-6.15);
+
+  % ---------- 预览路由：只发给房主，房主只转发旁观 ----------
+  \draw[pmsg] (-5.4,-6.85) -- node[lab, above=2pt]{PREVIEW（本端）} (0,-6.85);
+  \node[draw=ink!45, fill=ink!4, align=left, font=\footnotesize, inner sep=4pt,
+        minimum width=4.4cm] (note) at (-2.85,-7.40) {注：PREVIEW 不转发给对手};
+  \draw[draw=ink!45, line width=0.6pt] (note.east) -- (0,-7.40);
+  \draw[pmsg] (0,-7.95) -- node[lab, above=2pt]{PREVIEW（转发旁观）} (5.4,-7.95);
+
+  % ---------- 断线重连 ----------
+  \node[draw=cred, fill=cred!4, align=left, font=\footnotesize, inner sep=4pt]
+        (drop) at (-2.70,-8.40)
+    {注：对手掉线（BLE 断开）\\[1pt]10 s 内可重连，超时判负};
+  \draw[draw=cred, line width=0.6pt] (drop.west) -- (-5.36,-8.40);
+  \draw[msg] (-5.4,-9.45) -- node[lab, above=2pt]{REJOIN（token）} (0,-9.45);
+  \draw[reply] (0,-10.00) -- node[lab, above=2pt]{RESUME（快照）} (-5.4,-10.00);
+
+  % ---------- 结算 ----------
+  \draw[bmsg] (-0.18,-10.70) -- node[lab, above=2pt]{RESULT（胜负）} (-5.4,-10.70);
+  \draw[bmsg] (0.18,-10.70) -- node[lab, above=2pt]{RESULT（胜负）} (5.4,-10.70);
+  \draw[bmsg] (-0.18,-11.25) -- node[lab, above=2pt]{ROOM\_STATE（回 WAIT）} (-5.4,-11.25);
+  \draw[bmsg] (0.18,-11.25) -- node[lab, above=2pt]{ROOM\_STATE（回 WAIT）} (5.4,-11.25);
+
+  % ---------- 说明 ----------
+  \node[font=\footnotesize, text=cgray, anchor=west, align=left] at (-8.85,-12.10)
+    {蓝色粗线为广播消息，左右各一支箭头表示两端同时收到；紫色为预览，只由房主转发给旁观。\\
+     对手生命线在掉线处（红框所指）留缺口，表示链路中断；10 s 内 REJOIN 成功即接上，超时由房主判负。};
+
+\end{tikzpicture}
+\end{document}

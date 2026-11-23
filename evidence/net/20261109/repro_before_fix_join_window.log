@@ -1,0 +1,217 @@
+
+=== leave after 0.4s ===
+B before leave: {'active': '2', 'role': '1', 'local': '1', 'players': '2'}
+A before leave: {'active': '1', 'players': '2', 'seq': '1'}
+leave sent
+t+ 0.45s A_lat=0.25s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 1.16s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 2.56s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 5.38s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 8.90s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+13.82s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+B final rooms: 1
+--- A logs ---
+msh />[3049][geyi:ble] host_start room=00001be5 players=1 power=1
+[3049][geyi:ble] adv_start connectable=1
+[3050][geyi:ble] adv init ret=0
+[3050][geyi:ble] adv start ret=0
+[3051][geyi:ble] host_start ret=0
+[3061][geyi:ble] adv started status=0
+[3528][geyi:ble] connected idx=0 role=1
+[3528][geyi:ble] adv stopped
+[3529][geyi:ble] mtu idx=0 mtu=1024
+[3811][geyi:ble] cccd conn=0 notify=1
+[3857][geyi:net] join accepted color=1
+[4345][geyi:ble] disconnected idx=0 reason=19
+[4347][geyi:ble] adv started status=0
+--- B logs ---
+msh />[geyi:light] event=1
+msh />[3527][geyi:ble] scan stopped
+[3574][geyi:ble] connected idx=0 role=0
+[3595][geyi:ble] mtu idx=0 mtu=1024
+[3596][geyi:ble] search start conn=0
+[3843][geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[3844][geyi:ble] svc uuid 31304356 ... hdl 16-21
+[3844][geyi:ble] chars rx=18 tx=20 cccd=21 rmt=0 hdl=16-21
+[3845][geyi:ble] remote svc registered conn=0 status=0
+[3846][geyi:ble] cccd write conn=0 hdl=21 ret=0
+[3848][geyi:net] join req sent
+[3941][geyi:net] join ack color=1
+msh />[4383][geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[4388][geyi:ble] scan started
+[4408][geyi:ble] disconnected idx=0 reason=22
+
+=== leave after 0.5s ===
+B before leave: {'active': '2', 'role': '1', 'local': '255', 'players': '1'}
+A before leave: {'active': '1', 'players': '2', 'seq': '1'}
+leave sent
+t+ 0.40s A_lat=0.20s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 1.11s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 2.51s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 5.32s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 8.84s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+13.76s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+B final rooms: 1
+--- A logs ---
+msh />[22859][geyi:ble] host_start room=0000193e players=1 power=1
+[22860][geyi:ble] adv_start connectable=1
+[22861][geyi:ble] adv init ret=0
+[22861][geyi:ble] adv start ret=0
+[22861][geyi:ble] host_start ret=0
+[22869][geyi:ble] scan stopped
+[22876][geyi:ble] adv started status=0
+[23531][geyi:ble] connected idx=0 role=1
+[23532][geyi:ble] adv stopped
+[23547][geyi:ble] mtu idx=0 mtu=1024
+[23829][geyi:ble] cccd conn=0 notify=1
+[23871][geyi:net] join accepted color=1
+[24334][geyi:ble] disconnected idx=0 reason=19
+[24336][geyi:ble] adv started status=0
+--- B logs ---
+msh />[geyi:light] event=1
+msh />[23292][geyi:ble] scan stopped
+[23560][geyi:ble] connected idx=0 role=0
+[23581][geyi:ble] search start conn=0
+[23585][geyi:ble] mtu idx=0 mtu=1024
+[23827][geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[23828][geyi:ble] svc uuid 31304356 ... hdl 16-21
+[23829][geyi:ble] chars rx=18 tx=20 cccd=21 rmt=0 hdl=16-21
+[23838][geyi:ble] remote svc registered conn=0 stat[23848][geyi:net] join req sent
+[23851][geyi:ble] cccd write conn=0 hdl=21 ret=0
+[23924][geyi:net] join ack color=1
+msh />[24344][geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[24348][geyi:ble] scan started
+[24370][geyi:ble] disconnected idx=0 reason=22
+
+=== leave after 0.6s ===
+B before leave: {'active': '2', 'role': '1', 'local': '1', 'players': '2'}
+A before leave: {'active': '1', 'players': '2', 'seq': '1'}
+leave sent
+t+ 0.40s A_lat=0.20s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 1.11s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 2.52s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 5.33s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 8.84s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+13.76s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+B final rooms: 1
+--- A logs ---
+msh />[42742][geyi:ble] host_start room=000016f1 players=1 power=1
+[42742][geyi:ble] adv_start connectable=1
+[42743][geyi:ble] adv init ret=0
+[42743][geyi:ble] adv start ret=0
+[42744][geyi:ble] host_start ret=0
+[42751][geyi:ble] scan stopped
+[42758][geyi:ble] adv started status=0
+[43696][geyi:ble] connected idx=0 role=1
+[43696][geyi:ble] adv stopped
+[43703][geyi:ble] mtu idx=0 mtu=1024
+[43970][geyi:ble] cccd conn=0 notify=1
+[44006][geyi:net] join accepted color=1
+[44637][geyi:ble] disconnected idx=0 reason=19
+[44639][geyi:ble] adv started status=0
+--- B logs ---
+msh />[geyi:light] event=1
+msh />[43564][geyi:ble] scan stopped
+[43707][geyi:ble] connected idx=0 role=0
+[43711][geyi:ble] search start conn=0
+[43723][geyi:ble] mtu idx=0 mtu=1024
+[43968][geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[43969][geyi:ble] svc uuid 31304356 ... hdl 16-21
+[43969][geyi:ble] chars rx=18 tx=20 cccd=21 rmt=0 hdl=16-21
+[43970][geyi:ble] remote svc registered conn=0 status=0
+[43971][geyi:ble] cccd write conn=0 hdl=21 ret=0
+[43973][geyi:net] join req sent
+[44045][geyi:net] join ack color=1
+msh />[44632][geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[44636][geyi:ble] scan started
+[44658][geyi:ble] disconnected idx=0 reason=22
+
+=== leave after 0.7s ===
+B before leave: {'active': '2', 'role': '1', 'local': '1', 'players': '2'}
+A before leave: {'active': '1', 'players': '2', 'seq': '1'}
+leave sent
+t+ 0.40s A_lat=0.20s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '0', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 1.11s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 2.51s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 5.32s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 8.84s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+13.76s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+B final rooms: 1
+--- A logs ---
+msh />[63041][geyi:ble] host_start room=0000163d players=1 power=1
+[63041][geyi:ble] adv_start connectable=1
+[63042][geyi:ble] adv init ret=0
+[63042][geyi:ble] adv start ret=0
+[63043][geyi:ble] host_start ret=0
+[63050][geyi:ble] scan stopped
+[63053][geyi:ble] adv started status=0
+[63876][geyi:ble] connected idx=0 role=1
+[63876][geyi:ble] adv stopped
+[63915][geyi:ble] mtu idx=0 mtu=1024
+[64143][geyi:ble] cccd conn=0 notify=1
+[64186][geyi:net] join accepted color=1
+[65034][geyi:ble] disconnected idx=0 reason=19
+[65036][geyi:ble] adv started status=0
+--- B logs ---
+msh />[geyi:light] event=1
+msh />[63855][geyi:ble] scan stopped
+[63872][geyi:ble] connected idx=0 role=0
+[63884][geyi:ble] search start conn=0
+[63888][geyi:ble] mtu idx=0 mtu=1024
+[64106][geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[64112][geyi:ble] svc uuid 31304356 ... hdl 16-21
+[64118][geyi:ble] chars rx=18 tx=20 [64123][geyi:net] join req sent
+[64126][geyi:ble] remote svc registered conn=0 status=0
+[64127][geyi:ble] cccd write conn=0 hdl=21 ret=0
+[64197][geyi:net] join ack color=1
+msh />[65012][geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[65016][geyi:ble] scan started
+[65037][geyi:ble] disconnected idx=0 reason=22
+
+=== leave after 0.9s ===
+B before leave: {'active': '2', 'role': '1', 'local': '1', 'players': '2'}
+A before leave: {'active': '1', 'players': '2', 'seq': '1'}
+leave sent
+t+ 0.45s A_lat=0.25s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 1.16s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 2.56s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 5.37s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+ 8.89s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+t+13.81s A_lat=0.15s A={'active': '1', 'players': '1', 'seq': '2', 'rooms': '0'} B={'active': '0', 'rooms': '1', 'role': '2', 'local': '255', 'joinreason': '0'}
+B final rooms: 1
+--- A logs ---
+msh />[83442][geyi:ble] host_start room=000015ed players=1 power=1
+[83442][geyi:ble] adv_start connectable=1
+[83443][geyi:ble] adv init ret=0
+[83443][geyi:ble] adv start ret=0
+[83444][geyi:ble] host_start ret=0
+[83451][geyi:ble] scan stopped
+[83458][geyi:ble] adv started status=0
+[84560][geyi:ble] connected idx=0 role=1
+[84561][geyi:ble] adv stopped
+[84584][geyi:ble] mtu idx=0 mtu=1024
+[84847][geyi:ble] cccd conn=0 notify=1
+[84883][geyi:net] join accepted color=1
+[85625][geyi:ble] disconnected idx=0 reason=19
+[85628][geyi:ble] adv started status=0
+--- B logs ---
+msh /[geyi:light] event=1
+msh />[84210][geyi:ble] scan stopped
+[84529][geyi:ble] connected idx=0 role=0
+[84533][geyi:ble] search start conn=0
+[84538][geyi:ble] mtu idx=0 mtu=1024
+[84795][geyi:ble] search svc result=0 conn=0 chars=2 uuid_len=16
+[84796][geyi:ble] svc uuid 31304356 ... hdl 16-21
+[84797][geyi:ble] chars rx=18 tx=20 cccd=21 rmt=0 hdl=16-21
+[84797][geyi:ble] remote svc registered conn=0 status=0
+[84798][geyi:ble] cccd write conn=0 hdl=21 ret=0
+[84800][geyi:net] join req sent
+[84873][geyi:net] join ack color=1
+msh />[85565][geyi:ble] scan_start ret=0
+[geyi:light] event=1
+[85570][geyi:ble] scan started
+[85591][geyi:ble] disconnected idx=0 reason=22

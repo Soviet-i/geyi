@@ -1,0 +1,99 @@
+% 研制总结报告插图：系统架构（四层 + 跨层通道）
+% 只画分层、模块与跨层通道；模块间的调用关系见数据流图（图 4-2）与表 4-1。
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage{xeCJK}
+\IfFontExistsTF{Noto Sans SC}
+  {\setCJKmainfont{Noto Sans SC}}
+  {\IfFontExistsTF{Source Han Sans SC}
+    {\setCJKmainfont{Source Han Sans SC}}
+    {\setCJKmainfont{Microsoft YaHei}}}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{cblue}{HTML}{2563EB}
+\definecolor{cgreen}{HTML}{059669}
+\definecolor{corange}{HTML}{D97706}
+\definecolor{cred}{HTML}{B91C1C}
+\definecolor{cgray}{HTML}{6B7280}
+
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small,
+    band/.style={draw=#1!32!black, fill=#1!4, rounded corners=5pt, line width=0.6pt},
+    mod/.style={draw=#1!55!black, fill=white, rounded corners=3pt, align=center,
+      inner sep=3pt, text=ink, font=\small, line width=0.6pt},
+    lay/.style={font=\footnotesize, text=ink!55, rotate=90},
+    lab/.style={font=\small, text=ink!85, inner sep=1pt},
+    arr/.style={-{Latex[length=2mm]}, draw=ink!70, line width=0.8pt}
+  ]
+
+  % ---------- 板卡边界 ----------
+  \draw[draw=cblue!35!black, dashed, rounded corners=6pt] (-0.85,2.30) rectangle (15.45,11.55);
+  \node[anchor=south west, font=\small\bfseries, text=cblue!45!black]
+    at (-0.80,11.62) {黄山派 SF32LB525UC6};
+
+  % ---------- 界面层 ----------
+  \draw[band=cgreen] (0.05,9.35) rectangle (15.35,10.95);
+  \node[lay] at (-0.48,10.15) {界面层};
+  \node[mod=cgreen, minimum width=14.9cm, minimum height=1.20cm] at (7.70,10.15)
+    {\normalsize\bfseries LVGL v9 · 仅主线程\\[1pt]\small
+     首页 · 模式 · 准备 · 大厅 · 房间 · 对局 · 结算 · 参数 · 规则};
+
+  % ---------- 业务层 ----------
+  \draw[band=cblue] (0.05,6.50) rectangle (15.35,8.70);
+  \node[lay] at (-0.48,7.60) {业务层};
+  \node[mod=cblue, minimum width=4.20cm, minimum height=1.50cm] (input) at (2.30,7.60)
+    {\normalsize\bfseries 输入状态机\\[1pt]\small 倾斜 → 四类事件};
+  \node[mod=cblue, minimum width=2.25cm, minimum height=1.50cm] (game) at (5.78,7.60)
+    {\normalsize\bfseries 规则核心\\[1pt]\small 唯一权威棋盘};
+  \node[mod=cblue, minimum width=2.00cm, minimum height=1.50cm] (ai) at (8.15,7.60)
+    {\normalsize\bfseries AI 搜索\\[1pt]\small 独立线程};
+  \node[mod=cblue, minimum width=2.00cm, minimum height=1.50cm] (param) at (10.40,7.60)
+    {\normalsize\bfseries 参数配置\\[1pt]\small 三套配置};
+  \node[mod=cblue, minimum width=1.55cm, minimum height=1.50cm] (fb) at (12.43,7.60)
+    {\normalsize\bfseries 反馈\\[1pt]\small 灯效};
+  \node[mod=cblue, minimum width=1.85cm, minimum height=1.50cm] (net) at (14.38,7.60)
+    {\normalsize\bfseries 联机对战\\[1pt]\small 房主权威};
+
+  % ---------- 板级适配层 ----------
+  \draw[band=corange] (0.05,3.75) rectangle (15.35,5.65);
+  \node[lay] at (-0.48,4.70) {板级层};
+  \node[mod=corange, minimum width=1.95cm, minimum height=1.20cm] (imu) at (1.45,4.80)
+    {\normalsize\bfseries IMU\\[1pt]\small 20 ms 采样};
+  \node[mod=corange, minimum width=1.85cm, minimum height=1.20cm] (key) at (3.45,4.80)
+    {\normalsize\bfseries KEY2\\[1pt]\small 确认键};
+  \node[mod=corange, minimum width=1.35cm, minimum height=1.20cm] (rgb) at (12.40,4.80)
+    {\normalsize\bfseries RGB};
+  \node[mod=corange, minimum width=1.55cm, minimum height=1.20cm] (ble) at (14.40,4.80)
+    {\normalsize\bfseries BLE};
+
+  % 板级层留白处说明显示/触摸的归属，避免再拉一条穿过业务层的线
+  \node[font=\footnotesize, text=cgray] at (7.95,4.80) {显示 / 触摸由 LVGL 的 BSP 端口直接驱动};
+
+  % ---------- 平台层 ----------
+  \node[lay] at (-0.48,3.00) {系统层};
+  \node[draw=ink!22, fill=ink!4, rounded corners=3pt, minimum width=14.9cm,
+        minimum height=0.90cm, font=\small, text=ink!85] at (7.70,3.00)
+    {BSP / HAL · RT-Thread · SiFli SDK v2.5.1};
+
+  % ---------- 跨层通道 ----------
+  \draw[arr] (imu.north) -- (1.45,6.80);
+  \draw[arr] (key.north) -- (3.45,6.80);
+
+  \draw[arr] (5.40,9.55) -- node[lab, left, pos=0.55]{事件} (5.40,8.35);
+  \draw[arr] (6.00,8.35) -- node[lab, right, pos=0.45]{重绘} (6.00,9.55);
+
+  \draw[arr] (fb.south) -- (12.40,5.40);
+  \draw[arr] (net.south) -- (14.40,5.40);
+
+  % ---------- 外部设备 ----------
+  \node[mod=corange, minimum width=2.10cm, minimum height=1.45cm] (peer) at (17.10,4.80)
+    {\small\bfseries 对手板\\[1pt]\small\bfseries 旁观板\\[1pt]\scriptsize BLE 中央};
+  \draw[arr] (ble.east) -- (peer.west);
+
+  % ---------- 图例 ----------
+  \node[mod=cblue, minimum width=1.55cm, minimum height=0.45cm, font=\footnotesize] at (1.05,1.65) {业务模块};
+  \node[mod=cgreen, minimum width=1.15cm, minimum height=0.45cm, font=\footnotesize] at (3.35,1.65) {界面};
+  \node[mod=corange, minimum width=1.55cm, minimum height=0.45cm, font=\footnotesize] at (5.70,1.65) {板级/外部};
+
+\end{tikzpicture}
+\end{document}

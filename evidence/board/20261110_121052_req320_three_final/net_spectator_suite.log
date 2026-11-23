@@ -1,0 +1,11 @@
+== room + spectator identity ==
+== spectator read-only ==
+== ready -> game -> preview sync ==
+== result -> room -> second game ==
+== guest reboot in WAIT ==
+== guest reboot in PLAYING + timeout ==
+== spectator drop / mid-game join ==
+PASS: three-board spectator suite
+A final: {'active': '1', 'role': '0', 'phase': '2', 'players': '2', 'spectators': '1', 'seq': '8', 'rooms': '0', 'turn': '0', 'rev': '0', 'adv': '1', 'local': '0', 'host': '0', 'guest': '1', 'id': 'F33A', 'hostid': 'F33A', 'guestid': '03EA', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0', 'peer': '1', 'reconn': '0', 'seatr': '1', 'seatb': '1', 'secr': '0', 'secb': '0', 'spec': '0', 'lost': '0', 'off': '-1', 'rsec': '0', 'prevr': '1,2,0', 'prevb': '0,0,0'}
+B final: {'active': '2', 'role': '1', 'phase': '2', 'players': '2', 'spectators': '1', 'seq': '8', 'rooms': '0', 'turn': '0', 'rev': '0', 'adv': '0', 'local': '1', 'host': '0', 'guest': '1', 'id': '03EA', 'hostid': 'F33A', 'guestid': '03EA', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0', 'peer': '1', 'reconn': '0', 'seatr': '1', 'seatb': '1', 'secr': '0', 'secb': '0', 'spec': '0', 'lost': '0', 'off': '-1', 'rsec': '0', 'prevr': '0,0,0', 'prevb': '0,0,0'}
+C final: {'active': '2', 'role': '2', 'phase': '2', 'players': '2', 'spectators': '1', 'seq': '8', 'rooms': '0', 'turn': '0', 'rev': '0', 'adv': '0', 'local': '255', 'host': '0', 'guest': '1', 'id': 'B7B0', 'hostid': 'F33A', 'guestid': '03EA', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0', 'peer': '1', 'reconn': '0', 'seatr': '1', 'seatb': '1', 'secr': '0', 'secb': '0', 'spec': '1', 'lost': '0', 'off': '-1', 'rsec': '0', 'prevr': '0,2,0', 'prevb': '0,1,1'}

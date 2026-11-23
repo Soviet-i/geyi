@@ -1,0 +1,155 @@
+# verify_all log
+2026-11-08T18:19:55
+========================================================
+✓ 提交规范     PASS
+✓ 开发日志     PASS
+✓ 需求追踪     PASS
+✓ manifest PASS
+========================================================
+结论：必检项全部通过。
+
+
+PASS: 26920 assertions; TC-301..307; TC-308 host selftest only
+
+
+PASS: input 60 assertions; TC-309 simulated angles/time only
+
+
+PASS: 2517 assertions; TC-401..TC-406 + TC-409 host tests
+
+
+PASS: 85 assertions; TC-407 parameter page state host tests
+
+
+PASS: 62 AI assertions (legal win, self-damage, RNG independence, pruning, cancel)
+
+
+PASS: 10 assertions; TC-408 balance scan reproducibility
+
+
+
+
+
+GEYI single-board rules prototype (keyboard replaces tilt)
+w/d/s/a COUNT: preview up/right/down/left; 0 allowed only if no soldier eligible
+ok: confirm preview | cancel | place COLUMN | resign | restart | quit
+No hardware, AI or Bluetooth. R/B:health. Outcome 0=playing 1=red 2=blue 3=draw.
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> PREVIEW ONLY (includes proposed next random tile):
+
+Turn=BLUE coins R:0 B:0 revision=1 outcome=0
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> PREVIEW ONLY (includes proposed next random tile):
+
+Turn=BLUE coins R:0 B:0 revision=1 outcome=0
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> COMMITTED
+CURRENT STATE:
+
+Turn=BLUE coins R:0 B:0 revision=1 outcome=0
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+> CURRENT STATE:
+
+Turn=BLUE coins R:0 B:0 revision=2 outcome=1
+             0      1      2      3      4      5
+row 0:       2 B:8         2      . B:8         .
+row 1:       .      .      .      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       . R:8         .      .      .      .
+row 5:       2      .      .      . R:8         .
+RESULT: RED WIN
+> CURRENT STATE:
+
+Turn=RED coins R:0 B:0 revision=0 outcome=0
+             0      1      2      3      4      5
+row 0:       . B:8         .      . B:8         .
+row 1:       2      .      2      .      .      .
+row 2:       .      .      .      .      .      .
+row 3:       .      .      .      .      .      .
+row 4:       .      .      .      .      .      .
+row 5:       . R:8         .      . R:8         .
+> 
+CLI ready: D:\233\code\course_starter\build\host\geyi-cli.exe
+
+== geyi-tests -> src/geyi_game.c
+== input-tests -> src/geyi_input.c
+== config-tests -> src/geyi_config.c
+== param-ui-tests -> src/geyi_param_ui.c
+== ai-tests -> src/geyi_ai.c
+== balance-tests -> tools/geyi_balance.c
+
+| 模块 | 行覆盖率 | 可执行行 | 说明 |
+|---|---:|---:|---|
+| `src/geyi_game.c` | 99.5% | 183 | |
+| `src/geyi_input.c` | 87.0% | 77 | |
+| `src/geyi_config.c` | 98.5% | 131 | |
+| `src/geyi_param_ui.c` | 100.0% | 106 | |
+| `src/geyi_ai.c` | 89.2% | 231 | |
+| `tools/geyi_balance.c` | 76.2% | 80 | |
+
+log: D:\233\code\course_starter\build\coverage\coverage.txt
+threshold: 70.0%
+
+
+===== 汇总 =====
+PASS  课程检查（提交/日志/追踪/manifest）  (exit 0)
+PASS  主机测试（6 组断言）  (exit 0)
+PASS  覆盖率（核心模块 ≥70%）  (exit 0)
+结论：全部通过

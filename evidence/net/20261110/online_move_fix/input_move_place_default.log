@@ -1,0 +1,67 @@
+flashing COM7 ...
+  COM7 flash rc=0
+flashing COM5 ...
+  COM5 flash rc=0
+host=COM7 guest=COM5
+[move 1] turn=0 actor=A (host) local=0/1 rev=1
+  A place row=5 col=3, holding 1.6s across periodic snapshot
+  OK place rev 1 -> 2
+[move 2] turn=1 actor=B (guest) local=0/1 rev=2
+  B place row=4 col=3, holding 1.6s across periodic snapshot
+  OK place rev 2 -> 3
+[move 3] turn=0 actor=A (host) local=0/1 rev=3
+  A tilt UP -> preview dir=0 count=1
+  OK rev 3 -> 4
+[move 4] turn=1 actor=B (guest) local=0/1 rev=4
+  B tilt UP -> preview dir=0 count=1
+  OK rev 4 -> 5
+[move 5] turn=0 actor=A (host) local=0/1 rev=5
+  A tilt UP -> preview dir=0 count=1
+  OK rev 5 -> 6
+[move 6] turn=1 actor=B (guest) local=0/1 rev=6
+  B tilt UP -> preview dir=0 count=1
+  OK rev 6 -> 7
+[move 7] turn=0 actor=A (host) local=0/1 rev=7
+  A tilt UP -> preview dir=0 count=1
+  OK rev 7 -> 8
+[move 8] turn=1 actor=B (guest) local=0/1 rev=8
+  B tilt UP -> preview dir=0 count=1
+  OK rev 8 -> 9
+[move 9] turn=0 actor=A (host) local=0/1 rev=9
+  A tilt UP -> preview dir=0 count=1
+  OK rev 9 -> 10
+[move 10] turn=1 actor=B (guest) local=0/1 rev=10
+  B tilt UP -> preview dir=0 count=0
+  OK rev 10 -> 11
+[move 11] turn=0 actor=A (host) local=0/1 rev=11
+  A tilt UP -> preview dir=0 count=1
+  OK rev 11 -> 12
+[move 12] turn=1 actor=B (guest) local=0/1 rev=12
+  B tilt UP -> preview dir=0 count=0
+  OK rev 12 -> 13
+[move 13] turn=0 actor=A (host) local=0/1 rev=13
+  A tilt UP -> preview dir=0 count=1
+  OK rev 13 -> 14
+[move 14] turn=1 actor=B (guest) local=0/1 rev=14
+  B tilt UP -> preview dir=0 count=0
+  OK rev 14 -> 15
+[move 15] turn=0 actor=A (host) local=0/1 rev=15
+  A tilt UP -> preview dir=0 count=1
+  OK rev 15 -> 16
+[move 16] turn=1 actor=B (guest) local=0/1 rev=16
+  B tilt UP -> preview dir=0 count=0
+  OK rev 16 -> 17
+[move 17] turn=0 actor=A (host) local=0/1 rev=17
+  A place row=4 col=3, holding 1.6s across periodic snapshot
+  OK place rev 17 -> 18
+[move 18] turn=1 actor=B (guest) local=0/1 rev=18
+  B place row=3 col=3, holding 1.6s across periodic snapshot
+  OK place rev 18 -> 19
+[move 19] turn=0 actor=A (host) local=0/1 rev=19
+  A tilt UP -> preview dir=0 count=1
+  OK rev 19 -> 20
+[move 20] turn=1 actor=B (guest) local=0/1 rev=20
+  B tilt UP -> preview dir=0 count=0
+  OK rev 20 -> 21
+PASS: tilt+KEY2 move and placement accepted on both boards; moves={'COM7': 8, 'COM5': 8} places={'COM7': 2, 'COM5': 2}
+evidence: D:\233\code\course_starter\evidence\net\20261110\input_20261110_194301

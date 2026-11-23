@@ -1,0 +1,20 @@
+== boot / unique ID ==
+== rules / safe area ==
+== empty seat UI ==
+== join / ready ==
+== full game ==
+== resign sync ==
+== edge churn ==
+== reboot reclaim (WAIT) ==
+B rebooted in 4.0s
+== reboot reclaim (PLAYING) ==
+B rebooted during PLAYING in 4.1s
+== transient rejoin ==
+== reboot timeout ==
+== leave / rejoin / close ==
+== host transfer ==
+== stale room click ==
+== spectator ==
+PASS: two-board online suite
+A final: {'active': '0', 'role': '2', 'phase': '0', 'players': '0', 'spectators': '0', 'seq': '0', 'rooms': '0', 'turn': '0', 'rev': '0', 'adv': '0', 'local': '255', 'host': '0', 'guest': '0', 'id': 'F33A', 'hostid': '0000', 'guestid': '0000', 'human': '1', 'ready': '0', 'dir': '-1', 'count': '0', 'placing': '0', 'prow': '-1', 'pcol': '-1', 'pending': '0', 'coinr': '0', 'coinb': '0', 'cost': '4', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0', 'peer': '1', 'reconn': '0', 'seatr': '0', 'seatb': '0', 'secr': '0', 'secb': '0', 'spec': '0', 'lost': '0', 'off': '-1', 'rsec': '0', 'prevr': '0,3,1', 'prevb': '0,0,0'}
+B final: {'active': '0', 'role': '2', 'phase': '0', 'players': '0', 'spectators': '0', 'seq': '0', 'rooms': '0', 'turn': '0', 'rev': '0', 'adv': '0', 'local': '255', 'host': '0', 'guest': '0', 'id': 'B7B0', 'hostid': '0000', 'guestid': '0000', 'human': '1', 'ready': '0', 'dir': '-1', 'count': '0', 'placing': '0', 'prow': '-1', 'pcol': '-1', 'pending': '0', 'coinr': '0', 'coinb': '0', 'cost': '4', 'hready': '0', 'gready': '0', 'rready': '0', 'bready': '0', 'outcome': '0', 'result': '0', 'joinrej': '0', 'joinreason': '0', 'cd': '0', 'peer': '1', 'reconn': '0', 'seatr': '0', 'seatb': '0', 'secr': '0', 'secb': '0', 'spec': '0', 'lost': '0', 'off': '-1', 'rsec': '0', 'prevr': '0,0,0', 'prevb': '0,0,0'}

@@ -1,0 +1,21 @@
+===== third-peer =====
+A host + B guest; adv= 1
+found GEYI-00001ad6 5C:FD:52:80:05:D6 room=0x00001ad6
+connected, mtu 527
+PC JOIN_ACK: [(3, 'ff000000d91a0000d61a000002000000')]
+A with board B + PC: {'players': '2', 'spectators': '1', 'adv': '1'}
+A after PC leave: {'players': '2', 'spectators': '0', 'adv': '1'}
+PASS: third-peer
+===== idle-link =====
+A host + B guest; adv= 1
+found GEYI-00001adb 5C:FD:52:80:05:D6 room=0x00001adb
+connected, mtu 527
+PC connected without JOIN; waiting for host 5s reap...
+idle link dropped; A: {'players': '2', 'spectators': '0', 'adv': '1'}
+PASS: idle-link
+===== burst =====
+A host + B guest; adv= 1
+found GEYI-00001ad9 5C:FD:52:80:05:D6 room=0x00001ad9
+connected, mtu 527
+A after burst: {'players': '2', 'spectators': '0', 'adv': '1'}
+PASS: burst

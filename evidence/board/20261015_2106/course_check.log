@@ -1,0 +1,22 @@
+========================================================
+✓ 提交规范     PASS
+✓ 开发日志     PASS
+✓ 需求追踪     PASS
+! manifest WARN
+    检查文件: manifest.yaml
+    
+    发现 22 项必须补全的问题：
+      [必须] submission.student_id 未填写
+      [必须] submission.student_name 未填写
+      [必须] submission.group_id 未填写
+      [必须] submission.milestone 未填写
+      [必须] submission.submitted_at 未填写
+      [必须] dev_agent.session_log_path 未填写
+      [必须] design.key_decisions[2].decision 未填写
+      [必须] design.key_decisions[2].alternatives_considered 未填写
+      [必须] design.key_decisions[2].rationale 未填写
+      [必须] design.key_decisions[2].decided_by 未填写
+      [必须] code.commit_range 未填写
+      [必须] physical_verification[1].item 未填写
+========================================================
+结论：必检项全部通过。
